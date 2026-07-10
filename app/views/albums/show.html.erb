@@ -20,9 +20,6 @@
         <% end %>
         <span aria-hidden="true">•</span>
         <span><%= pluralize(@album.tracks.size, "song") %><%= ", #{length}" if length %></span>
-        <% if @album.genre.present? %>
-          <span aria-hidden="true">•</span> <span class="text-neutral-400"><%= @album.genre %></span>
-        <% end %>
       </p>
     </div>
   </div>
