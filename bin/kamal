@@ -10,6 +10,14 @@
 
 ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../Gemfile", __dir__)
 
+# Kamal decides whether its build clone already exists by matching git's error
+# message against the English "already exists and is not an empty directory".
+# A git that speaks any other language never matches, so instead of resetting
+# the clone Kamal deletes and re-clones the repo on every single deploy, after
+# printing an alarming "Error preparing clone". Pin the locale for the git
+# subprocesses Kamal shells out to.
+ENV["LC_ALL"] = "C"
+
 require "rubygems"
 require "bundler/setup"
 
