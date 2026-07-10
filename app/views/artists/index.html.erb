@@ -1,0 +1,20 @@
+<% content_for :title, "Artistas" %>
+
+<h1 class="mb-8 text-3xl font-bold tracking-tight">Artistas</h1>
+
+<div class="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
+  <% @artists.each do |artist| %>
+    <%= link_to artist_path(artist), class: "group rounded-lg p-4 transition hover:bg-white/5" do %>
+      <div class="aspect-square overflow-hidden rounded-full bg-neutral-800 shadow-lg">
+        <% if (album = artist.albums.first) %>
+          <%= image_tag cover_album_path(album), alt: "", loading: "lazy",
+                        class: "size-full object-cover transition group-hover:scale-105" %>
+        <% end %>
+      </div>
+      <p class="mt-4 truncate text-center text-sm font-medium"><%= artist.name %></p>
+      <p class="mt-1 text-center text-xs text-neutral-500">
+        <%= pluralize(artist.albums.size, "álbum", plural: "álbumes") %>
+      </p>
+    <% end %>
+  <% end %>
+</div>

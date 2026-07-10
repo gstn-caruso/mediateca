@@ -1,0 +1,49 @@
+<% content_for :title, "#{@album.title} — #{@album.artist.name}" %>
+
+<header class="mb-10 flex flex-col gap-6 sm:flex-row sm:items-end">
+  <img src="<%= cover_album_path(@album) %>" alt=""
+       class="size-52 rounded object-cover shadow-2xl ring-1 ring-white/10">
+
+  <div class="min-w-0">
+    <p class="text-xs font-semibold uppercase tracking-widest text-neutral-400">
+      <%= @album.album_type %>
+    </p>
+    <h1 class="mt-2 text-4xl font-bold tracking-tight"><%= @album.title %></h1>
+    <p class="mt-3 text-sm text-neutral-400">
+      <%= link_to @album.artist.name, artist_path(@album.artist), class: "font-medium text-neutral-200 hover:underline" %>
+      <span aria-hidden="true">·</span> <%= @album.year %>
+      <span aria-hidden="true">·</span> <%= pluralize(@album.tracks.size, "track") %>
+      <% if @album.genre.present? %>
+        <span aria-hidden="true">·</span> <%= @album.genre %>
+      <% end %>
+    </p>
+  </div>
+</header>
+
+<% @album.tracks.group_by(&:disc_no).each do |disc_no, tracks| %>
+  <% if @album.disc_total > 1 %>
+    <h2 class="mb-3 mt-8 text-xs font-semibold uppercase tracking-widest text-neutral-500">
+      Disco <%= disc_no %>
+    </h2>
+  <% end %>
+
+  <ol class="divide-y divide-white/5">
+    <% tracks.each do |track| %>
+      <li>
+        <button type="button"
+                data-action="player#play"
+                data-player-src-param="<%= stream_track_path(track) %>"
+                data-player-title-param="<%= track.title %>"
+                data-player-subtitle-param="<%= @album.artist.name %> — <%= @album.title %>"
+                data-player-cover-param="<%= cover_album_path(@album) %>"
+                class="group flex w-full items-center gap-4 rounded px-3 py-2.5 text-left transition hover:bg-white/5">
+          <span class="w-6 text-right text-sm tabular-nums text-neutral-500 group-hover:text-neutral-200">
+            <%= track.track_no %>
+          </span>
+          <span class="min-w-0 flex-1 truncate text-sm font-medium"><%= track.title %></span>
+          <span class="text-sm tabular-nums text-neutral-500"><%= track_duration(track.duration) %></span>
+        </button>
+      </li>
+    <% end %>
+  </ol>
+<% end %>

@@ -39,4 +39,7 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true
+
+  # A handful of fake FLACs and covers stand in for the NAS.
+  config.x.media_root = Rails.root.join("test/fixtures/media").to_s
 end

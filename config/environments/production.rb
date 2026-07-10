@@ -21,11 +21,16 @@ Rails.application.configure do
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
 
-  # Assume all access to the app is happening through a SSL-terminating reverse proxy.
-  config.assume_ssl = true
+  # Mediateca lives on the LAN, reached by hostname over plain HTTP. There is no
+  # certificate to terminate, and forcing SSL would just redirect every request
+  # into a scheme nothing answers on.
+  config.assume_ssl = false
+  config.force_ssl = false
 
-  # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  config.force_ssl = true
+  # Thruster sits in front and streams any file we name in this header, so the
+  # FLACs never pass through Ruby — and it answers Range requests, so seeking
+  # inside a track costs one partial read instead of a whole album.
+  config.action_dispatch.x_sendfile_header = "X-Sendfile"
 
   # Skip http-to-https redirect for the default health check endpoint.
   # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
