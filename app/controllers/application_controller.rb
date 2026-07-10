@@ -4,4 +4,14 @@ class ApplicationController < ActionController::Base
 
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
+
+  helper_method :library_artists
+
+  private
+
+  # The library sits in the sidebar of every page, the way a music app keeps it.
+  # Lazily, so serving a FLAC never pays for a query nobody reads.
+  def library_artists
+    @library_artists ||= Artist.ordered
+  end
 end

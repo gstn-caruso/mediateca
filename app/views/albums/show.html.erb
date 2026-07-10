@@ -1,49 +1,73 @@
 <% content_for :title, "#{@album.title} — #{@album.artist.name}" %>
+<% cover = cover_album_path(@album) %>
+<% subtitle = "#{@album.artist.name} — #{@album.title}" %>
 
-<header class="mb-10 flex flex-col gap-6 sm:flex-row sm:items-end">
-  <img src="<%= cover_album_path(@album) %>" alt=""
-       class="size-52 rounded object-cover shadow-2xl ring-1 ring-white/10">
+<header class="bg-gradient-to-b from-emerald-900/40 to-transparent px-8 pb-8 pt-16">
+  <div class="flex flex-col gap-6 sm:flex-row sm:items-end">
+    <img src="<%= cover %>" alt=""
+         class="size-56 shrink-0 rounded object-cover shadow-2xl ring-1 ring-white/10">
 
-  <div class="min-w-0">
-    <p class="text-xs font-semibold uppercase tracking-widest text-neutral-400">
-      <%= @album.album_type %>
-    </p>
-    <h1 class="mt-2 text-4xl font-bold tracking-tight"><%= @album.title %></h1>
-    <p class="mt-3 text-sm text-neutral-400">
-      <%= link_to @album.artist.name, artist_path(@album.artist), class: "font-medium text-neutral-200 hover:underline" %>
-      <span aria-hidden="true">·</span> <%= @album.year %>
-      <span aria-hidden="true">·</span> <%= pluralize(@album.tracks.size, "track") %>
-      <% if @album.genre.present? %>
-        <span aria-hidden="true">·</span> <%= @album.genre %>
-      <% end %>
-    </p>
+    <div class="min-w-0">
+      <p class="text-xs font-semibold uppercase tracking-widest text-neutral-300"><%= @album.album_type %></p>
+      <h1 class="mt-3 text-5xl font-extrabold tracking-tight text-white"><%= @album.title %></h1>
+      <p class="mt-5 text-sm text-neutral-300">
+        <%= link_to @album.artist.name, artist_path(@album.artist), class: "font-semibold text-white hover:underline" %>
+        <span aria-hidden="true">·</span> <%= @album.year %>
+        <span aria-hidden="true">·</span> <%= pluralize(@album.tracks.size, "track") %>
+        <% if @album.genre.present? %>
+          <span aria-hidden="true">·</span> <%= @album.genre %>
+        <% end %>
+      </p>
+    </div>
   </div>
 </header>
 
-<% @album.tracks.group_by(&:disc_no).each do |disc_no, tracks| %>
-  <% if @album.disc_total > 1 %>
-    <h2 class="mb-3 mt-8 text-xs font-semibold uppercase tracking-widest text-neutral-500">
-      Disco <%= disc_no %>
-    </h2>
-  <% end %>
+<div class="px-8 pb-10">
+  <button type="button"
+          data-action="player#play"
+          data-player-index-param="0"
+          aria-label="Reproducir <%= @album.title %>"
+          class="mb-6 flex size-14 items-center justify-center rounded-full bg-emerald-500 text-black shadow-xl transition hover:scale-105 hover:bg-emerald-400">
+    <svg class="size-6 translate-x-px" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <path d="M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713Z"/>
+    </svg>
+  </button>
 
-  <ol class="divide-y divide-white/5">
-    <% tracks.each do |track| %>
-      <li>
-        <button type="button"
-                data-action="player#play"
-                data-player-src-param="<%= stream_track_path(track) %>"
-                data-player-title-param="<%= track.title %>"
-                data-player-subtitle-param="<%= @album.artist.name %> — <%= @album.title %>"
-                data-player-cover-param="<%= cover_album_path(@album) %>"
-                class="group flex w-full items-center gap-4 rounded px-3 py-2.5 text-left transition hover:bg-white/5">
-          <span class="w-6 text-right text-sm tabular-nums text-neutral-500 group-hover:text-neutral-200">
-            <%= track.track_no %>
-          </span>
-          <span class="min-w-0 flex-1 truncate text-sm font-medium"><%= track.title %></span>
-          <span class="text-sm tabular-nums text-neutral-500"><%= track_duration(track.duration) %></span>
-        </button>
-      </li>
+  <%# El índice tiene que ser el de la cola entera, no el del disco: en un álbum
+      de dos discos, el primer track del segundo no es el número 1 de la cola. %>
+  <% @album.tracks.each_with_index.group_by { |track, _| track.disc_no }.each do |disc_no, numbered_tracks| %>
+    <% if @album.disc_total > 1 %>
+      <h2 class="mb-2 mt-8 px-3 text-xs font-semibold uppercase tracking-widest text-neutral-500">
+        Disco <%= disc_no %>
+      </h2>
     <% end %>
-  </ol>
-<% end %>
+
+    <ol>
+      <% numbered_tracks.each do |track, position| %>
+        <li>
+          <button type="button"
+                  data-player-track
+                  data-src="<%= stream_track_path(track) %>"
+                  data-title="<%= track.title %>"
+                  data-subtitle="<%= subtitle %>"
+                  data-cover="<%= cover %>"
+                  data-action="player#play"
+                  data-player-index-param="<%= position %>"
+                  class="group flex w-full items-center gap-4 rounded px-3 py-2.5 text-left transition hover:bg-white/10">
+            <span class="w-6 text-right text-sm tabular-nums text-neutral-400 group-hover:hidden">
+              <%= track.track_no %>
+            </span>
+            <span class="hidden w-6 justify-end text-white group-hover:flex" aria-hidden="true">
+              <svg class="size-3.5" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713Z"/>
+              </svg>
+            </span>
+
+            <span class="min-w-0 flex-1 truncate text-sm font-medium text-neutral-100"><%= track.title %></span>
+            <span class="text-sm tabular-nums text-neutral-400"><%= track_duration(track.duration) %></span>
+          </button>
+        </li>
+      <% end %>
+    </ol>
+  <% end %>
+</div>

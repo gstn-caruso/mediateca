@@ -19,24 +19,23 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <%# The controller sits on <body> so play buttons anywhere on the page are in
-      its scope; the element it drives lives in the permanent #player below. %>
-  <body class="h-full bg-neutral-950 text-neutral-100 antialiased" data-controller="player">
-    <header class="sticky top-0 z-10 border-b border-white/5 bg-neutral-950/80 backdrop-blur">
-      <nav class="mx-auto flex max-w-6xl items-center gap-6 px-6 py-4">
-        <%= link_to "Mediateca", root_path, class: "text-lg font-semibold tracking-tight hover:text-white" %>
-        <span class="text-sm text-neutral-500">música</span>
-      </nav>
-    </header>
+  <%# The player controller sits on <body> so that play buttons anywhere on the
+      page fall inside its scope. What it drives — the <audio> element and the
+      now-playing strip — lives in the permanent #player below, and survives the
+      body swap Turbo Drive does on navigation. %>
+  <body class="h-full overflow-hidden bg-black text-neutral-200 antialiased" data-controller="player">
+    <div class="flex h-full flex-col">
+      <div class="flex min-h-0 flex-1 gap-2 p-2">
+        <%= render "shared/sidebar" %>
 
-    <main class="mx-auto max-w-6xl px-6 py-10 pb-40">
-      <%= yield %>
-    </main>
+        <main class="min-w-0 flex-1 overflow-y-auto rounded-lg bg-gradient-to-b from-neutral-900 to-neutral-950">
+          <%= yield %>
+        </main>
+      </div>
 
-    <%# Turbo Drive swaps the body on navigation; data-turbo-permanent keeps the
-        audio element — and whatever is playing — alive across pages. %>
-    <div id="player" data-turbo-permanent>
-      <%= render "shared/player" %>
+      <div id="player" data-turbo-permanent class="shrink-0 border-t border-white/5 bg-black">
+        <%= render "shared/player" %>
+      </div>
     </div>
   </body>
 </html>
