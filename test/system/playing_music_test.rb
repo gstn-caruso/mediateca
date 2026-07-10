@@ -106,9 +106,22 @@ class PlayingMusicTest < ApplicationSystemTestCase
     play "Dijo El Droguero Al Drogador"
     click_button "Queue"
 
-    within("[data-player-target='queue']") { click_button "El Pibe Tigre" }
+    # exact: the row also holds a "Remove El Pibe Tigre…" button.
+    within("[data-player-target='queue']") { click_button "El Pibe Tigre", exact: true }
 
     assert_selector "[data-player-target='title']", text: "El Pibe Tigre"
+  end
+
+  test "a track can be dropped from the queue" do
+    play "Dijo El Droguero Al Drogador"
+    click_button "Queue"
+
+    within "[data-player-target='queue']" do
+      click_button "Remove Desencuentro from the queue"
+
+      assert_no_text "Desencuentro"
+      assert_text "El Pibe Tigre"
+    end
   end
 
   test "next plays the album's next track" do

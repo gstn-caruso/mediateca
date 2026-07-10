@@ -21,7 +21,7 @@ export default class extends Controller {
     "audio", "title", "idle", "subtitle", "cover", "tail",
     "playIcon", "pauseIcon", "progress", "elapsed", "duration", "volume",
     "shuffle", "repeat", "repeatOne", "next", "queue", "queueEmpty", "queueToggle", "panel",
-    "row"
+    "repeatBadge", "repeatBadgeText", "row"
   ]
 
   // Turbo builds the new body before it moves #player, the permanent element,
@@ -316,25 +316,100 @@ export default class extends Controller {
   }
 
   renderQueue() {
-    const upcoming = this.order.slice(this.cursor + 1)
+    const base = this.cursor + 1
+    const rows = this.order.slice(base).map((at, offset) => this.queueRow(at, base + offset))
 
-    this.queueTarget.replaceChildren(...upcoming.map((at, offset) => this.queueRow(at, this.cursor + 1 + offset)))
-    this.queueEmptyTarget.hidden = upcoming.length > 0
+    this.queueTarget.replaceChildren(...rows)
+
+    const empty = rows.length === 0
+    this.queueEmptyTarget.hidden = !empty
+    // Repeat-all never runs out: the queue loops back rather than ending.
+    this.queueEmptyTarget.textContent =
+      empty && this.repeating === ALL && this.order.length > 0 ? "Repeats from the top." : "Nothing up next."
+
+    this.repeatBadgeTarget.hidden = this.repeating === OFF
+    this.repeatBadgeTextTarget.textContent = this.repeating === ONE ? "Repeat One" : "Repeat"
   }
 
+  // A queue row is a drag handle, the track (click to jump), and a way to drop
+  // it. position is its index into the play order, so drag and remove speak the
+  // same coordinates.
   queueRow(at, position) {
     const track = this.queue[at]
-    const item = document.createElement("li")
-    const button = document.createElement("button")
 
+    const item = document.createElement("li")
+    item.className = "group flex cursor-grab items-center gap-1 rounded-lg pl-1 transition hover:bg-white/10 active:cursor-grabbing"
+    item.draggable = true
+    item.dataset.pos = position
+    item.dataset.action = "dragstart->player#dragStart dragover->player#dragOver drop->player#drop dragend->player#dragEnd"
+
+    const grip = document.createElement("span")
+    grip.className = "shrink-0 text-neutral-600 transition group-hover:text-neutral-400"
+    grip.innerHTML = '<svg class="size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M6 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm0 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm-1 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm7-11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm-1 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm1 4a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/></svg>'
+
+    const button = document.createElement("button")
     button.type = "button"
     button.textContent = track.title
-    button.className = "w-full truncate rounded px-3 py-2 text-left text-sm text-neutral-300 transition hover:bg-white/10 hover:text-white"
+    button.className = "min-w-0 flex-1 truncate py-2 text-left text-sm text-neutral-300 transition group-hover:text-white"
     button.dataset.action = "player#jump"
     button.dataset.playerAtParam = position
 
-    item.append(button)
+    const remove = document.createElement("button")
+    remove.type = "button"
+    remove.setAttribute("aria-label", `Remove ${track.title} from the queue`)
+    remove.className = "shrink-0 rounded-full p-1.5 text-neutral-500 transition hover:bg-white/10 hover:text-white"
+    remove.dataset.action = "player#removeFromQueue"
+    remove.dataset.playerAtParam = position
+    remove.innerHTML = '<svg class="size-3.5" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4.28 3.22a.75.75 0 0 0-1.06 1.06L6.94 8l-3.72 3.72a.75.75 0 1 0 1.06 1.06L8 9.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L9.06 8l3.72-3.72a.75.75 0 0 0-1.06-1.06L8 6.94 4.28 3.22Z"/></svg>'
+
+    item.append(grip, button, remove)
     return item
+  }
+
+  // --- The queue, rearranged ---------------------------------------------------
+
+  dragStart(event) {
+    this.dragFrom = Number(event.currentTarget.dataset.pos)
+    event.dataTransfer.effectAllowed = "move"
+    event.currentTarget.classList.add("opacity-40")
+  }
+
+  // Something can only be dropped where dropping was allowed.
+  dragOver(event) {
+    event.preventDefault()
+    event.dataTransfer.dropEffect = "move"
+  }
+
+  drop(event) {
+    event.preventDefault()
+    this.moveInQueue(this.dragFrom, Number(event.currentTarget.dataset.pos))
+  }
+
+  dragEnd(event) {
+    event.currentTarget.classList.remove("opacity-40")
+  }
+
+  // Only what hasn't played yet moves, so the cursor and everything behind it
+  // stay put while the tail is redealt.
+  moveInQueue(from, to) {
+    if (Number.isNaN(from) || Number.isNaN(to) || from === to) return
+
+    const base = this.cursor + 1
+    const tail = this.order.slice(base)
+    const [moved] = tail.splice(from - base, 1)
+    tail.splice(to - base, 0, moved)
+
+    this.order = [...this.order.slice(0, base), ...tail]
+    this.render()
+  }
+
+  removeFromQueue({ params: { at } }) {
+    const base = this.cursor + 1
+    const tail = this.order.slice(base)
+    tail.splice(at - base, 1)
+
+    this.order = [...this.order.slice(0, base), ...tail]
+    this.render()
   }
 
   // The album page can be any album, or none. Only the row that is playing gets

@@ -1,10 +1,22 @@
 <%# The queue. Lives inside #player, which is data-turbo-permanent, so it stays
     open and filled while you navigate. %>
 <aside data-player-target="panel" hidden
-       class="pointer-events-auto absolute bottom-20 right-2 z-20 w-72 rounded-2xl sm:bottom-24 sm:right-4 sm:w-80 glass">
-  <h2 class="border-b border-white/10 px-4 py-3 text-sm font-semibold text-white">Next up</h2>
-  <ol data-player-target="queue" class="max-h-80 overflow-y-auto p-2"></ol>
-  <p data-player-target="queueEmpty" class="px-4 pb-4 pt-1 text-sm text-neutral-500">Nothing up next.</p>
+       class="pointer-events-auto absolute bottom-[calc(100%+0.75rem)] right-2 z-30 flex max-h-[70vh] w-80 flex-col
+              overflow-hidden rounded-2xl glass sm:right-4 sm:w-96">
+  <div class="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
+    <h2 class="text-sm font-semibold text-white">Playing Next</h2>
+    <%# The queue loops when repeat is on, so it says so. %>
+    <span data-player-target="repeatBadge" hidden
+          class="flex items-center gap-1 rounded-full bg-accent/12 px-2 py-0.5 text-[11px] font-semibold text-accent ring-1 ring-inset ring-accent/25">
+      <svg class="size-3" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M0 4.75A3.75 3.75 0 0 1 3.75 1h8.5A3.75 3.75 0 0 1 16 4.75v5a3.75 3.75 0 0 1-3.75 3.75H9.81l1.018 1.018a.75.75 0 1 1-1.06 1.06L6.939 12.75l2.829-2.828a.75.75 0 1 1 1.06 1.06L9.811 12h2.439a2.25 2.25 0 0 0 2.25-2.25v-5a2.25 2.25 0 0 0-2.25-2.25h-8.5A2.25 2.25 0 0 0 1.5 4.75v5A2.25 2.25 0 0 0 3.75 12H5v1.5H3.75A3.75 3.75 0 0 1 0 9.75v-5Z"/>
+      </svg>
+      <span data-player-target="repeatBadgeText">Repeat</span>
+    </span>
+  </div>
+  <%# Drag a row by its grip to reorder what's coming; the × drops it. %>
+  <ol data-player-target="queue" class="min-h-0 flex-1 space-y-0.5 overflow-y-auto p-2"></ol>
+  <p data-player-target="queueEmpty" class="shrink-0 px-4 pb-4 pt-1 text-sm text-neutral-500">Nothing up next.</p>
 </aside>
 
 <div class="grid h-14 grid-cols-[1fr_auto] items-center gap-2 px-3 sm:h-[68px] sm:grid-cols-[1fr_minmax(0,28rem)_1fr] sm:gap-4 sm:px-5">
