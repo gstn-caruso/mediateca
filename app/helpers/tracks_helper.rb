@@ -10,4 +10,16 @@ module TracksHelper
 
     format("%d:%02d", minutes, remainder)
   end
+
+  # A whole record reads differently from one song: nobody says an album lasts
+  # 111 minutes.
+  def album_length(seconds)
+    return if seconds.blank? || seconds.zero?
+
+    hours, minutes = (seconds / 60).round.divmod(60)
+
+    return "#{minutes} min" if hours.zero?
+
+    [ "#{hours} h", ("#{minutes} min" unless minutes.zero?) ].compact.join(" ")
+  end
 end
