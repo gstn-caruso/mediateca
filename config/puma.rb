@@ -37,6 +37,12 @@ plugin :tmp_restart
 # Run the Solid Queue supervisor inside of Puma for single-server deployments.
 plugin :solid_queue if ENV["SOLID_QUEUE_IN_PUMA"]
 
+# When the app comes up, put a face to every artist who still has none: a fresh
+# deploy shouldn't wait for the 4am scan to fetch the portraits it's missing. The
+# job only asks after the artists with no picture, so a boot with none missing
+# costs one query. Gated with the in-Puma queue that is here to run it.
+on_booted { FetchPortraitsJob.perform_later } if ENV["SOLID_QUEUE_IN_PUMA"]
+
 # Specify the PID file. Defaults to tmp/pids/server.pid in development.
 # In other environments, only set the PID file if requested.
 pidfile ENV["PIDFILE"] if ENV["PIDFILE"]
