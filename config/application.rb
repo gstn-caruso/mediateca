@@ -28,12 +28,12 @@ module Mediateca
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
 
-    # Configuration for the application, engines, and railties goes here.
-    #
-    # These settings can be overridden in specific environments using the files
-    # in config/environments, which are processed later.
-    #
-    # config.time_zone = "Central Time (US & Canada)"
-    # config.eager_load_paths << Rails.root.join("extras")
+    # Where the media lives. The NAS path is bind-mounted into the container
+    # under the same path, so a path stored by the scanner means the same thing
+    # on the host and inside the container.
+    config.x.media_root = ENV.fetch("MEDIA_ROOT", "/mnt/data/multimedia")
+
+    # The beets library we import the music catalog from, mounted read-only.
+    config.x.beets_database = ENV.fetch("BEETS_DATABASE", "/mnt/data/beets/musiclibrary.db")
   end
 end
