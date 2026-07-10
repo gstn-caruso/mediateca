@@ -98,6 +98,35 @@ module Music
       assert_equal [ "#{GUANACO}/02 - se queda.flac" ], Track.pluck(:path)
     end
 
+    # Un disco borrado del NAS no puede seguir apareciendo en la biblioteca.
+    test "un álbum que la fuente ya no reporta desaparece" do
+      Importer.new.import(source(albums: [
+        source_album(directory: GUANACO, title: "Mundo Guanaco"),
+        source_album(directory: ENTORNO, title: "Del entorno")
+      ]))
+
+      Importer.new.import(source(albums: [ source_album(directory: GUANACO, title: "Mundo Guanaco") ]))
+
+      assert_equal [ "Mundo Guanaco" ], Album.pluck(:title)
+    end
+
+    test "un artista que se quedó sin álbumes desaparece" do
+      Importer.new.import(source(albums: [ source_album(artist: "Almafuerte"), source_album(directory: ENTORNO, artist: "Hermética") ]))
+      Importer.new.import(source(albums: [ source_album(artist: "Almafuerte") ]))
+
+      assert_equal [ "Almafuerte" ], Artist.pluck(:name)
+    end
+
+    # Vaciar la fuente por error no puede vaciar la biblioteca: un NAS que no
+    # montó se ve exactamente igual que una biblioteca borrada.
+    test "una fuente vacía no borra la biblioteca entera" do
+      Importer.new.import(source(albums: [ source_album ]))
+
+      Importer.new.import(source(albums: []))
+
+      assert_equal 1, Album.count
+    end
+
     test "los tracks de un álbum multi-disco quedan ordenados por disco y número" do
       Importer.new.import(source(albums: [ source_album(disc_total: 2, tracks: [
         source_track(path: "#{GUANACO}/CD2/01.flac", disc_no: 2, track_no: 1, title: "primera del disco dos"),

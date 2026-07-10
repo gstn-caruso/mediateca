@@ -33,7 +33,8 @@ module Mediateca
     # on the host and inside the container.
     config.x.media_root = ENV.fetch("MEDIA_ROOT", "/mnt/data/multimedia")
 
-    # The beets library we import the music catalog from, mounted read-only.
+    # The disk decides what music exists; beets only says what it is called.
+    config.x.music_root = ENV.fetch("MUSIC_ROOT", "/mnt/data/multimedia/Música")
     config.x.beets_database = ENV.fetch("BEETS_DATABASE", "/mnt/data/beets/musiclibrary.db")
 
     # ffmpeg reads what the browser cannot. Both live in the image.

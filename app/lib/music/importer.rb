@@ -7,12 +7,28 @@ module Music
   # a changed one updates in place.
   class Importer
     def import(source)
+      albums = source.albums
+
       ApplicationRecord.transaction do
-        source.albums.each { |album| import_album(album) }
+        albums.each { |album| import_album(album) }
+        discard_vanished_albums(albums)
+        discard_artists_without_albums
       end
     end
 
     private
+
+    # An empty source and an unmounted NAS look exactly alike, and only one of
+    # them means the music is gone.
+    def discard_vanished_albums(albums)
+      return if albums.empty?
+
+      Album.where.not(directory: albums.map(&:directory)).destroy_all
+    end
+
+    def discard_artists_without_albums
+      Artist.where.missing(:albums).destroy_all
+    end
 
     def import_album(album)
       record = Album.find_or_initialize_by(directory: album.directory)
