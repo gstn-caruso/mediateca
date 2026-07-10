@@ -18,4 +18,13 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     page.driver.browser.execute_cdp("Emulation.clearDeviceMetricsOverride")
     page.current_window.resize_to(*DESKTOP)
   end
+
+  # The whole run shares one browser, and the player now writes the queue to
+  # localStorage. Left behind, it would ride into the next test's fresh page and
+  # be restored under a profile id the rollback handed out again.
+  teardown do
+    page.execute_script("window.localStorage.clear()")
+  rescue StandardError
+    # The session never opened a document — there is nothing to leak.
+  end
 end
