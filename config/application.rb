@@ -35,5 +35,9 @@ module Mediateca
 
     # The beets library we import the music catalog from, mounted read-only.
     config.x.beets_database = ENV.fetch("BEETS_DATABASE", "/mnt/data/beets/musiclibrary.db")
+
+    # ffmpeg reads what the browser cannot. Both live in the image.
+    config.x.ffprobe = ENV.fetch("FFPROBE", "ffprobe")
+    config.x.ffmpeg = ENV.fetch("FFMPEG", "ffmpeg")
   end
 end
