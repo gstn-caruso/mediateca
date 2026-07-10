@@ -44,3 +44,6 @@
 # macOS
 .DS_Store
 tmp/screenshots/
+
+# JetBrains IDEs.
+/.idea/
