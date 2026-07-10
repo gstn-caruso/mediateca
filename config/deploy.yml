@@ -22,8 +22,12 @@ proxy:
 # token que guardar ni imagen privada dando vueltas por internet — la imagen
 # nunca sale de la LAN. Con un server que empieza con "localhost", Kamal ni
 # siquiera intenta hacer docker login.
+#
+# El 5000 NO sirve en macOS: el receptor de AirPlay (ControlCenter) escucha en
+# *:5000 sobre IPv4 e IPv6, y como localhost resuelve primero a ::1, el push
+# termina hablándole a AirTunes, que contesta 403.
 registry:
-  server: localhost:5000
+  server: localhost:5555
 
 # El NAS es amd64 y la Mac arm64. Buildear en el NAS es nativo; cross-compilar
 # con QEMU desde la Mac es correcto pero mucho más lento.
