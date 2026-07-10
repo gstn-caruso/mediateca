@@ -1,16 +1,26 @@
 <% content_for :title, @artist.name %>
 
-<h1 class="mb-8 text-3xl font-bold tracking-tight"><%= @artist.name %></h1>
+<header class="bg-gradient-to-b from-emerald-900/40 to-transparent px-8 pb-8 pt-16">
+  <p class="text-xs font-semibold uppercase tracking-widest text-neutral-300">Artista</p>
+  <h1 class="mt-3 text-6xl font-extrabold tracking-tight text-white"><%= @artist.name %></h1>
+  <p class="mt-4 text-sm text-neutral-300">
+    <%= pluralize(@albums.size, "álbum", plural: "álbumes") %>
+  </p>
+</header>
 
-<div class="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
-  <% @albums.each do |album| %>
-    <%= link_to album_path(album), class: "group rounded-lg p-4 transition hover:bg-white/5" do %>
-      <div class="aspect-square overflow-hidden rounded bg-neutral-800 shadow-lg">
-        <%= image_tag cover_album_path(album), alt: "", loading: "lazy",
-                      class: "size-full object-cover transition group-hover:scale-105" %>
-      </div>
-      <p class="mt-4 truncate text-sm font-medium"><%= album.title %></p>
-      <p class="mt-1 text-xs text-neutral-500"><%= album.year %></p>
+<div class="px-8 pb-8">
+  <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+    <% @albums.each do |album| %>
+      <%= link_to album_path(album), class: "group rounded-lg bg-neutral-900/60 p-4 transition hover:bg-neutral-800" do %>
+        <div class="aspect-square overflow-hidden rounded bg-neutral-800 shadow-xl">
+          <%= image_tag cover_album_path(album), alt: "", loading: "lazy",
+                        class: "size-full object-cover transition duration-300 group-hover:scale-105" %>
+        </div>
+        <p class="mt-4 truncate text-sm font-semibold text-white"><%= album.title %></p>
+        <p class="mt-1 truncate text-xs text-neutral-400">
+          <%= album.year %><%= " · #{album.album_type}" if album.album_type.present? %>
+        </p>
+      <% end %>
     <% end %>
-  <% end %>
+  </div>
 </div>

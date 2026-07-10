@@ -1,0 +1,35 @@
+<nav class="hidden w-72 shrink-0 flex-col gap-2 md:flex">
+  <div class="rounded-lg bg-neutral-900 px-5 py-4">
+    <%= link_to root_path, class: "flex items-center gap-2 text-neutral-200 transition hover:text-white" do %>
+      <svg class="size-6 text-emerald-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6Z"/>
+      </svg>
+      <span class="text-lg font-bold tracking-tight">Mediateca</span>
+    <% end %>
+  </div>
+
+  <div class="flex min-h-0 flex-1 flex-col rounded-lg bg-neutral-900">
+    <h2 class="px-5 py-4 text-sm font-semibold text-neutral-400">Tu biblioteca</h2>
+
+    <ul class="min-h-0 flex-1 space-y-1 overflow-y-auto px-2 pb-3">
+      <% library_artists.each do |artist| %>
+        <li>
+          <%= link_to artist_path(artist),
+                      class: "flex items-center gap-3 rounded-md p-2 transition hover:bg-white/10 #{"bg-white/10" if current_page?(artist_path(artist))}" do %>
+            <div class="size-11 shrink-0 overflow-hidden rounded-full bg-neutral-800">
+              <% if (album = artist.albums.first) %>
+                <%= image_tag cover_album_path(album), alt: "", loading: "lazy", class: "size-full object-cover" %>
+              <% end %>
+            </div>
+            <div class="min-w-0">
+              <p class="truncate text-sm font-medium text-neutral-100"><%= artist.name %></p>
+              <p class="truncate text-xs text-neutral-400">
+                <%= pluralize(artist.albums.size, "álbum", plural: "álbumes") %>
+              </p>
+            </div>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+</nav>
