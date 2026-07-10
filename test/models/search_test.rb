@@ -45,6 +45,21 @@ class SearchTest < ActiveSupport::TestCase
     assert_empty Search.new("_").artists
   end
 
+  # Escaping the wildcard is only half of it: the escape character has to be
+  # declared, or SQLite reads the backslash as a backslash and finds neither the
+  # wildcard nor the literal.
+  test "a band with a percent sign in its name is found by that percent sign" do
+    Artist.create!(name: "100% Real")
+
+    assert_equal [ "100% Real" ], Search.new("%").artists.map(&:name)
+  end
+
+  test "a band with an underscore in its name is found by that underscore" do
+    Artist.create!(name: "Lo_Fi")
+
+    assert_equal [ "Lo_Fi" ], Search.new("_").artists.map(&:name)
+  end
+
   test "a search that matches nothing finds nothing" do
     assert_empty Search.new("Piazzolla").artists
   end

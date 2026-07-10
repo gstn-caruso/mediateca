@@ -2,6 +2,11 @@
 # LIKE scan that finishes before the page paints, and an FTS index would be a
 # second copy of the truth to keep in step with the disk.
 class Search
+  # SQLite reads a backslash as a backslash unless the LIKE says otherwise, so
+  # escaping the wildcard is only half of it: the escape character has to be
+  # declared too.
+  ESCAPE = "\\".freeze
+
   def initialize(term)
     @term = term.to_s.strip
   end
@@ -35,6 +40,8 @@ class Search
   def matching(scope, column)
     return scope.none if blank?
 
-    scope.where("#{column} LIKE ?", "%#{ApplicationRecord.sanitize_sql_like(@term)}%")
+    pattern = "%#{ApplicationRecord.sanitize_sql_like(@term)}%"
+
+    scope.where(scope.arel_table[column].matches(pattern, ESCAPE))
   end
 end
