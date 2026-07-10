@@ -17,17 +17,23 @@ proxy:
   healthcheck:
     path: /up
 
-# Local registry: Kamal spins up a `registry:3` on this machine and opens a
-# reverse SSH port-forward so the NAS can pull from its own localhost. There's
-# no token to store and no private image floating around the internet — the
-# image never leaves the LAN. With a server that starts with "localhost",
-# Kamal doesn't even try to do a docker login.
+# The registry runs on the NAS itself, on the LAN. The image is built on the NAS
+# and pulled by the NAS, so it never leaves the house — no token to store, no
+# private image on anyone's internet. It has no real auth: on this LAN anybody
+# can already be anybody, so the credentials below are a formality Kamal insists
+# on for a non-`localhost` server. The daemon trusts it over plain HTTP through
+# `insecure-registries` in /etc/docker/daemon.json.
 #
-# 5000 does NOT work on macOS: the AirPlay receiver (ControlCenter) listens on
-# *:5000 over both IPv4 and IPv6, and since localhost resolves to ::1 first,
-# the push ends up talking to AirTunes, which answers with 403.
+# Why a registry on the NAS and not `localhost` on the deployer: when the thing
+# that deploys IS the server (the CI runner lives on the NAS), Kamal's localhost
+# registry opens a reverse SSH forward that binds :5555 on the server — the port
+# its own registry already holds — and the deploy dies. A registry addressed by
+# the NAS's LAN IP sidesteps the forward entirely.
 registry:
-  server: localhost:5555
+  server: 192.168.1.7:5555
+  username: kamal
+  password:
+    - KAMAL_REGISTRY_PASSWORD
 
 # The NAS is amd64 and the Mac is arm64. Building on the NAS is native;
 # cross-compiling with QEMU from the Mac works but is much slower.
