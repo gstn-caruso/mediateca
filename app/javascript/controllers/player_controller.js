@@ -376,11 +376,14 @@ export default class extends Controller {
 
   renderQueue() {
     const base = this.cursor + 1
-    const rows = this.order.slice(base).map((at, offset) => this.queueRow(at, base + offset))
+    const upcoming = this.order.slice(base).map((at, offset) => this.queueRow(at, base + offset))
 
-    this.queueTarget.replaceChildren(...rows)
+    const children = []
+    if (this.current) children.push(this.queueSection("Now Playing"), this.nowPlayingRow(this.current))
+    if (upcoming.length) children.push(this.queueSection("Next Up"), ...upcoming)
+    this.queueTarget.replaceChildren(...children)
 
-    const empty = rows.length === 0
+    const empty = upcoming.length === 0
     this.queueEmptyTarget.hidden = !empty
     // Repeat-all never runs out: the queue loops back rather than ending.
     this.queueEmptyTarget.textContent =
@@ -390,39 +393,85 @@ export default class extends Controller {
     this.repeatBadgeTextTarget.textContent = this.repeating === ONE ? "Repeat One" : "Repeat"
   }
 
-  // A queue row is a drag handle, the track (click to jump), and a way to drop
-  // it. position is its index into the play order, so drag and remove speak the
-  // same coordinates.
+  // A quiet header inside the list to tell "Now Playing" from "Next Up".
+  queueSection(label) {
+    const li = document.createElement("li")
+    li.className = "select-none px-1.5 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-neutral-500 first:pt-1"
+    li.textContent = label
+    return li
+  }
+
+  // What's on now: art, title and artist, lit in accent behind an equalizer. It
+  // doesn't move and can't be dropped — it isn't up next, it's playing.
+  nowPlayingRow(track) {
+    const item = document.createElement("li")
+    item.className = "flex items-center gap-2.5 rounded-lg bg-white/5 p-1.5 ring-1 ring-inset ring-white/10"
+
+    const meter = document.createElement("span")
+    meter.className = "shrink-0 pr-0.5 text-accent"
+    meter.innerHTML = '<svg class="size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M1 14V9h2v5H1Zm4.5 0V2h2v12h-2ZM10 14V6h2v8h-2Zm4.5 0v-4h1.5v4h-1.5Z"/></svg>'
+
+    item.append(this.queueArt(track), this.queueText(track, "text-accent"), meter)
+    return item
+  }
+
+  // A queue row: art, title and artist, click to jump to it. The whole row is a
+  // drag handle for reordering; the × to drop it surfaces on hover. position is
+  // its index into the play order, so drag and remove speak the same
+  // coordinates.
   queueRow(at, position) {
     const track = this.queue[at]
 
     const item = document.createElement("li")
-    item.className = "group flex cursor-grab items-center gap-1 rounded-lg pl-1 transition hover:bg-white/10 active:cursor-grabbing"
+    item.className = "group flex items-center gap-1 rounded-lg pr-1 transition hover:bg-white/10"
     item.draggable = true
     item.dataset.pos = position
     item.dataset.action = "dragstart->player#dragStart dragover->player#dragOver drop->player#drop dragend->player#dragEnd"
 
-    const grip = document.createElement("span")
-    grip.className = "shrink-0 text-neutral-600 transition group-hover:text-neutral-400"
-    grip.innerHTML = '<svg class="size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M6 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm0 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm-1 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm7-11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm-1 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm1 4a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/></svg>'
-
-    const button = document.createElement("button")
-    button.type = "button"
-    button.textContent = track.title
-    button.className = "min-w-0 flex-1 truncate py-2 text-left text-sm text-neutral-300 transition group-hover:text-white"
-    button.dataset.action = "player#jump"
-    button.dataset.playerAtParam = position
+    const jump = document.createElement("button")
+    jump.type = "button"
+    jump.setAttribute("aria-label", track.title)
+    jump.className = "flex min-w-0 flex-1 cursor-grab items-center gap-2.5 rounded-lg p-1.5 text-left active:cursor-grabbing"
+    jump.dataset.action = "player#jump"
+    jump.dataset.playerAtParam = position
+    jump.append(this.queueArt(track), this.queueText(track))
 
     const remove = document.createElement("button")
     remove.type = "button"
     remove.setAttribute("aria-label", `Remove ${track.title} from the queue`)
-    remove.className = "shrink-0 rounded-full p-1.5 text-neutral-500 transition hover:bg-white/10 hover:text-white"
+    remove.className = "shrink-0 rounded-full p-1.5 text-neutral-500 transition hover:bg-white/10 hover:text-white group-hover:text-neutral-300"
     remove.dataset.action = "player#removeFromQueue"
     remove.dataset.playerAtParam = position
     remove.innerHTML = '<svg class="size-3.5" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4.28 3.22a.75.75 0 0 0-1.06 1.06L6.94 8l-3.72 3.72a.75.75 0 1 0 1.06 1.06L8 9.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L9.06 8l3.72-3.72a.75.75 0 0 0-1.06-1.06L8 6.94 4.28 3.22Z"/></svg>'
 
-    item.append(grip, button, remove)
+    item.append(jump, remove)
     return item
+  }
+
+  // The small album thumbnail every queue row wears.
+  queueArt(track) {
+    const art = document.createElement("img")
+    art.src = track.cover
+    art.alt = ""
+    art.className = "size-10 shrink-0 rounded object-cover shadow ring-1 ring-white/10"
+    return art
+  }
+
+  // A title over a dimmer artist, each clipped to one line.
+  queueText(track, titleColor = "text-neutral-100") {
+    const text = document.createElement("span")
+    text.className = "min-w-0 flex-1"
+
+    const title = document.createElement("span")
+    title.className = `block truncate text-sm font-medium ${titleColor}`
+    title.textContent = track.title
+
+    const artist = document.createElement("span")
+    artist.className = "block truncate text-xs text-neutral-400"
+    artist.textContent = track.subtitle
+
+    text.append(title, artist)
+    return text
   }
 
   // --- The queue, rearranged ---------------------------------------------------

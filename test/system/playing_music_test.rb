@@ -86,18 +86,21 @@ class PlayingMusicTest < ApplicationSystemTestCase
     assert_selector "[data-player-track][aria-current='true']", count: 1
   end
 
-  # Clicking a track queues the whole album: what comes next has to be
-  # visible, not just implied.
-  test "the queue shows what's next" do
+  # Clicking a track queues the whole album: what's on now and what comes next
+  # both have to be visible, not just implied.
+  test "the queue shows what's playing and what's next" do
     play "Dijo El Droguero Al Drogador"
 
     click_button "Playing Next"
 
     within "[data-player-target='queue']" do
+      # What's on now is named under its own heading...
+      assert_text "NOW PLAYING"
+      assert_text "Dijo El Droguero Al Drogador"
+      # ...and everything still to come under the next.
+      assert_text "NEXT UP"
       assert_text "Desencuentro"
       assert_text "El Pibe Tigre"
-      # What already played isn't what's next.
-      assert_no_text "Dijo El Droguero Al Drogador"
     end
     take_screenshot
   end
