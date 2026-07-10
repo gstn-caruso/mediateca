@@ -60,6 +60,8 @@
                   data-subtitle="<%= entry.track.album.artist.name %>"
                   data-cover="<%= cover_url(entry.track.album) %>"
                   data-album="<%= album_path(entry.track.album) %>"
+                  data-quality="<%= track_quality(entry.track) %>"
+                  data-quality-detail="<%= track_quality_detail(entry.track) %>"
                   data-action="player#play"
                   data-player-index-param="<%= index %>"
                   aria-current="false"
