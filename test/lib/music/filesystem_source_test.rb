@@ -30,6 +30,17 @@ module Music
       end
     end
 
+    # The scanner carries a file's encoding through untouched, so the catalog can
+    # record how good the file is, not just what it's called.
+    test "a track carries the audio its file was encoded with" do
+      within_root do |root|
+        flac = Audio.new(codec: "flac", bit_depth: 16, sample_rate: 44100, bit_rate: 1006840)
+        create(root, "Indio Solari/2010 - X/01.flac", audio: flac)
+
+        assert_equal flac, source(root).albums.sole.tracks.sole.audio
+      end
+    end
+
     # 1074 of the NAS's 1171 flacs live at depth 2. The other 97 hang off a
     # CDn inside the album, and still belong to the same album.
     test "tracks in subfolders by disc belong to the album, not the subfolder" do

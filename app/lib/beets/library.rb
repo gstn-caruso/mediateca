@@ -61,7 +61,9 @@ module Beets
     def track_from(row)
       _album_id, title, track_no, disc_no, duration, path = row
 
-      Music::Source::Track.new(title:, track_no:, duration:, disc_no: disc_no || 1, path: text(path))
+      # beets only ever enriches the metadata; the encoding is read off the disk,
+      # so beets has no audio to offer.
+      Music::Source::Track.new(title:, track_no:, duration:, disc_no: disc_no || 1, path: text(path), audio: nil)
     end
 
     # Most albums are one folder. Green Day's deluxe Warning splits its tracks

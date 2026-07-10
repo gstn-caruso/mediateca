@@ -20,8 +20,8 @@ module SourceBuilders
 
   def source_track(
     path: "#{GUANACO}/02 - Desencuentro.flac", title: "Desencuentro",
-    track_no: 1, disc_no: 1, duration: 136.9
+    track_no: 1, disc_no: 1, duration: 136.9, audio: nil
   )
-    Music::Source::Track.new(path:, title:, track_no:, disc_no:, duration:)
+    Music::Source::Track.new(path:, title:, track_no:, disc_no:, duration:, audio:)
   end
 end
