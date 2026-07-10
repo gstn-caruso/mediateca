@@ -1,0 +1,57 @@
+# Mediateca corre en el NAS de casa, en la LAN, sin certificado.
+#
+# Reemplaza a Jellyfin, que sigue vivo en :8096 mientras tanto. kamal-proxy se
+# queda con el :80 del host — por eso nginx quedó apagado.
+service: mediateca
+image: gstn-caruso/mediateca
+
+servers:
+  web:
+    - 192.168.1.7
+
+proxy:
+  # LAN por hostname, sin DNS público: no hay certificado que terminar.
+  ssl: false
+  # Thruster escucha en el 80 dentro del contenedor.
+  app_port: 80
+  healthcheck:
+    path: /up
+
+registry:
+  server: ghcr.io
+  username: gstn-caruso
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+# El NAS es amd64 y la Mac arm64. Buildear en el NAS es nativo; cross-compilar
+# con QEMU desde la Mac es correcto pero mucho más lento.
+builder:
+  arch: amd64
+  remote: ssh://gaston@192.168.1.7
+
+# root por SSH está denegado en el NAS; gaston está en el grupo docker.
+ssh:
+  user: gaston
+
+env:
+  clear:
+    MEDIA_ROOT: /mnt/data/multimedia
+    BEETS_DATABASE: /mnt/data/beets/musiclibrary.db
+    # Un solo proceso: el NAS tiene 8 cores y no hay concurrencia que repartir.
+    SOLID_QUEUE_IN_PUMA: true
+  secret:
+    - RAILS_MASTER_KEY
+
+# La música se monta read-only y bajo el MISMO path que en el host, así un path
+# guardado en el catálogo significa lo mismo adentro que afuera del contenedor.
+# El contenedor corre como uid 1000, que en el NAS es gaston, dueño de los
+# archivos.
+volumes:
+  - "/mnt/data/multimedia:/mnt/data/multimedia:ro"
+  - "/mnt/data/beets/musiclibrary.db:/mnt/data/beets/musiclibrary.db:ro"
+  - "mediateca_storage:/rails/storage"
+
+aliases:
+  import: app exec --reuse "bin/rails music:import"
+  console: app exec --interactive --reuse "bin/rails console"
+  logs: app logs -f
