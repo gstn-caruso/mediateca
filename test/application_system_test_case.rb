@@ -7,5 +7,12 @@ Capybara.enable_aria_label = true
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   include ListeningInABrowser
 
-  driven_by :selenium, using: :headless_chrome, screen_size: [ 1440, 900 ]
+  DESKTOP = [ 1440, 900 ].freeze
+
+  driven_by :selenium, using: :headless_chrome, screen_size: DESKTOP
+
+  # Every test in the run shares one browser window, so a test that shrinks it
+  # shrinks the next one too. Each says what it needs; a subclass's setup runs
+  # after this one and may say otherwise.
+  setup { page.current_window.resize_to(*DESKTOP) }
 end

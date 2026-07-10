@@ -3,14 +3,14 @@
 <% subtitle = @album.artist.name %>
 <% length = album_length(@album.tracks.sum { |track| track.duration.to_f }) %>
 
-<header class="bg-gradient-to-b from-emerald-800/50 via-emerald-950/20 to-transparent px-8 pb-6 pt-16">
+<header class="bg-gradient-to-b from-emerald-800/50 via-emerald-950/20 to-transparent px-4 pb-6 pt-8 sm:px-8 sm:pt-16">
   <div class="flex flex-col gap-6 sm:flex-row sm:items-end">
     <img src="<%= cover %>" alt=""
-         class="size-56 shrink-0 rounded object-cover shadow-2xl ring-1 ring-white/10">
+         class="size-40 shrink-0 rounded object-cover shadow-2xl ring-1 ring-white/10 sm:size-56">
 
     <div class="min-w-0 pb-2">
       <p class="text-sm font-semibold text-white"><%= @album.album_type.presence || "Album" %></p>
-      <h1 class="mt-2 text-6xl font-extrabold tracking-tighter text-white"><%= @album.title %></h1>
+      <h1 class="mt-2 text-4xl font-extrabold tracking-tighter text-white sm:text-6xl"><%= @album.title %></h1>
       <p class="mt-6 flex flex-wrap items-center gap-x-1.5 text-sm text-neutral-300">
         <%= link_to @album.artist.name, artist_path(@album.artist), class: "font-semibold text-white hover:underline" %>
         <% if @album.year %>
@@ -26,7 +26,7 @@
   </div>
 </header>
 
-<div class="px-8 pb-10">
+<div class="px-4 pb-10 sm:px-8">
   <div class="mb-4 flex items-center gap-6">
     <button type="button"
             data-action="player#play" data-player-index-param="0"
@@ -44,12 +44,12 @@
       album, the first track of the second disc is not queue position 1. %>
   <% @album.tracks.each_with_index.group_by { |track, _| track.disc_no }.each do |disc_no, numbered_tracks| %>
     <% if @album.disc_total > 1 %>
-      <h2 class="mb-2 mt-8 px-4 text-xs font-semibold uppercase tracking-widest text-neutral-500">
+      <h2 class="mb-2 mt-8 px-2 text-xs sm:px-4 font-semibold uppercase tracking-widest text-neutral-500">
         Disc <%= disc_no %>
       </h2>
     <% end %>
 
-    <div class="grid grid-cols-[2rem_1fr_auto] items-center gap-4 border-b border-white/10 px-4 pb-2 text-xs text-neutral-400">
+    <div class="grid grid-cols-[2rem_1fr_auto] items-center gap-4 border-b border-white/10 px-2 pb-2 text-xs text-neutral-400 sm:px-4">
       <span class="text-right">#</span>
       <span>Title</span>
       <svg class="size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">

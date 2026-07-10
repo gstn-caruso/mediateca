@@ -4,7 +4,8 @@ A self-hosted media server, meant to replace Jellyfin. It runs in Docker on the
 NAS and reads the files under `/mnt/data/multimedia` without copying or
 transcoding them.
 
-Right now it does **music**, with a Spotify-style interface. Video comes later.
+Right now it does **music**, with a Spotify-style interface and Netflix-style
+profiles. Video comes later.
 
 ---
 
@@ -30,7 +31,7 @@ file serves the range too.*
 
 `MediaFile` is the trust boundary. The paths come out of the database, and it
 rejects any that fall outside the media root: `..`, absolute paths, sibling
-directories with the same prefix (`/mnt/data-secreto` is not inside `/mnt/data`)
+directories with the same prefix (`/mnt/data-secret` is not inside `/mnt/data`)
 and symlinks that point outside.
 
 Nothing gets transcoded. The FLACs are served raw and every modern browser plays
@@ -41,6 +42,31 @@ navigate (`data-turbo-permanent`), and the playback queue is stored **in the
 `<audio>` element**, not in the Stimulus controller — which Turbo destroys and
 rebuilds on every page. That's why the music doesn't cut out when you switch
 views.
+
+Whoever is listening picks themselves off a grid, the way Netflix asks. **There
+is no password**: whoever holds the cookie is whoever it names. On a home LAN
+that is the whole of signing in, and it is a trade made on purpose — anybody on
+the network can be anybody. Playlists, hearts and the play history hang off
+`Current.profile`, and a playlist is looked up *through* it, so somebody else's
+simply does not exist. That lookup is what stands in for a password.
+
+The cookie outlives the profile it names — a browser left open on the kitchen
+tablet still remembers somebody deleted last week — so a name that no longer
+exists means nobody is listening, and the picker comes back.
+
+Search is a `LIKE` scan, not FTS5: a thousand tracks scan faster than the page
+paints, and an index would be a second copy of the truth to keep in step with
+the disk. `%` and `_` are wildcards there, so both are escaped — and the escape
+character is *declared*, because SQLite reads a backslash as a backslash
+otherwise, and the escaping quietly does nothing.
+
+The play history is written by the player when a track starts, not by the stream
+endpoint: `preload=metadata` asks for the file before anybody presses play, and
+every seek asks for it again.
+
+The sidebar is desktop-only, so on a phone the library, the hearts and the way
+out of a profile live in the top bar instead. A system test at 390 px holds
+every page to no sideways scroll.
 
 ---
 
@@ -214,4 +240,7 @@ It's ignored with a note in `config/brakeman.ignore`.
   mkv are HEVC with multitrack FLAC 5.1 audio and ASS subtitles: they're not
   direct-play in any browser. The agreed plan is to remux with `ffmpeg -c copy`
   (change the container without recompressing the video), not to transcode.
-- **Search**, and an album view that doesn't go through the artist.
+- **A page for liked albums.** An album can be hearted, but only songs have a
+  page listing them.
+- **Drag-and-drop reordering.** A playlist moves a song one place at a time.
+- **A PIN on a profile**, for when a home LAN stops being the whole story.
