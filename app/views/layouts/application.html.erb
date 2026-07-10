@@ -34,15 +34,16 @@
       <div class="relative h-full" data-controller="sidebar">
         <%= render "shared/backdrop" %>
 
-        <%# pb-20 leaves the floating pill its air; the cover shows through the
-            gaps the panels leave. %>
-        <div class="relative z-10 flex h-full flex-col gap-2 p-2 pb-20">
+        <%# The panels reach all the way down, the same margin as the top; the
+            pill floats over them, and the cover shows through the gaps. %>
+        <div class="relative z-10 flex h-full flex-col gap-2 p-2">
           <%= render "shared/header" %>
 
           <div class="flex min-h-0 flex-1 gap-2">
             <%= render "shared/sidebar" %>
 
-            <main class="min-w-0 flex-1 overflow-y-auto rounded-2xl glass">
+            <%# pb-20: the content clears the pill floating over the panel's foot. %>
+            <main class="min-w-0 flex-1 overflow-y-auto rounded-2xl glass pb-20">
               <%= yield %>
             </main>
 
