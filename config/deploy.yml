@@ -17,11 +17,13 @@ proxy:
   healthcheck:
     path: /up
 
+# Registry local: Kamal levanta un `registry:3` en esta máquina y abre un
+# port-forward SSH inverso para que el NAS pullee de su propio localhost. No hay
+# token que guardar ni imagen privada dando vueltas por internet — la imagen
+# nunca sale de la LAN. Con un server que empieza con "localhost", Kamal ni
+# siquiera intenta hacer docker login.
 registry:
-  server: ghcr.io
-  username: gstn-caruso
-  password:
-    - KAMAL_REGISTRY_PASSWORD
+  server: localhost:5000
 
 # El NAS es amd64 y la Mac arm64. Buildear en el NAS es nativo; cross-compilar
 # con QEMU desde la Mac es correcto pero mucho más lento.
