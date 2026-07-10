@@ -4,6 +4,7 @@ class PlayingMusicTest < ApplicationSystemTestCase
   ALBUM_DIR = "Almafuerte/1995 - Mundo guanaco".freeze
 
   setup do
+    listening_as
     artist = Artist.create!(name: "Almafuerte")
     @album = Album.create!(
       directory: File.join(Rails.configuration.x.media_root, ALBUM_DIR), title: "Mundo Guanaco", year: 1995,
@@ -124,6 +125,18 @@ class PlayingMusicTest < ApplicationSystemTestCase
 
     assert_text "Mundo Guanaco"
     assert_selector "[data-player-track][aria-current='true']", text: "Desencuentro"
+  end
+
+  # The player lives in the chrome that only a listener sees, so leaving a
+  # profile takes the music with it. That is what leaving means.
+  test "switching profiles puts the music down" do
+    play "Desencuentro"
+    assert_selector "audio", visible: :all
+
+    click_on "Switch profile"
+
+    assert_text "Who's listening?"
+    assert_no_selector "audio", visible: :all
   end
 
   private

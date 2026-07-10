@@ -1,6 +1,10 @@
 Rails.application.routes.draw do
   root "artists#index"
 
+  # Picking a profile off the grid starts a session; switching profiles ends it.
+  resources :profiles, only: [ :index, :create ]
+  resource  :session,  only: [ :create, :destroy ]
+
   resources :artists, only: [ :index, :show ]
 
   resources :albums, only: [ :show ] do

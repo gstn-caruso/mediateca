@@ -24,19 +24,25 @@
       now-playing strip — lives in the permanent #player below, and survives the
       body swap Turbo Drive does on navigation. %>
   <body class="h-full overflow-hidden bg-black text-neutral-200 antialiased" data-controller="player">
-    <div class="flex h-full flex-col">
-      <div class="flex min-h-0 flex-1 gap-2 p-2">
-        <%= render "shared/sidebar" %>
+    <%# With nobody listening the picker owns the screen: no sidebar, no player.
+        So leaving a profile stops the music, which is what leaving means. %>
+    <% if Current.profile %>
+      <div class="flex h-full flex-col">
+        <div class="flex min-h-0 flex-1 gap-2 p-2">
+          <%= render "shared/sidebar" %>
 
-        <main class="min-w-0 flex-1 overflow-y-auto rounded-lg bg-gradient-to-b from-neutral-900 to-neutral-950">
-          <%= yield %>
-        </main>
-      </div>
+          <main class="min-w-0 flex-1 overflow-y-auto rounded-lg bg-gradient-to-b from-neutral-900 to-neutral-950">
+            <%= yield %>
+          </main>
+        </div>
 
-      <%# relative: the queue positions itself against the player, and opens upward. %>
-      <div id="player" data-turbo-permanent class="relative shrink-0 border-t border-white/5 bg-black">
-        <%= render "shared/player" %>
+        <%# relative: the queue positions itself against the player, and opens upward. %>
+        <div id="player" data-turbo-permanent class="relative shrink-0 border-t border-white/5 bg-black">
+          <%= render "shared/player" %>
+        </div>
       </div>
-    </div>
+    <% else %>
+      <main class="h-full overflow-y-auto"><%= yield %></main>
+    <% end %>
   </body>
 </html>

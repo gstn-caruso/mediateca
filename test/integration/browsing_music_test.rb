@@ -4,6 +4,7 @@ class BrowsingMusicTest < ActionDispatch::IntegrationTest
   ALBUM_DIR = "Almafuerte/1995 - Mundo guanaco".freeze
 
   setup do
+    listening_as
     @artist = Artist.create!(name: "Almafuerte")
     @album = Album.create!(
       directory: File.join(Rails.configuration.x.media_root, ALBUM_DIR), title: "Mundo Guanaco", year: 1995, genre: "", album_type: "album",

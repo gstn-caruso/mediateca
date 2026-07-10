@@ -1,0 +1,40 @@
+<% content_for :title, "Who's listening?" %>
+
+<div class="flex min-h-full flex-col items-center justify-center gap-12 p-8">
+  <h1 class="text-center text-3xl font-semibold tracking-tight text-white sm:text-5xl">
+    Who's listening?
+  </h1>
+
+  <ul class="flex flex-wrap justify-center gap-6 sm:gap-10">
+    <% @profiles.each do |profile| %>
+      <li>
+        <%= button_to session_path, params: { profile_id: profile.id },
+                      class: "group flex w-28 flex-col items-center gap-3 sm:w-36" do %>
+          <span class="flex aspect-square w-full items-center justify-center rounded-lg text-4xl
+                       font-bold text-black ring-white/0 transition group-hover:ring-4
+                       sm:text-5xl <%= avatar_colour(profile) %>">
+            <%= avatar_initial(profile) %>
+          </span>
+          <span class="w-full truncate text-center text-sm text-neutral-400 transition group-hover:text-white">
+            <%= profile.name %>
+          </span>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+
+  <%= form_with model: @profile, url: profiles_path, class: "flex w-full max-w-sm flex-col gap-3" do |form| %>
+    <% if @profile.errors.any? %>
+      <p class="text-center text-sm text-rose-400"><%= @profile.errors.full_messages.to_sentence %></p>
+    <% end %>
+
+    <div class="flex gap-2">
+      <%= form.text_field :name, placeholder: "Name", autocomplete: "off",
+                          class: "min-w-0 flex-1 rounded-md border border-white/10 bg-neutral-900 px-4 py-2.5
+                                  text-white placeholder:text-neutral-500 focus:border-emerald-500 focus:outline-none" %>
+      <%= form.submit "Add profile",
+                      class: "shrink-0 cursor-pointer rounded-md bg-white px-5 py-2.5 font-semibold text-black
+                              transition hover:bg-neutral-200" %>
+    </div>
+  <% end %>
+</div>
