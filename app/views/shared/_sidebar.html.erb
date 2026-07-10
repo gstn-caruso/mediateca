@@ -28,7 +28,7 @@
                       class: "flex items-center gap-3 rounded-md p-2 transition hover:bg-white/10 #{"bg-white/10" if current_page?(artist_path(artist))}" do %>
             <div class="size-11 shrink-0 overflow-hidden rounded-full bg-neutral-800">
               <% if (album = artist.albums.first) %>
-                <%= image_tag cover_album_path(album), alt: "", loading: "lazy", class: "size-full object-cover" %>
+                <%= image_tag cover_url(album), alt: "", loading: "lazy", class: "size-full object-cover" %>
               <% end %>
             </div>
             <div class="min-w-0">

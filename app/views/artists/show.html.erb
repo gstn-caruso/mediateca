@@ -13,7 +13,7 @@
     <% @albums.each do |album| %>
       <%= link_to album_path(album), class: "group rounded-lg bg-neutral-900/60 p-4 transition hover:bg-neutral-800" do %>
         <div class="aspect-square overflow-hidden rounded bg-neutral-800 shadow-xl">
-          <%= image_tag cover_album_path(album), alt: "", loading: "lazy",
+          <%= image_tag cover_url(album), alt: "", loading: "lazy",
                         class: "size-full object-cover transition duration-300 group-hover:scale-105" %>
         </div>
         <p class="mt-4 truncate text-sm font-semibold text-white"><%= album.title %></p>

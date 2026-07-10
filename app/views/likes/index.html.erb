@@ -27,10 +27,10 @@
                   data-player-track
                   data-player-target="row"
                   data-track-id="<%= track.id %>"
-                  data-src="<%= stream_track_path(track) %>"
+                  data-src="<%= stream_url(track) %>"
                   data-title="<%= track.title %>"
                   data-subtitle="<%= track.album.artist.name %>"
-                  data-cover="<%= cover_album_path(track.album) %>"
+                  data-cover="<%= cover_url(track.album) %>"
                   data-album="<%= album_path(track.album) %>"
                   data-action="player#play"
                   data-player-index-param="<%= index %>"

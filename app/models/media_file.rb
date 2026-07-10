@@ -18,6 +18,14 @@ class MediaFile
     Rails.configuration.x.media_root
   end
 
+  # A URL keyed on a row id cannot say which file it means: a re-import hands
+  # the same id to a different record, and a cache then answers a request for
+  # one with the other. The path can say it, so the path travels in the URL —
+  # digested, because a path is not the browser's business.
+  def self.signature(path)
+    ::Digest::SHA256.hexdigest(path.to_s).first(12)
+  end
+
   def exist?
     ::File.file?(path)
   end

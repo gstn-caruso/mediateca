@@ -1,5 +1,5 @@
 <% content_for :title, "#{@album.title} — #{@album.artist.name}" %>
-<% cover = cover_album_path(@album) %>
+<% cover = cover_url(@album) %>
 <% subtitle = @album.artist.name %>
 <% length = album_length(@album.tracks.sum { |track| track.duration.to_f }) %>
 
@@ -64,7 +64,7 @@
                   data-player-track
                   data-player-target="row"
                   data-track-id="<%= track.id %>"
-                  data-src="<%= stream_track_path(track) %>"
+                  data-src="<%= stream_url(track) %>"
                   data-title="<%= track.title %>"
                   data-subtitle="<%= subtitle %>"
                   data-cover="<%= cover %>"
