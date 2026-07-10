@@ -7,6 +7,7 @@ on:
 
 jobs:
   scan_ruby:
+    name: Seguridad (Ruby)
     runs-on: ubuntu-latest
 
     steps:
@@ -20,11 +21,12 @@ jobs:
 
       - name: Scan for common Rails security vulnerabilities using static analysis
         run: bin/brakeman --no-pager
-      
+
       - name: Scan for known security vulnerabilities in gems used
         run: bin/bundler-audit
-      
+
   scan_js:
+    name: Seguridad (JavaScript)
     runs-on: ubuntu-latest
 
     steps:
@@ -40,6 +42,7 @@ jobs:
         run: bin/importmap audit
 
   lint:
+    name: Estilo
     runs-on: ubuntu-latest
     env:
       RUBOCOP_CACHE_ROOT: tmp/rubocop
@@ -66,14 +69,9 @@ jobs:
         run: bin/rubocop -f github
 
   test:
+    name: Tests
     runs-on: ubuntu-latest
 
-    # services:
-    #  redis:
-    #    image: valkey/valkey:8
-    #    ports:
-    #      - 6379:6379
-    #    options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -83,42 +81,58 @@ jobs:
         with:
           bundler-cache: true
 
+      # Los tests nunca tocan el NAS: Beets::Library corre contra fixtures de
+      # SQLite que se arman en el momento, y MEDIA_ROOT apunta a un puñado de
+      # FLACs falsos en test/fixtures/media.
       - name: Run tests
         env:
           RAILS_ENV: test
-          # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
-          # REDIS_URL: redis://localhost:6379/0
         run: bin/rails db:test:prepare test
 
-  system-test:
+  # La imagen es el artefacto que corre en el NAS. Si el Dockerfile se rompe, un
+  # deploy no es el momento de enterarse. El NAS es amd64 y no hay build de
+  # producción en ningún otro lado, así que se buildea para esa plataforma.
+  docker:
+    name: Imagen Docker (amd64)
     runs-on: ubuntu-latest
 
-    # services:
-    #  redis:
-    #    image: valkey/valkey:8
-    #    ports:
-    #      - 6379:6379
-    #    options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Run System Tests
-        env:
-          RAILS_ENV: test
-          # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
-          # REDIS_URL: redis://localhost:6379/0
-        run: bin/rails db:test:prepare test:system
-
-      - name: Keep screenshots from failed system tests
-        uses: actions/upload-artifact@v4
-        if: failure()
+      - name: Build image
+        uses: docker/build-push-action@v6
         with:
-          name: screenshots
-          path: ${{ github.workspace }}/tmp/screenshots
-          if-no-files-found: ignore
+          context: .
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: mediateca:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Un build que compila pero no arranca no sirve de nada. La imagen tiene
+      # que levantar y contestar el healthcheck que kamal-proxy va a consultar.
+      - name: Boot the image and check /up
+        run: |
+          docker run -d --name mediateca-ci \
+            -e RAILS_ENV=production \
+            -e SECRET_KEY_BASE=$(openssl rand -hex 32) \
+            -e SOLID_QUEUE_IN_PUMA=true \
+            -p 8080:80 \
+            mediateca:ci
+
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://localhost:8080/up > /dev/null 2>&1; then
+              echo "✓ /up contestó al intento $attempt"
+              exit 0
+            fi
+            sleep 2
+          done
+
+          echo "✗ /up nunca contestó; logs del contenedor:"
+          docker logs mediateca-ci
+          exit 1
