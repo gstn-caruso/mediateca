@@ -30,7 +30,7 @@
     <button type="button"
             data-action="player#play" data-player-index-param="0"
             aria-label="Play <%= @album.title %>"
-            class="inline-flex items-center gap-2 rounded-lg bg-accent/15 px-6 py-2.5 text-sm font-semibold text-accent transition hover:bg-accent/25">
+            class="inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-accent/20 transition hover:bg-accent-bright">
       <svg class="size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
         <path d="M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713Z"/>
       </svg>
@@ -47,7 +47,7 @@
       Shuffle
     </button>
 
-    <%= render "shared/heart", thing: @album, label: @album.title %>
+    <%= render "shared/album_like", album: @album %>
   </div>
 
   <%# The index has to be the whole queue's, not the disc's: on a two-disc
@@ -59,7 +59,7 @@
       </h2>
     <% end %>
 
-    <div class="grid grid-cols-[2rem_1fr_auto] items-center gap-4 border-b border-white/10 px-2 pb-2 text-xs text-neutral-400 sm:px-4">
+    <div class="grid grid-cols-[2rem_1fr_auto] items-center gap-4 border-b border-white/10 px-2 pb-2 text-xs text-neutral-300 sm:px-4">
       <span class="text-right">#</span>
       <span>Title</span>
       <svg class="size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -67,7 +67,7 @@
       </svg>
     </div>
 
-    <ol class="mt-1">
+    <ol class="mt-1 divide-y divide-white/5">
       <% numbered_tracks.each do |track, position| %>
         <li class="flex items-center gap-1">
           <button type="button"
@@ -82,9 +82,9 @@
                   data-action="player#play"
                   data-player-index-param="<%= position %>"
                   aria-current="false"
-                  class="group grid min-w-0 flex-1 grid-cols-[2rem_1fr_auto] items-center gap-4 rounded-lg px-4 py-2 text-left transition hover:bg-white/10 aria-[current=true]:text-accent">
+                  class="group grid min-w-0 flex-1 grid-cols-[2rem_1fr_auto] items-center gap-4 rounded-lg px-4 py-1.5 text-left transition hover:bg-white/10 aria-[current=true]:text-accent">
             <span class="relative flex justify-end">
-              <span class="text-sm tabular-nums text-neutral-400 group-hover:invisible group-aria-[current=true]:invisible">
+              <span class="text-sm tabular-nums text-neutral-300 group-hover:invisible group-aria-[current=true]:invisible">
                 <%= track.track_no %>
               </span>
               <%# The one playing shows the equalizer instead of its number. %>
@@ -104,7 +104,6 @@
               <span class="block truncate text-sm font-medium text-neutral-100 group-aria-[current=true]:text-accent">
                 <%= track.title %>
               </span>
-              <span class="block truncate text-xs text-neutral-400"><%= subtitle %></span>
             </span>
 
             <span class="flex items-center justify-end gap-3">
@@ -114,7 +113,7 @@
                 <span title="<%= track_quality_detail(track) %>"
                       class="hidden shrink-0 whitespace-nowrap rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-300 ring-1 ring-inset ring-white/10 sm:inline-block"><%= quality %></span>
               <% end %>
-              <span class="text-sm tabular-nums text-neutral-400"><%= track_duration(track.duration) %></span>
+              <span class="text-sm tabular-nums text-neutral-300"><%= track_duration(track.duration) %></span>
             </span>
           </button>
 
