@@ -5,7 +5,7 @@
               params: { likeable_type: thing.class.name, likeable_id: thing.id },
               "aria-label": "#{liked ? "Unlike" : "Like"} #{label}",
               class: "shrink-0 cursor-pointer rounded-full p-1.5 transition
-                      #{liked ? "text-emerald-400 hover:text-emerald-300" : "text-neutral-500 hover:text-white"}" do %>
+                      #{liked ? "text-accent hover:text-accent-bright" : "text-neutral-500 hover:text-white"}" do %>
   <svg class="size-4" viewBox="0 0 16 16" fill="<%= liked ? "currentColor" : "none" %>"
        stroke="currentColor" stroke-width="1.5" aria-hidden="true">
     <path d="M8 14S1.5 9.7 1.5 5.6A3.6 3.6 0 0 1 8 3.5a3.6 3.6 0 0 1 6.5 2.1C14.5 9.7 8 14 8 14Z"/>

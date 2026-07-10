@@ -1,1 +1,34 @@
 @import "tailwindcss";
+
+@theme {
+  /* Apple's system typeface — SF Pro on Apple platforms, graceful elsewhere. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji";
+
+  /* Apple Music's signature red-pink, and a brighter tint for hover. */
+  --color-accent: #fa2d48;
+  --color-accent-bright: #ff5468;
+}
+
+/* The dark, faintly-lit backdrop the glass refracts. Fixed, so it stays put
+   while the panels move over it. */
+@utility bg-ambient {
+  background-color: #000000;
+  background-image:
+    radial-gradient(55rem 28rem at 12% -6%, rgba(250, 45, 72, 0.13), transparent 60%),
+    radial-gradient(50rem 32rem at 106% 6%, rgba(124, 58, 237, 0.10), transparent 55%);
+  background-attachment: fixed;
+}
+
+/* Liquid glass: a dark translucent pane that blurs and saturates whatever sits
+   behind it, edged by a bright specular highlight over a hairline border. */
+@utility glass {
+  background-color: rgba(28, 28, 30, 0.55);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(180%);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 16px 48px -16px rgba(0, 0, 0, 0.75);
+}
