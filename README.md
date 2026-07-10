@@ -58,7 +58,7 @@ en cada página. Por eso la música no se corta al cambiar de vista.
 ```bash
 bin/setup                # dependencias, base, assets
 bin/dev                  # servidor local en :3000
-bin/rails test           # 37 tests
+bin/rails test           # 79 tests
 bin/rails test:system    # 3 system tests con Chrome headless
 bin/ci                   # todo lo que corre GitHub Actions
 ```
@@ -66,6 +66,17 @@ bin/ci                   # todo lo que corre GitHub Actions
 Los tests **nunca tocan el NAS**: `Beets::Library` corre contra bases SQLite que
 se arman en el momento, y `MEDIA_ROOT` apunta a un par de FLAC falsos en
 `test/fixtures/media`.
+
+**Y no necesitan ffmpeg.** `Video::Playback` decide sin abrir nada;
+`Video::Probe` interpreta salida de ffprobe grabada en `test/fixtures/ffprobe`;
+`Video::Conversion` arma el comando y otro lo corre. Correr un proceso es una
+responsabilidad aparte, y vive en `Video::Ffprobe`.
+
+Los únicos que sí lo corren son los de `test/contracts/`, y son los únicos que
+pueden verificar lo que nadie más: que ffprobe siga describiendo los archivos
+como cuando grabamos su salida, y que ffmpeg entienda los argumentos que
+armamos. Si ffmpeg no está, se saltean — salvo con `REQUIRE_FFMPEG=1`, que es
+como los corre el CI, para que nunca queden verdes sin haber corrido.
 
 Para levantar la app con tu música real, copiate la base de beets:
 

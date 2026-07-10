@@ -1,16 +1,15 @@
-require "json"
-require "open3"
-
 module Video
-  # Asks ffprobe what is inside a media file, and answers in the vocabulary
-  # Video::Playback speaks.
+  # Turns ffprobe's description of a file into the vocabulary Video::Playback
+  # speaks. It never runs a process: Video::Ffprobe does that, and can be
+  # replaced by anything that answers #streams.
   class Probe
-    Unreadable = Class.new(StandardError)
-
-    ARGUMENTS = %w[-v error -print_format json -show_streams].freeze
+    def initialize(ffprobe: Ffprobe.new)
+      @ffprobe = ffprobe
+    end
 
     def examine(path)
-      streams = read(path)
+      streams = ffprobe.streams(path)
+      raise Unreadable, "#{path} no tiene ninguna pista" if streams.empty?
 
       Media.new(
         container: container_of(path),
@@ -21,22 +20,12 @@ module Video
 
     private
 
-    def read(path)
-      output, error, status = Open3.capture3(ffprobe, *ARGUMENTS, path.to_s)
-      raise Unreadable, "ffprobe no pudo leer #{path}: #{error.strip}" unless status.success?
+    attr_reader :ffprobe
 
-      streams = JSON.parse(output).fetch("streams", [])
-      raise Unreadable, "#{path} no tiene ninguna pista" if streams.empty?
-
-      streams
-    rescue JSON::ParserError => e
-      raise Unreadable, "ffprobe devolvió algo que no es JSON para #{path}: #{e.message}"
-    end
-
-    # The browser cares about the container, and the extension is what beets,
-    # the scanner and the filesystem all agree on. ffprobe's format_name is no
-    # help here: it reports "matroska,webm" for both, and mkv plays nowhere
-    # while webm plays everywhere.
+    # The browser cares about the container, and the extension is what the
+    # scanner and the filesystem agree on. ffprobe's format_name is no help:
+    # it reports "matroska,webm" for both, and mkv plays nowhere while webm
+    # plays everywhere.
     def container_of(path)
       ::File.extname(path.to_s).downcase.delete_prefix(".")
     end
@@ -70,10 +59,6 @@ module Video
 
     def attached_picture?(stream)
       stream.dig("disposition", "attached_pic").to_i == 1
-    end
-
-    def ffprobe
-      Rails.configuration.x.ffprobe
     end
   end
 end
