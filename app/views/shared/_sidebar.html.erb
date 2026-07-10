@@ -1,14 +1,84 @@
 <nav class="hidden w-72 shrink-0 flex-col gap-2 md:flex">
-  <div class="rounded-lg bg-neutral-900 px-5 py-4">
-    <%= link_to root_path, class: "flex items-center gap-2 text-neutral-200 transition hover:text-white" do %>
+  <%# Where you go, before what you own — the two things Spotify puts above the
+      library, because they are the two you reach for without looking. %>
+  <div class="shrink-0 rounded-lg bg-neutral-900 px-2 py-3">
+    <%= link_to root_path, class: "mb-2 flex items-center gap-2 px-3 text-neutral-200 transition hover:text-white" do %>
       <svg class="size-6 text-emerald-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6Z"/>
       </svg>
       <span class="text-lg font-bold tracking-tight">Mediateca</span>
     <% end %>
+
+    <%= link_to root_path, class: nav_link_class(current_page?(root_path)) do %>
+      <svg class="size-6 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12.5 3.247a1 1 0 0 0-1 0L4 7.577V20h4.5v-6a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v6H20V7.577l-7.5-4.33Z"/>
+      </svg>
+      Home
+    <% end %>
+
+    <%= link_to search_path, class: nav_link_class(current_page?(search_path)) do %>
+      <svg class="size-6 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M10.533 1.279c-5.18 0-9.407 4.14-9.407 9.279s4.226 9.279 9.407 9.279c2.234 0 4.29-.77 5.907-2.058l4.353 4.353a1 1 0 1 0 1.414-1.414l-4.344-4.344a9.157 9.157 0 0 0 2.076-5.816c0-5.14-4.226-9.28-9.406-9.28Zm-7.407 9.279c0-4.006 3.302-7.28 7.407-7.28s7.406 3.274 7.406 7.28-3.301 7.279-7.406 7.279-7.407-3.273-7.407-7.28Z"/>
+      </svg>
+      Search
+    <% end %>
   </div>
 
-  <div class="flex items-center gap-3 rounded-lg bg-neutral-900 px-4 py-3">
+  <div class="flex min-h-0 flex-1 flex-col rounded-lg bg-neutral-900">
+    <h2 class="shrink-0 px-5 pb-2 pt-4 text-sm font-semibold text-neutral-400">Your Library</h2>
+
+    <div class="min-h-0 flex-1 space-y-1 overflow-y-auto px-2 pb-3">
+      <%= link_to likes_path, class: "flex items-center gap-3 rounded-md p-2 transition hover:bg-white/10 #{"bg-white/10" if current_page?(likes_path)}" do %>
+        <span aria-hidden="true" class="flex size-11 shrink-0 items-center justify-center rounded bg-gradient-to-br from-indigo-500 to-violet-700">
+          <svg class="size-5 text-white" viewBox="0 0 16 16" fill="currentColor"><path d="M8 14S1.5 9.7 1.5 5.6A3.6 3.6 0 0 1 8 3.5a3.6 3.6 0 0 1 6.5 2.1C14.5 9.7 8 14 8 14Z"/></svg>
+        </span>
+        <span class="min-w-0">
+          <span class="block truncate text-sm font-medium text-neutral-100">Liked Songs</span>
+          <span class="block truncate text-xs text-neutral-400">Playlist</span>
+        </span>
+      <% end %>
+
+      <% playlists.each do |playlist| %>
+        <%= link_to playlist, class: "flex items-center gap-3 rounded-md p-2 transition hover:bg-white/10 #{"bg-white/10" if current_page?(playlist)}" do %>
+          <span aria-hidden="true" class="flex size-11 shrink-0 items-center justify-center rounded bg-neutral-800 text-neutral-500">
+            <svg class="size-5" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3h9v1.5H6V3ZM6 7h9v1.5H6V7ZM1 11h14v1.5H1V11ZM1 3h3v1.5H1V3ZM1 7h3v1.5H1V7Z"/></svg>
+          </span>
+          <span class="min-w-0">
+            <span class="block truncate text-sm font-medium text-neutral-100"><%= playlist.name %></span>
+            <span class="block truncate text-xs text-neutral-400">
+              Playlist · <%= pluralize(playlist.entries.size, "song") %>
+            </span>
+          </span>
+        <% end %>
+      <% end %>
+
+      <% library_artists.each do |artist| %>
+        <%= link_to artist_path(artist), class: "flex items-center gap-3 rounded-md p-2 transition hover:bg-white/10 #{"bg-white/10" if current_page?(artist_path(artist))}" do %>
+          <span class="size-11 shrink-0 overflow-hidden rounded-full bg-neutral-800">
+            <% if (album = artist.albums.first) %>
+              <%= image_tag cover_url(album), alt: "", loading: "lazy", class: "size-full object-cover" %>
+            <% end %>
+          </span>
+          <span class="min-w-0">
+            <span class="block truncate text-sm font-medium text-neutral-100"><%= artist.name %></span>
+            <span class="block truncate text-xs text-neutral-400">
+              Artist · <%= pluralize(artist.albums.size, "album") %>
+            </span>
+          </span>
+        <% end %>
+      <% end %>
+    </div>
+
+    <%= form_with model: Playlist.new, class: "flex shrink-0 gap-1 border-t border-white/5 p-2" do |form| %>
+      <%= form.text_field :name, placeholder: "New playlist", required: true, autocomplete: "off",
+                          "aria-label": "New playlist",
+                          class: "min-w-0 flex-1 rounded border border-white/10 bg-neutral-800 px-2 py-1.5 text-sm text-white placeholder:text-neutral-500 focus:border-emerald-500 focus:outline-none" %>
+      <%= form.submit "Create",
+                      class: "shrink-0 cursor-pointer rounded bg-white/10 px-2.5 py-1.5 text-xs font-semibold text-neutral-200 transition hover:bg-white/20" %>
+    <% end %>
+  </div>
+
+  <div class="flex shrink-0 items-center gap-3 rounded-lg bg-neutral-900 px-4 py-3">
     <span aria-hidden="true"
           class="flex size-9 shrink-0 items-center justify-center rounded text-sm font-bold text-black <%= avatar_colour(Current.profile) %>">
       <%= avatar_initial(Current.profile) %>
@@ -16,59 +86,5 @@
     <span class="min-w-0 flex-1 truncate text-sm font-medium text-neutral-100"><%= Current.profile.name %></span>
     <%= button_to "Switch profile", session_path, method: :delete,
                   class: "shrink-0 cursor-pointer rounded-full px-3 py-1 text-xs font-semibold text-neutral-400 transition hover:bg-white/10 hover:text-white" %>
-  </div>
-
-  <div class="flex min-h-0 flex-1 flex-col rounded-lg bg-neutral-900">
-    <h2 class="px-5 py-4 text-sm font-semibold text-neutral-400">Your Library</h2>
-
-    <ul class="min-h-0 flex-1 space-y-1 overflow-y-auto px-2 pb-3">
-      <% library_artists.each do |artist| %>
-        <li>
-          <%= link_to artist_path(artist),
-                      class: "flex items-center gap-3 rounded-md p-2 transition hover:bg-white/10 #{"bg-white/10" if current_page?(artist_path(artist))}" do %>
-            <div class="size-11 shrink-0 overflow-hidden rounded-full bg-neutral-800">
-              <% if (album = artist.albums.first) %>
-                <%= image_tag cover_url(album), alt: "", loading: "lazy", class: "size-full object-cover" %>
-              <% end %>
-            </div>
-            <div class="min-w-0">
-              <p class="truncate text-sm font-medium text-neutral-100"><%= artist.name %></p>
-              <p class="truncate text-xs text-neutral-400">
-                <%= pluralize(artist.albums.size, "album") %>
-              </p>
-            </div>
-          <% end %>
-        </li>
-      <% end %>
-    </ul>
-  </div>
-
-  <div class="shrink-0 rounded-lg bg-neutral-900 px-2 py-3">
-    <%= link_to likes_path,
-                class: "flex items-center gap-3 rounded px-3 py-1.5 text-sm text-neutral-300 transition hover:bg-white/10 hover:text-white #{"bg-white/10 text-white" if current_page?(likes_path)}" do %>
-      <span aria-hidden="true" class="flex size-7 items-center justify-center rounded bg-gradient-to-br from-indigo-500 to-violet-700">
-        <svg class="size-3.5 text-white" viewBox="0 0 16 16" fill="currentColor"><path d="M8 14S1.5 9.7 1.5 5.6A3.6 3.6 0 0 1 8 3.5a3.6 3.6 0 0 1 6.5 2.1C14.5 9.7 8 14 8 14Z"/></svg>
-      </span>
-      Liked Songs
-    <% end %>
-
-    <h2 class="mt-3 px-3 pb-1 text-sm font-semibold text-neutral-400">Playlists</h2>
-
-    <ul class="max-h-48 space-y-0.5 overflow-y-auto">
-      <% playlists.each do |playlist| %>
-        <li>
-          <%= link_to playlist.name, playlist,
-                      class: "block truncate rounded px-3 py-1.5 text-sm text-neutral-300 transition hover:bg-white/10 hover:text-white #{"bg-white/10 text-white" if current_page?(playlist)}" %>
-        </li>
-      <% end %>
-    </ul>
-
-    <%= form_with model: Playlist.new, class: "mt-2 flex gap-1 px-1" do |form| %>
-      <%= form.text_field :name, placeholder: "New playlist", required: true, autocomplete: "off",
-                          "aria-label": "New playlist",
-                          class: "min-w-0 flex-1 rounded border border-white/10 bg-neutral-800 px-2 py-1.5 text-sm text-white placeholder:text-neutral-500 focus:border-emerald-500 focus:outline-none" %>
-      <%= form.submit "Create",
-                      class: "shrink-0 cursor-pointer rounded bg-white/10 px-2.5 py-1.5 text-xs font-semibold text-neutral-200 transition hover:bg-white/20" %>
-    <% end %>
   </div>
 </nav>

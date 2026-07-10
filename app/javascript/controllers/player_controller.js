@@ -42,6 +42,13 @@ export default class extends Controller {
     this.start()
   }
 
+  // The big shuffle button on a record turns shuffle on and then plays it, the
+  // way pressing shuffle in Spotify is a way of pressing play.
+  playShuffled(event) {
+    this.shuffled = true
+    this.play(event)
+  }
+
   // Jumping from the queue panel: the track is already queued, only the cursor
   // moves.
   jump({ params: { at } }) {

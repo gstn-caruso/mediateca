@@ -139,6 +139,28 @@ class PlayingMusicTest < ApplicationSystemTestCase
     assert_no_selector "audio", visible: :all
   end
 
+  # Pressing shuffle on a record is a way of pressing play.
+  test "shuffle from the album header turns shuffle on and starts the record" do
+    visit album_path(@album)
+
+    click_on "Shuffle Mundo Guanaco"
+
+    assert_selector "[data-player-target='shuffle'][aria-pressed='true']"
+    assert_selector "[data-player-target='title']", text: "Dijo El Droguero Al Drogador"
+  end
+
+  # Home and Search sit above the library, where you reach for them without
+  # looking.
+  test "the sidebar goes home, and to search" do
+    visit album_path(@album)
+
+    within("nav") { click_on "Search" }
+    assert_text "Search your library"
+
+    within("nav") { click_on "Home" }
+    assert_selector "main h1", text: "Your Library"
+  end
+
   private
 
   def play(title)
