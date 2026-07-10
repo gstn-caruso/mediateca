@@ -7,6 +7,12 @@ Rails.application.routes.draw do
 
   get "search", to: "searches#show", as: :search
 
+  # A like is removed by naming what was liked, not by an id nobody has.
+  resources :likes, only: [ :index, :create ]
+  delete "likes", to: "likes#destroy"
+
+  resources :plays, only: [ :create ]
+
   resources :playlists, only: [ :show, :create, :update, :destroy ] do
     resources :entries, only: [ :create, :update, :destroy ], controller: "playlist_entries"
   end

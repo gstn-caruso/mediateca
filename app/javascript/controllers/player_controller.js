@@ -167,7 +167,24 @@ export default class extends Controller {
 
     this.audioTarget.src = track.src
     this.audioTarget.play()
+    this.remember(track)
     this.render()
+  }
+
+  // History is written when a track starts, not when its file is fetched:
+  // preload asks for the file before anybody presses play, and every seek asks
+  // for it again. Nothing waits on this — a lost play is not worth a stutter.
+  remember({ trackId }) {
+    if (!trackId) return
+
+    fetch("/plays", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": document.querySelector("meta[name='csrf-token']")?.content
+      },
+      body: JSON.stringify({ track_id: trackId })
+    })
   }
 
   // Whatever is playing stays where it is; everything else gets dealt again.

@@ -36,6 +36,8 @@
         <path d="M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713Z"/>
       </svg>
     </button>
+
+    <%= render "shared/heart", thing: @album, label: @album.title %>
   </div>
 
   <%# The index has to be the whole queue's, not the disc's: on a two-disc
@@ -61,6 +63,7 @@
           <button type="button"
                   data-player-track
                   data-player-target="row"
+                  data-track-id="<%= track.id %>"
                   data-src="<%= stream_track_path(track) %>"
                   data-title="<%= track.title %>"
                   data-subtitle="<%= subtitle %>"
@@ -97,6 +100,7 @@
             <span class="text-sm tabular-nums text-neutral-400"><%= track_duration(track.duration) %></span>
           </button>
 
+          <%= render "shared/heart", thing: track, label: track.title %>
           <%= render "shared/add_to_playlist", track: track %>
         </li>
       <% end %>

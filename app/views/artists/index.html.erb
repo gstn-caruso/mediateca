@@ -1,7 +1,24 @@
 <% content_for :title, "Your Library" %>
 
-<div class="p-8">
-  <h1 class="mb-8 text-3xl font-bold tracking-tight text-white">Your Library</h1>
+<div class="p-4 sm:p-8">
+  <% if @recently_played.any? %>
+    <h1 class="mb-4 text-2xl font-bold tracking-tight text-white sm:text-3xl">Recently played</h1>
+
+    <div class="mb-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      <% @recently_played.each do |album| %>
+        <%= link_to album_path(album), class: "group rounded-lg bg-neutral-900/60 p-4 transition hover:bg-neutral-800" do %>
+          <div class="aspect-square overflow-hidden rounded bg-neutral-800 shadow-xl">
+            <%= image_tag cover_album_path(album), alt: "", loading: "lazy",
+                          class: "size-full object-cover transition duration-300 group-hover:scale-105" %>
+          </div>
+          <p class="mt-4 truncate text-sm font-semibold text-white"><%= album.title %></p>
+          <p class="mt-1 truncate text-xs text-neutral-400"><%= album.artist.name %></p>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <h1 class="mb-8 text-2xl font-bold tracking-tight text-white sm:text-3xl">Your Library</h1>
 
   <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
     <% library_artists.each do |artist| %>

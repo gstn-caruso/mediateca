@@ -1,0 +1,52 @@
+<% content_for :title, "Liked Songs" %>
+
+<header class="bg-gradient-to-b from-indigo-800/50 via-indigo-950/20 to-transparent px-4 pb-6 pt-10 sm:px-8 sm:pt-16">
+  <p class="text-sm font-semibold text-white">Playlist</p>
+  <h1 class="mt-2 text-4xl font-extrabold tracking-tighter text-white sm:text-6xl">Liked Songs</h1>
+  <p class="mt-4 text-sm text-neutral-300"><%= pluralize(@tracks.size, "song") %></p>
+</header>
+
+<div class="px-4 pb-10 sm:px-8">
+  <% if @tracks.empty? %>
+    <p class="py-12 text-center text-sm text-neutral-500">
+      Songs you heart show up here, newest first.
+    </p>
+  <% else %>
+    <button type="button" data-action="player#play" data-player-index-param="0"
+            aria-label="Play Liked Songs"
+            class="mb-4 flex size-14 items-center justify-center rounded-full bg-emerald-500 text-black shadow-xl transition hover:scale-105 hover:bg-emerald-400">
+      <svg class="size-6 translate-x-px" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713Z"/>
+      </svg>
+    </button>
+
+    <ol>
+      <% @tracks.each_with_index do |track, index| %>
+        <li class="flex items-center gap-1">
+          <button type="button"
+                  data-player-track
+                  data-player-target="row"
+                  data-track-id="<%= track.id %>"
+                  data-src="<%= stream_track_path(track) %>"
+                  data-title="<%= track.title %>"
+                  data-subtitle="<%= track.album.artist.name %>"
+                  data-cover="<%= cover_album_path(track.album) %>"
+                  data-album="<%= album_path(track.album) %>"
+                  data-action="player#play"
+                  data-player-index-param="<%= index %>"
+                  aria-current="false"
+                  class="group flex min-w-0 flex-1 items-center gap-4 rounded px-3 py-2 text-left transition hover:bg-white/10 aria-[current=true]:text-emerald-400">
+            <span class="w-6 shrink-0 text-right text-sm tabular-nums text-neutral-400"><%= index + 1 %></span>
+            <span class="min-w-0 flex-1">
+              <span class="block truncate text-sm font-medium text-neutral-100 group-aria-[current=true]:text-emerald-400"><%= track.title %></span>
+              <span class="block truncate text-xs text-neutral-400"><%= track.album.artist.name %></span>
+            </span>
+            <span class="shrink-0 text-sm tabular-nums text-neutral-400"><%= track_duration(track.duration) %></span>
+          </button>
+
+          <%= render "shared/heart", thing: track, label: track.title %>
+        </li>
+      <% end %>
+    </ol>
+  <% end %>
+</div>
