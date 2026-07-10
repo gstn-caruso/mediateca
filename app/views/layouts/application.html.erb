@@ -23,7 +23,8 @@
       page fall inside its scope. What it drives — the <audio> element and the
       now-playing strip — lives in the permanent #player below, and survives the
       body swap Turbo Drive does on navigation. %>
-  <body class="h-full overflow-hidden bg-ambient text-neutral-200 antialiased" data-controller="player">
+  <body class="h-full overflow-hidden bg-ambient text-neutral-200 antialiased"
+        data-controller="player" data-player-profile-value="<%= Current.profile&.id %>">
     <%# With nobody listening the picker owns the screen: no sidebar, no player.
         So leaving a profile stops the music, which is what leaving means. %>
     <% if Current.profile %>

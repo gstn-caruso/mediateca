@@ -4,6 +4,10 @@ const OFF = "off"
 const ALL = "all"
 const ONE = "one"
 
+// Where the queue is written down so it can outlive a full reload. Named by the
+// origin, so two apps on one host don't read each other's music.
+const REMEMBERED = "mediateca:player"
+
 // Drives the single <audio> element in the layout.
 //
 // Turbo Drive swaps the body on every navigation, so this controller is torn
@@ -11,6 +15,8 @@ const ONE = "one"
 // #player, which is data-turbo-permanent. So the queue rides on the audio
 // element rather than on the controller, and playback survives navigation.
 export default class extends Controller {
+  static values = { profile: String }
+
   static targets = [
     "audio", "title", "idle", "subtitle", "cover",
     "playIcon", "pauseIcon", "progress", "elapsed", "duration", "volume",
@@ -22,6 +28,7 @@ export default class extends Controller {
   // into it — so on navigation the controller connects to a body with no player
   // yet. Waiting to be told the audio arrived beats asking whether it has.
   audioTargetConnected() {
+    this.restore()
     this.refreshIcons()
     this.tick()
     this.render()
@@ -138,6 +145,7 @@ export default class extends Controller {
     this.elapsedTarget.textContent = this.clock(currentTime)
     this.durationTarget.textContent = Number.isFinite(duration) ? this.clock(duration) : "–:––"
     this.progressTarget.value = Number.isFinite(duration) && duration > 0 ? (currentTime / duration) * 1000 : 0
+    this.save()
   }
 
   refreshIcons() {
@@ -145,6 +153,7 @@ export default class extends Controller {
 
     this.playIconTarget.classList.toggle("hidden", Boolean(playing))
     this.pauseIconTarget.classList.toggle("hidden", !playing)
+    this.save()
   }
 
   // --- State, which lives in the <audio> because the <audio> survives Turbo -
@@ -211,6 +220,51 @@ export default class extends Controller {
     this.renderControls()
     this.renderQueue()
     this.renderRows()
+    this.save()
+  }
+
+  // The queue rides on the <audio>, which a full reload throws away. So it is
+  // also written to storage, tagged with whose it is: a reload rebuilds a bare
+  // <audio> and we put the queue back onto it, but only for the same listener —
+  // leaving a profile still takes the music. A source and time set here; the
+  // browser may still refuse to resume unasked, and then it waits for a press.
+  save() {
+    try {
+      localStorage.setItem(REMEMBERED, JSON.stringify({
+        profile: this.profileValue,
+        queue: this.queue, order: this.order, cursor: this.cursor,
+        shuffled: this.shuffled, repeating: this.repeating,
+        src: this.audioTarget.src || "", time: this.audioTarget.currentTime || 0,
+        paused: this.audioTarget.paused
+      }))
+    } catch { /* private windows and full disks just forget; the tab still plays */ }
+  }
+
+  // Only a brand-new <audio> is rebuilt: after a Turbo visit the element is the
+  // same one, still carrying its queue, and must be left alone.
+  restore() {
+    if (this.audioTarget.queue !== undefined) return
+
+    const saved = this.remembered()
+    if (!saved || saved.profile !== this.profileValue || !saved.src) return
+
+    this.queue = saved.queue
+    this.order = saved.order
+    this.cursor = saved.cursor
+    this.shuffled = saved.shuffled
+    this.repeating = saved.repeating
+
+    this.audioTarget.src = saved.src
+    this.audioTarget.addEventListener("loadedmetadata", () => { this.audioTarget.currentTime = saved.time }, { once: true })
+    if (!saved.paused) this.audioTarget.play().catch(() => {})
+  }
+
+  remembered() {
+    try {
+      return JSON.parse(localStorage.getItem(REMEMBERED))
+    } catch {
+      return null
+    }
   }
 
   renderNowPlaying() {

@@ -49,6 +49,36 @@ class PlayingMusicTest < ApplicationSystemTestCase
       "the <audio> lost its source when navigating"
   end
 
+  # A full reload builds a brand-new <audio>, so the queue that rode on the old
+  # one is gone unless it was written down. It was: the browser remembers.
+  test "a full refresh keeps what's playing and the queue" do
+    play "Dijo El Droguero Al Drogador"
+
+    page.refresh
+
+    assert_selector "[data-player-target='title']", text: "Dijo El Droguero Al Drogador"
+    assert page.evaluate_script("document.querySelector('audio').currentSrc.length > 0"),
+      "the <audio> lost its source across a refresh"
+
+    click_button "Queue"
+    within "[data-player-target='queue']" do
+      assert_text "Desencuentro"
+      assert_text "El Pibe Tigre"
+    end
+  end
+
+  # What the browser remembers is whose it was. Leaving a profile takes the music
+  # with it, so the next listener does not inherit the queue left behind.
+  test "another profile does not inherit the queue left in the browser" do
+    play "Desencuentro"
+
+    click_on "Switch profile"
+    listening_as "Otro"
+
+    assert_selector "[data-player-target='idle']", text: "Nothing playing"
+    assert_no_selector "[data-player-target='title']", visible: true
+  end
+
   test "the track that's playing is marked in the list" do
     play "Desencuentro"
 
