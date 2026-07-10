@@ -1,7 +1,8 @@
-# El catálogo es dato derivado: se reconstruye entero con un `rails music:import`.
-# Por eso las tablas se rehacen en vez de migrarse — un backfill de `directory`
-# a partir del primer track daría mal en el álbum de Green Day, cuyos tracks
-# viven en CD01/CD02/CD03 y no en el directorio del álbum.
+# The catalog is derived data: it gets rebuilt whole with `rails music:import`.
+# That's why the tables are recreated instead of migrated — backfilling
+# `directory` from the first track would get it wrong for the Green Day
+# album, whose tracks live in CD01/CD02/CD03 and not in the album's
+# directory.
 class RekeyCatalogByPath < ActiveRecord::Migration[8.1]
   def change
     drop_table :tracks, force: :cascade
@@ -16,8 +17,8 @@ class RekeyCatalogByPath < ActiveRecord::Migration[8.1]
     add_index :artists, :name, unique: true
 
     create_table :albums do |t|
-      # El directorio es la identidad del álbum: es lo único que beets y el
-      # filesystem pueden acordar sin conocerse.
+      # The directory is the album's identity: it's the only thing beets and
+      # the filesystem can agree on without knowing each other.
       t.string :directory, null: false
       t.string :title, null: false
       t.integer :year

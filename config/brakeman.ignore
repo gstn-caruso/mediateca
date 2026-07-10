@@ -2,7 +2,7 @@
   "ignored_warnings": [
     {
       "fingerprint": "bb0cea5e4b9f798a82580fdddbf979f933cdda53d751eebf9f6111e86387dd97",
-      "note": "El path viene de Track#path o Album#cover_path, pero no llega crudo a send_file: MediaFile lo resuelve a través de symlinks y lo rechaza si cae fuera de la raíz de medios, antes de que se abra nada. Brakeman ve el atributo del modelo y no ve al guardián. Cubierto por test/models/media_file_test.rb (.., paths absolutos, hermanos con el mismo prefijo, symlinks que escapan) y por el test de integración que espera 403."
+      "note": "The path comes from Track#path or Album#cover_path, but it never reaches send_file raw: MediaFile resolves it through symlinks and rejects it if it falls outside the media root, before anything is opened. Brakeman sees the model attribute and not the guard. Covered by test/models/media_file_test.rb (.., absolute paths, siblings with the same prefix, symlinks that escape) and by the integration test that expects 403."
     }
   ],
   "brakeman_version": "7.1.0"

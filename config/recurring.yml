@@ -14,8 +14,8 @@ production:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
 
-  # Un escaneo lee los tags de 1171 FLAC con ffprobe: un minuto largo. De
-  # madrugada no le saca CPU a nadie, y la música nueva aparece sola.
+  # A scan reads the tags of 1171 FLACs with ffprobe: a long minute. In the
+  # small hours it doesn't steal CPU from anyone, and new music just shows up.
   scan_music:
     class: ScanMusicJob
     schedule: at 4am every day

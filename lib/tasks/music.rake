@@ -1,11 +1,11 @@
 namespace :music do
-  desc "Importa la biblioteca de música al catálogo (idempotente)"
+  desc "Imports the music library into the catalog (idempotent)"
   task import: :environment do
     root = Rails.configuration.x.music_root
-    abort "No encuentro la música en #{root}" unless File.directory?(root)
+    abort "Can't find the music in #{root}" unless File.directory?(root)
 
     Music::Catalog.import
 
-    puts "#{Artist.count} artistas, #{Album.count} álbumes, #{Track.count} tracks"
+    puts "#{Artist.count} artists, #{Album.count} albums, #{Track.count} tracks"
   end
 end

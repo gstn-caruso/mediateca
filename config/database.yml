@@ -26,9 +26,9 @@ test:
 #
 # Similarly, if you deploy your application as a Docker container, you must
 # ensure the database is located in a persisted volume.
-# storage/ es un volumen persistente del contenedor (mediateca_storage en
-# config/deploy.yml). Es el único lugar del contenedor donde se puede escribir:
-# la música va montada read-only.
+# storage/ is a persistent container volume (mediateca_storage in
+# config/deploy.yml). It's the only place in the container that can be
+# written to: the music is mounted read-only.
 production:
   primary:
     <<: *default
