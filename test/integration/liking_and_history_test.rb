@@ -9,7 +9,7 @@ class LikingAndHistoryTest < ActionDispatch::IntegrationTest
   end
 
   test "a song is liked, and shows on the liked songs page" do
-    post likes_path, params: { likeable_type: "Track", likeable_id: @track.id }
+    post track_like_path(@track)
 
     assert @gaston.likes?(@track)
     get likes_path
@@ -17,7 +17,7 @@ class LikingAndHistoryTest < ActionDispatch::IntegrationTest
   end
 
   test "an album is liked too" do
-    post likes_path, params: { likeable_type: "Album", likeable_id: @album.id }
+    post album_like_path(@album)
 
     assert @gaston.likes?(@album)
   end
@@ -25,15 +25,16 @@ class LikingAndHistoryTest < ActionDispatch::IntegrationTest
   test "a like is taken back by naming what was liked" do
     @gaston.like(@track)
 
-    delete likes_path, params: { likeable_type: "Track", likeable_id: @track.id }
+    delete track_like_path(@track)
 
     refute @gaston.reload.likes?(@track)
   end
 
-  # likeable_type comes from a form. Without a whitelist it names any class in
-  # the app, and a heart becomes a way to load one.
+  # A like now names its owner through the route, so the only things that can be
+  # liked are the ones that have a like route. Nothing else can even be asked
+  # for, and a heart is no longer a way to load an arbitrary class.
   test "only tracks and albums can be liked" do
-    post likes_path, params: { likeable_type: "Profile", likeable_id: @gaston.id }
+    post "/profiles/#{@gaston.id}/like"
 
     assert_response :not_found
     assert_empty @gaston.likes

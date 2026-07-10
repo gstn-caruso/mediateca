@@ -1,7 +1,7 @@
 class LikesController < ApplicationController
-  # The type arrives from a form, so it names whatever the browser chose to
-  # send. Two classes can be liked; asking for a third is not a 500.
-  LIKEABLE = { "Track" => Track, "Album" => Album }.freeze
+  # A like hangs off a track or an album, and the route says which by the id it
+  # carries. Nothing else can be liked, because nothing else has a like route.
+  LIKEABLE = { track_id: Track, album_id: Album }.freeze
 
   def index
     @tracks = Current.profile.liked_tracks
@@ -20,7 +20,8 @@ class LikesController < ApplicationController
   private
 
   def likeable
-    model = LIKEABLE.fetch(params[:likeable_type]) { raise ActiveRecord::RecordNotFound }
-    model.find(params[:likeable_id])
+    param, model = LIKEABLE.find { |name, _| params[name] }
+
+    model.find(params[param])
   end
 end

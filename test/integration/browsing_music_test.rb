@@ -41,7 +41,7 @@ class BrowsingMusicTest < ActionDispatch::IntegrationTest
   end
 
   test "an album's cover is served as an image" do
-    get cover_album_path(@album)
+    get album_cover_path(@album)
 
     assert_response :success
     assert_equal "image/jpeg", response.media_type
@@ -51,7 +51,7 @@ class BrowsingMusicTest < ActionDispatch::IntegrationTest
   test "a cover that is no longer on disk returns 404" do
     @album.update!(cover_path: media("missing.jpg"))
 
-    get cover_album_path(@album)
+    get album_cover_path(@album)
 
     assert_response :not_found
   end
@@ -59,13 +59,13 @@ class BrowsingMusicTest < ActionDispatch::IntegrationTest
   test "an album with no cover returns 404" do
     @album.update!(cover_path: nil)
 
-    get cover_album_path(@album)
+    get album_cover_path(@album)
 
     assert_response :not_found
   end
 
   test "a track is served as audio" do
-    get stream_track_path(@track)
+    get track_stream_path(@track)
 
     assert_response :success
     assert_equal "audio/flac", response.media_type
@@ -75,7 +75,7 @@ class BrowsingMusicTest < ActionDispatch::IntegrationTest
   # impossible and the browser has to download the whole FLAC to start.
   # (Rack 3 normalizes headers to lowercase.)
   test "a track responds to a Range request with partial content" do
-    get stream_track_path(@track), headers: { "Range" => "bytes=0-9" }
+    get track_stream_path(@track), headers: { "Range" => "bytes=0-9" }
 
     assert_response :partial_content
     assert_equal "bytes 0-9/50", response.headers["content-range"]
@@ -83,7 +83,7 @@ class BrowsingMusicTest < ActionDispatch::IntegrationTest
   end
 
   test "a track announces that it accepts ranges, so the player offers seek" do
-    get stream_track_path(@track)
+    get track_stream_path(@track)
 
     assert_response :success
     assert_equal "bytes", response.headers["accept-ranges"]
@@ -92,7 +92,7 @@ class BrowsingMusicTest < ActionDispatch::IntegrationTest
   test "a track whose file is no longer on disk returns 404" do
     @track.update!(path: media("deleted.flac"))
 
-    get stream_track_path(@track)
+    get track_stream_path(@track)
 
     assert_response :not_found
   end
@@ -100,7 +100,7 @@ class BrowsingMusicTest < ActionDispatch::IntegrationTest
   test "a track whose path escapes the media root returns 403" do
     @track.update_column(:path, "/etc/passwd")
 
-    get stream_track_path(@track)
+    get track_stream_path(@track)
 
     assert_response :forbidden
   end

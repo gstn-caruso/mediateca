@@ -5,11 +5,11 @@ Rails.application.routes.draw do
   resources :profiles, only: [ :index, :create ]
   resource  :session,  only: [ :create, :destroy ]
 
-  get "search", to: "searches#show", as: :search
+  resource :search, only: [ :show ]
 
-  # A like is removed by naming what was liked, not by an id nobody has.
-  resources :likes, only: [ :index, :create ]
-  delete "likes", to: "likes#destroy"
+  # The liked-songs page is a collection; a like itself is a singular resource
+  # of whatever was liked, so it is named by its owner, not by an id nobody has.
+  resources :likes, only: [ :index ]
 
   resources :plays, only: [ :create ]
 
@@ -18,15 +18,17 @@ Rails.application.routes.draw do
   end
 
   resources :artists, only: [ :index, :show ] do
-    get :portrait, on: :member
+    resource :portrait, only: [ :show ]
   end
 
   resources :albums, only: [ :show ] do
-    get :cover, on: :member
+    resource :cover, only: [ :show ]
+    resource :like,  only: [ :create, :destroy ]
   end
 
   resources :tracks, only: [] do
-    get :stream, on: :member
+    resource :stream, only: [ :show ]
+    resource :like,   only: [ :create, :destroy ]
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

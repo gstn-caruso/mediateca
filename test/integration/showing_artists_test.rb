@@ -12,7 +12,7 @@ class ShowingArtistsTest < ActionDispatch::IntegrationTest
   test "an artist with a photograph is served it" do
     @artist.update!(portrait_path: photograph("of almafuerte"))
 
-    get portrait_artist_path(@artist)
+    get artist_portrait_path(@artist)
 
     assert_response :success
     assert_equal "image/jpeg", response.media_type
@@ -30,7 +30,7 @@ class ShowingArtistsTest < ActionDispatch::IntegrationTest
   end
 
   test "asking for a portrait that was never taken answers 404" do
-    get portrait_artist_path(@artist)
+    get artist_portrait_path(@artist)
 
     assert_response :not_found
   end
@@ -40,7 +40,7 @@ class ShowingArtistsTest < ActionDispatch::IntegrationTest
   test "a portrait path that escapes the portraits root is refused" do
     @artist.update_column(:portrait_path, "/etc/passwd")
 
-    get portrait_artist_path(@artist)
+    get artist_portrait_path(@artist)
 
     assert_response :forbidden
   end

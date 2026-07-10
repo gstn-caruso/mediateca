@@ -1,8 +1,7 @@
 <%# One button, two states. Whichever is showing, the other is one click away. %>
 <% liked = Current.profile.likes?(thing) %>
-<%= button_to likes_path,
+<%= button_to [ thing, :like ],
               method: liked ? :delete : :post,
-              params: { likeable_type: thing.class.name, likeable_id: thing.id },
               "aria-label": "#{liked ? "Unlike" : "Like"} #{label}",
               class: "shrink-0 cursor-pointer rounded-full p-1.5 transition
                       #{liked ? "text-accent hover:text-accent-bright" : "text-neutral-500 hover:text-white"}" do %>

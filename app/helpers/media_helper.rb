@@ -7,14 +7,14 @@
 # throw away a warm cache.
 module MediaHelper
   def cover_url(album)
-    cover_album_path(album, v: MediaFile.signature(album.cover_path))
+    album_cover_path(album, v: MediaFile.signature(album.cover_path))
   end
 
   def stream_url(track)
-    stream_track_path(track, v: MediaFile.signature(track.path))
+    track_stream_path(track, v: MediaFile.signature(track.path))
   end
 
   def portrait_url(artist)
-    portrait_artist_path(artist, v: MediaFile.signature(artist.portrait_path))
+    artist_portrait_path(artist, v: MediaFile.signature(artist.portrait_path))
   end
 end
