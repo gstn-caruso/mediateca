@@ -1,0 +1,11 @@
+<%# Sticky, because a search bar you have to scroll up to reach is a search bar
+    you stop using. %>
+<div class="sticky top-0 z-10 bg-neutral-900/80 px-4 py-3 backdrop-blur sm:px-8">
+  <%= form_with url: search_path, method: :get, data: { turbo_action: "advance" } do |form| %>
+    <%= form.search_field :q, value: params[:q], placeholder: "What do you want to listen to?",
+                          autocomplete: "off", aria: { label: "Search" },
+                          class: "w-full max-w-md rounded-full border border-white/10 bg-neutral-800 px-5 py-2.5
+                                  text-sm text-white placeholder:text-neutral-500
+                                  focus:border-emerald-500 focus:outline-none" %>
+  <% end %>
+</div>

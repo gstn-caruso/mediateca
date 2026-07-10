@@ -1,0 +1,76 @@
+<% content_for :title, @search.blank? ? "Search" : "#{params[:q]} — Search" %>
+
+<div class="px-4 pb-10 sm:px-8">
+  <% if @search.blank? %>
+    <h1 class="mt-6 text-2xl font-bold text-white">Search your library</h1>
+    <p class="mt-2 text-sm text-neutral-400">Artists, albums and songs, by any part of their name.</p>
+
+  <% elsif !@search.any? %>
+    <h1 class="mt-6 text-2xl font-bold text-white">No results for &ldquo;<%= params[:q] %>&rdquo;</h1>
+    <p class="mt-2 text-sm text-neutral-400">Check the spelling, or try a shorter word.</p>
+
+  <% else %>
+    <% if @search.artists.any? %>
+      <h2 class="mt-6 mb-4 text-xl font-bold text-white">Artists</h2>
+      <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <% @search.artists.each do |artist| %>
+          <%= link_to artist_path(artist), class: "group rounded-lg bg-neutral-900/60 p-4 transition hover:bg-neutral-800" do %>
+            <div class="aspect-square overflow-hidden rounded-full bg-neutral-800 shadow-xl">
+              <% if (album = artist.albums.first) %>
+                <%= image_tag cover_album_path(album), alt: "", loading: "lazy", class: "size-full object-cover" %>
+              <% end %>
+            </div>
+            <p class="mt-4 truncate text-center text-sm font-semibold text-white"><%= artist.name %></p>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if @search.albums.any? %>
+      <h2 class="mt-8 mb-4 text-xl font-bold text-white">Albums</h2>
+      <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <% @search.albums.each do |album| %>
+          <%= link_to album_path(album), class: "group rounded-lg bg-neutral-900/60 p-4 transition hover:bg-neutral-800" do %>
+            <div class="aspect-square overflow-hidden rounded bg-neutral-800 shadow-xl">
+              <%= image_tag cover_album_path(album), alt: "", loading: "lazy", class: "size-full object-cover" %>
+            </div>
+            <p class="mt-4 truncate text-sm font-semibold text-white"><%= album.title %></p>
+            <p class="mt-1 truncate text-xs text-neutral-400"><%= album.artist.name %></p>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if @search.tracks.any? %>
+      <h2 class="mt-8 mb-4 text-xl font-bold text-white">Songs</h2>
+      <%# Clicking one queues the results, the way clicking a track queues its album. %>
+      <ol>
+        <% @search.tracks.each_with_index do |track, index| %>
+          <li>
+            <button type="button"
+                    data-player-track
+                    data-player-target="row"
+                    data-src="<%= stream_track_path(track) %>"
+                    data-title="<%= track.title %>"
+                    data-subtitle="<%= track.album.artist.name %>"
+                    data-cover="<%= cover_album_path(track.album) %>"
+                    data-album="<%= album_path(track.album) %>"
+                    data-action="player#play"
+                    data-player-index-param="<%= index %>"
+                    aria-current="false"
+                    class="group flex w-full items-center gap-4 rounded px-3 py-2 text-left transition
+                           hover:bg-white/10 aria-[current=true]:text-emerald-400">
+              <span class="min-w-0 flex-1">
+                <span class="block truncate text-sm font-medium text-neutral-100 group-aria-[current=true]:text-emerald-400">
+                  <%= track.title %>
+                </span>
+                <span class="block truncate text-xs text-neutral-400"><%= track.album.artist.name %></span>
+              </span>
+              <span class="shrink-0 text-sm tabular-nums text-neutral-400"><%= track_duration(track.duration) %></span>
+            </button>
+          </li>
+        <% end %>
+      </ol>
+    <% end %>
+  <% end %>
+</div>

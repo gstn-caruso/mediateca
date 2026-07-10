@@ -5,6 +5,8 @@ Rails.application.routes.draw do
   resources :profiles, only: [ :index, :create ]
   resource  :session,  only: [ :create, :destroy ]
 
+  get "search", to: "searches#show", as: :search
+
   resources :artists, only: [ :index, :show ]
 
   resources :albums, only: [ :show ] do
