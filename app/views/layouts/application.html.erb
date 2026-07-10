@@ -28,23 +28,30 @@
     <%# With nobody listening the picker owns the screen: no sidebar, no player.
         So leaving a profile stops the music, which is what leaving means. %>
     <% if Current.profile %>
-      <%# The library rail and its topbar toggle both live in here, so one
-          sidebar controller can reach both. %>
+      <%# The cover of what's playing is the floor, edge to edge; the chrome and
+          the content float over it on glass. The library rail and its topbar
+          toggle both live in here, so one sidebar controller reaches both. %>
       <div class="relative h-full" data-controller="sidebar">
-        <%# The album, and everything you browse, is the base layer: edge to edge,
-            scrolling under the glass that floats over it. Its padding keeps the
-            reading clear of the chrome, and gives way when a rail folds. %>
-        <main data-sidebar-target="content" data-player-target="content"
-              class="absolute inset-0 overflow-y-auto pb-24 pt-20 transition-[padding] duration-200 md:pl-80 md:pr-6">
-          <%= yield %>
-        </main>
+        <%= render "shared/backdrop" %>
 
-        <%= render "shared/header" %>
-        <%= render "shared/sidebar" %>
-        <%= render "shared/queue" %>
+        <%# pb-20 leaves the floating pill its air; the cover shows through the
+            gaps the panels leave. %>
+        <div class="relative z-10 flex h-full flex-col gap-2 p-2 pb-20">
+          <%= render "shared/header" %>
+
+          <div class="flex min-h-0 flex-1 gap-2">
+            <%= render "shared/sidebar" %>
+
+            <main class="min-w-0 flex-1 overflow-y-auto rounded-2xl glass">
+              <%= yield %>
+            </main>
+
+            <%= render "shared/queue" %>
+          </div>
+        </div>
 
         <%# The player floats free of the edges: a centred pill, a touch up from
-            the bottom, the way Apple Music's mini-player sits. %>
+            the bottom, over the cover the way Apple Music's mini-player sits. %>
         <div id="player" data-turbo-permanent
              class="absolute bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-2xl glass">
           <%= render "shared/player" %>

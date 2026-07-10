@@ -21,7 +21,7 @@ export default class extends Controller {
     "audio", "title", "idle", "subtitle", "cover", "tail",
     "playIcon", "pauseIcon", "progress", "elapsed", "duration", "volume",
     "shuffle", "repeat", "repeatOne", "next", "queue", "queueEmpty", "queueToggle", "panel",
-    "repeatBadge", "repeatBadgeText", "content", "row"
+    "repeatBadge", "repeatBadgeText", "backdrop", "row"
   ]
 
   // Turbo builds the new body before it moves #player, the permanent element,
@@ -33,7 +33,6 @@ export default class extends Controller {
     if (this.hasVolumeTarget) this.paint(this.volumeTarget)
     this.tick()
     this.render()
-    this.syncQueueInset()
   }
 
   // A tracklist arrives whenever you navigate, and the row that is playing may
@@ -126,27 +125,11 @@ export default class extends Controller {
   }
 
   // The rail shows on desktop through `md:flex`; the standing `hidden` folds it
-  // shut. Both the topbar and the player carry a toggle, so keep them in step,
-  // and let the content make room for it.
+  // shut. Both the topbar and the player carry a toggle, so keep them in step.
   toggleQueue() {
     const open = this.panelTarget.classList.toggle("md:flex")
 
     this.queueToggleTargets.forEach((toggle) => toggle.setAttribute("aria-expanded", String(open)))
-    this.queueInset(open)
-  }
-
-  // The rail rides Turbo's permanent element, but the content it pushes aside
-  // is rebuilt on every visit, so on connect the content is told where the rail
-  // stands.
-  syncQueueInset() {
-    if (this.hasPanelTarget) this.queueInset(this.panelTarget.classList.contains("md:flex"))
-  }
-
-  queueInset(open) {
-    if (!this.hasContentTarget) return
-
-    this.contentTarget.classList.toggle("md:pr-80", open)
-    this.contentTarget.classList.toggle("md:pr-6", !open)
   }
 
   scrub() {
@@ -312,7 +295,10 @@ export default class extends Controller {
 
     this.idleTarget.hidden = Boolean(track)
     this.titleTarget.hidden = !track
-    if (!track) return
+    if (!track) {
+      this.clearBackdrop()
+      return
+    }
 
     this.titleTarget.textContent = track.title
     this.titleTarget.href = track.album
@@ -320,6 +306,33 @@ export default class extends Controller {
 
     this.coverTarget.src = track.cover
     this.coverTarget.classList.remove("hidden")
+
+    this.setBackdrop(track.cover)
+  }
+
+  // The cover of what's playing washes the whole floor. Two layers cross-fade:
+  // paint the next cover on the layer that's hidden, then trade their opacities.
+  setBackdrop(cover) {
+    if (!this.hasBackdropTarget || !cover) return
+
+    const shown = this.backdropTargets.find((layer) => layer.classList.contains("opacity-100"))
+    if (shown?.dataset.cover === cover) return
+
+    const next = this.backdropTargets.find((layer) => layer !== shown)
+    next.style.backgroundImage = `url("${cover}")`
+    next.dataset.cover = cover
+    next.classList.replace("opacity-0", "opacity-100")
+    shown?.classList.replace("opacity-100", "opacity-0")
+  }
+
+  // Nobody playing, no wash: both layers fade back to the bare backdrop.
+  clearBackdrop() {
+    if (!this.hasBackdropTarget) return
+
+    this.backdropTargets.forEach((layer) => {
+      layer.classList.replace("opacity-100", "opacity-0")
+      delete layer.dataset.cover
+    })
   }
 
   // Shuffle and repeat moved off the mini-player; when their buttons aren't on

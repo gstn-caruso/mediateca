@@ -6,29 +6,20 @@ import { Controller } from "@hotwired/stimulus"
 const REMEMBERED = "mediateca:library"
 
 export default class extends Controller {
-  static targets = ["panel", "content"]
+  static targets = ["panel"]
 
   connect() {
-    if (localStorage.getItem(REMEMBERED) === "collapsed") {
-      this.panelTarget.classList.remove("md:flex")
-      this.inset(false)
-    }
+    if (localStorage.getItem(REMEMBERED) === "collapsed") this.panelTarget.classList.remove("md:flex")
   }
 
   // The rail shows on desktop through `md:flex`; taking that away lets the
   // standing `hidden` fold it shut without touching the phone, where it never
-  // showed to begin with. The content reclaims the space it leaves.
+  // showed to begin with. Flexbox hands the space back to the content.
   toggle() {
     const open = this.panelTarget.classList.toggle("md:flex")
-    this.inset(open)
 
     try {
       localStorage.setItem(REMEMBERED, open ? "open" : "collapsed")
     } catch { /* a private window just forgets which way it was left */ }
-  }
-
-  inset(open) {
-    this.contentTarget.classList.toggle("md:pl-80", open)
-    this.contentTarget.classList.toggle("md:pl-6", !open)
   }
 }
