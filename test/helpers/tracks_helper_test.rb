@@ -36,4 +36,36 @@ class TracksHelperTest < ActionView::TestCase
     assert_nil album_length(0)
     assert_nil album_length(nil)
   end
+
+  # A lossless file is measured by its depth and sample rate: the badge every
+  # FLAC in the library wears.
+  test "a lossless track's badge is its codec, depth and sample rate" do
+    assert_equal "FLAC · 16/44.1", track_quality(track(codec: "flac", bit_depth: 16, sample_rate: 44100))
+    assert_equal "FLAC · 24/96", track_quality(track(codec: "flac", bit_depth: 24, sample_rate: 96000))
+    assert_equal "FLAC · 24/88.2", track_quality(track(codec: "flac", bit_depth: 24, sample_rate: 88200))
+  end
+
+  # A compressed file has no fixed depth, so its badge is the bitrate it settled
+  # on, in kilobits.
+  test "a lossy track's badge is its codec and bitrate" do
+    assert_equal "MP3 · 320", track_quality(track(codec: "mp3", bit_rate: 320000))
+    assert_equal "AAC · 256", track_quality(track(codec: "aac", bit_rate: 256000))
+  end
+
+  # Scanned before we recorded encodings: no badge rather than a blank one.
+  test "a track with no known codec has no badge" do
+    assert_nil track_quality(track(codec: nil))
+  end
+
+  # The tooltip spells out everything measured, bitrate and all.
+  test "the detailed quality names every measure it has" do
+    assert_equal "FLAC · 16-bit · 44.1 kHz · 1007 kbps",
+      track_quality_detail(track(codec: "flac", bit_depth: 16, sample_rate: 44100, bit_rate: 1006840))
+  end
+
+  private
+
+  def track(**attributes)
+    Track.new(**attributes)
+  end
 end
