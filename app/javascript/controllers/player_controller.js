@@ -18,7 +18,7 @@ export default class extends Controller {
   static values = { profile: String }
 
   static targets = [
-    "audio", "title", "titleText", "idle", "subtitle", "subtitleText", "quality", "cover", "tail",
+    "audio", "title", "titleText", "idle", "subtitle", "subtitleText", "cover", "tail",
     "playIcon", "pauseIcon", "progress", "elapsed", "duration", "volume",
     "shuffle", "repeat", "repeatOne", "next", "queue", "queueEmpty", "queueToggle", "panel",
     "repeatBadge", "repeatBadgeText", "backdrop", "row"
@@ -297,7 +297,6 @@ export default class extends Controller {
     this.titleTarget.hidden = !track
     if (!track) {
       this.subtitleTextTarget.textContent = ""
-      this.qualityTarget.hidden = true
       this.clearBackdrop()
       return
     }
@@ -305,11 +304,6 @@ export default class extends Controller {
     this.titleTextTarget.textContent = track.title
     this.titleTarget.href = track.album
     this.subtitleTextTarget.textContent = track.subtitle
-
-    // The badge only shows for a file we measured; a blank one says nothing.
-    this.qualityTarget.hidden = !track.quality
-    this.qualityTarget.textContent = track.quality || ""
-    this.qualityTarget.title = track.qualityDetail || ""
 
     this.coverTarget.src = track.cover
     this.coverTarget.classList.remove("hidden")

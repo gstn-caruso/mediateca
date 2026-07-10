@@ -16,15 +16,9 @@
       </a>
       <p data-player-target="idle" class="truncate text-[13px] font-medium leading-tight text-neutral-400">Nothing playing</p>
 
-      <div class="mt-0.5 flex items-center gap-1.5">
-        <p data-player-target="subtitle" class="marquee min-w-0 flex-1 text-[11px] leading-tight text-neutral-400">
-          <span data-player-target="subtitleText" class="marquee__inner"></span>
-        </p>
-        <%# What the file is, and how good: FLAC · 16/44.1. The full detail —
-            bitrate and all — waits in the tooltip. %>
-        <span data-player-target="quality" hidden
-              class="shrink-0 rounded bg-white/10 px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-neutral-300 ring-1 ring-inset ring-white/10"></span>
-      </div>
+      <p data-player-target="subtitle" class="marquee mt-0.5 text-[11px] leading-tight text-neutral-400">
+        <span data-player-target="subtitleText" class="marquee__inner"></span>
+      </p>
 
       <%# The end is said out loud: nothing queued after this one. %>
       <p data-player-target="tail" hidden
