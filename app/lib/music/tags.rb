@@ -19,7 +19,8 @@ module Music
     end
 
     def read(path)
-      format = ffprobe.describe(path).fetch("format", {})
+      described = ffprobe.describe(path)
+      format = described.fetch("format", {})
       tags = normalize(format["tags"])
       artist = value(tags, ARTIST)
 
@@ -32,13 +33,36 @@ module Music
         genre: value(tags, GENRE),
         track_no: number(tags, TRACK),
         disc_no: number(tags, DISC) || 1,
-        duration: format["duration"]&.to_f
+        duration: format["duration"]&.to_f,
+        audio: audio_of(described, format)
       )
     end
 
     private
 
     attr_reader :ffprobe
+
+    # The physical encoding, read off the first audio stream. A file with no
+    # audio stream — a stray image, a corrupt download — simply has none.
+    def audio_of(described, format)
+      stream = (described["streams"] || []).find { |each| each["codec_type"] == "audio" }
+      return unless stream
+
+      Audio.new(
+        codec: stream["codec_name"],
+        bit_depth: bit_depth(stream),
+        sample_rate: stream["sample_rate"]&.to_i,
+        bit_rate: (stream["bit_rate"] || format["bit_rate"])&.to_i
+      )
+    end
+
+    # Lossless codecs report a real depth; lossy ones report 0, which means "not
+    # a thing I have".
+    def bit_depth(stream)
+      depth = (stream["bits_per_raw_sample"] || stream["bits_per_sample"]).to_i
+
+      depth if depth.positive?
+    end
 
     def normalize(tags)
       (tags || {}).transform_keys(&:downcase)

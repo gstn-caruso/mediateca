@@ -138,7 +138,8 @@ module Music
           genre: tags[:genre],
           track_no: tags.fetch(:track_no, 1),
           disc_no: tags.fetch(:disc_no, 1),
-          duration: tags.fetch(:duration, 1.0)
+          duration: tags.fetch(:duration, 1.0),
+          audio: tags[:audio]
         )
       end
     end
