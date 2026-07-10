@@ -5,6 +5,14 @@
 <%# relative z-30: the main pane is a backdrop-filter layer of its own and would
     otherwise paint over the profile menu that drops out of this bar. %>
 <header id="topbar" class="relative z-30 flex shrink-0 items-center gap-2 rounded-2xl glass px-3 py-2 sm:gap-3">
+  <%# Folds the library rail away; it comes back through this same button. %>
+  <button type="button" data-action="sidebar#toggle" aria-label="Library"
+          class="hidden shrink-0 rounded-full bg-white/10 p-2.5 text-neutral-200 transition hover:bg-white/15 hover:text-white md:block">
+    <svg class="size-5" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <path d="M3.5 2A1.5 1.5 0 0 0 2 3.5v9A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 12.5 2h-9Zm0 1.5H6v9H3.5v-9Zm4 0h5v9h-5v-9Z"/>
+    </svg>
+  </button>
+
   <%= link_to root_path, "aria-label": "Home",
               class: "shrink-0 rounded-full bg-white/10 p-2.5 text-neutral-200 transition hover:scale-105 hover:bg-white/15 hover:text-white" do %>
     <svg class="size-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -27,9 +35,18 @@
                                   focus:border-accent focus:bg-white/15 focus:outline-none" %>
   <% end %>
 
+  <%# Opens the queue rail on the right — also reachable from the player. %>
+  <button type="button" data-action="player#toggleQueue" data-player-target="queueToggle"
+          aria-label="Playing Next" aria-expanded="false"
+          class="hidden shrink-0 rounded-full bg-white/10 p-2.5 text-neutral-300 transition hover:bg-white/15 hover:text-white aria-expanded:text-accent md:block">
+    <svg class="size-5" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <path d="M15 15H1v-1.5h14V15Zm0-4.5H1V9h14v1.5Zm-14-7A2.5 2.5 0 0 1 3.5 1h9a2.5 2.5 0 0 1 0 5h-9A2.5 2.5 0 0 1 1 3.5Z"/>
+    </svg>
+  </button>
+
   <%# A native <details> menu: just the avatar in the bar, the name and the way
       out tucked behind it. No JavaScript, and Escape closes it. %>
-  <details class="relative ml-auto shrink-0">
+  <details class="relative shrink-0">
     <summary aria-label="Profile"
              class="flex size-9 cursor-pointer list-none items-center justify-center rounded-full text-sm font-bold text-black
                     ring-white/0 transition hover:scale-105 [&::-webkit-details-marker]:hidden <%= avatar_colour(Current.profile) %>">

@@ -124,9 +124,12 @@ export default class extends Controller {
     this.render()
   }
 
+  // The rail shows on desktop through `md:flex`; the standing `hidden` folds it
+  // shut. Both the topbar and the player carry a toggle, so keep them in step.
   toggleQueue() {
-    this.panelTarget.hidden = !this.panelTarget.hidden
-    this.queueToggleTarget.setAttribute("aria-expanded", String(!this.panelTarget.hidden))
+    const open = this.panelTarget.classList.toggle("md:flex")
+
+    this.queueToggleTargets.forEach((toggle) => toggle.setAttribute("aria-expanded", String(open)))
   }
 
   scrub() {

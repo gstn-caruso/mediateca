@@ -1,0 +1,28 @@
+<%# The queue, a rail on the right that mirrors the library on the left. It is
+    data-turbo-permanent so it and the order it holds survive navigation; the
+    player controller fills it. Closed by default: `md:flex` is what opens it. %>
+<aside id="queue-panel" data-turbo-permanent data-player-target="panel"
+       class="hidden w-72 shrink-0 flex-col overflow-hidden rounded-2xl glass">
+  <div class="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 py-3 pl-2 pr-4">
+    <div class="flex min-w-0 items-center gap-1">
+      <button type="button" data-action="player#toggleQueue" aria-label="Collapse queue"
+              class="shrink-0 rounded-full p-1.5 text-neutral-400 transition hover:bg-white/10 hover:text-white">
+        <svg class="size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M5.72 3.22a.75.75 0 0 1 1.06 0l4.28 4.25a.75.75 0 0 1 0 1.06l-4.28 4.25a.75.75 0 1 1-1.06-1.06L9.44 8 5.72 4.28a.75.75 0 0 1 0-1.06Z"/>
+        </svg>
+      </button>
+      <h2 class="truncate text-sm font-semibold text-white">Playing Next</h2>
+    </div>
+    <%# The queue loops when repeat is on, so it says so. %>
+    <span data-player-target="repeatBadge" hidden
+          class="flex shrink-0 items-center gap-1 rounded-full bg-accent/12 px-2 py-0.5 text-[11px] font-semibold text-accent ring-1 ring-inset ring-accent/25">
+      <svg class="size-3" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M0 4.75A3.75 3.75 0 0 1 3.75 1h8.5A3.75 3.75 0 0 1 16 4.75v5a3.75 3.75 0 0 1-3.75 3.75H9.81l1.018 1.018a.75.75 0 1 1-1.06 1.06L6.939 12.75l2.829-2.828a.75.75 0 1 1 1.06 1.06L9.811 12h2.439a2.25 2.25 0 0 0 2.25-2.25v-5a2.25 2.25 0 0 0-2.25-2.25h-8.5A2.25 2.25 0 0 0 1.5 4.75v5A2.25 2.25 0 0 0 3.75 12H5v1.5H3.75A3.75 3.75 0 0 1 0 9.75v-5Z"/>
+      </svg>
+      <span data-player-target="repeatBadgeText">Repeat</span>
+    </span>
+  </div>
+  <%# Drag a row by its grip to reorder what's coming; the × drops it. %>
+  <ol data-player-target="queue" class="min-h-0 flex-1 space-y-0.5 overflow-y-auto p-2"></ol>
+  <p data-player-target="queueEmpty" class="shrink-0 px-4 pb-4 pt-1 text-sm text-neutral-500">Nothing up next.</p>
+</aside>
