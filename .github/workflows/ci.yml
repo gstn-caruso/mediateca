@@ -196,9 +196,10 @@ jobs:
           cp .kamal/secrets.example .kamal/secrets
 
       # kamal es el gem del sistema (Ruby 3.3), no bin/kamal, que por bundler
-      # pediría el Ruby 4.0.5 de la app. LC_ALL=C evita que un git localizado lo
-      # haga re-clonar en cada deploy.
+      # pediría el Ruby 4.0.5 de la app. C.UTF-8 le da a git mensajes en inglés
+      # (para que no re-clone en cada deploy) sin forzar US-ASCII, que en Ruby
+      # 3.3 rompe a SSHKit al leer output con bytes no-ASCII.
       - name: Deploy with Kamal
         env:
-          LC_ALL: C
+          LC_ALL: C.UTF-8
         run: kamal deploy
