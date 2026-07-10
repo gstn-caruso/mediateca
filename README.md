@@ -106,7 +106,7 @@ ssh nas 'sudo systemctl stop docker.socket docker containerd
   sudo rm -rf /var/lib/docker /var/lib/containerd
 
   printf "{\n  \"data-root\": \"/srv/docker\"\n}\n" | sudo tee /etc/docker/daemon.json
-  sudo sed -i "s|^disabled_plugins|root = \"/srv/containerd\"\n\ndisabled_plugins|" /etc/containerd/config.toml
+  sudo sed -i "s|^disabled_plugins = \[\"cri\"\]|disabled_plugins = [\"cri\"]\n\nroot = \"/srv/containerd\"|" /etc/containerd/config.toml
 
   sudo systemctl start containerd docker'
 ```
