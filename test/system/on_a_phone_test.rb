@@ -1,12 +1,18 @@
 require "application_system_test_case"
 
 class OnAPhoneTest < ApplicationSystemTestCase
-  PHONE = [ 390, 844 ].freeze
+  WIDTH = 390
+  HEIGHT = 844
 
   ALBUM_DIR = "Almafuerte/1995 - Mundo guanaco".freeze
 
+  # Chrome refuses to make a window narrower than 500px, so resizing the window
+  # is not the same as being on a phone — a test that asked for 390 was quietly
+  # handed 500. The viewport is overridden instead, and every test below checks
+  # it got what it asked for.
   setup do
-    page.current_window.resize_to(*PHONE)
+    page.driver.browser.execute_cdp("Emulation.setDeviceMetricsOverride",
+                                    width: WIDTH, height: HEIGHT, deviceScaleFactor: 2, mobile: true)
     listening_as
     artist = Artist.create!(name: "Almafuerte")
     @album = Album.create!(
@@ -20,10 +26,11 @@ class OnAPhoneTest < ApplicationSystemTestCase
   # A phone scrolls up and down. Sideways means something is wider than the
   # screen, and everything to its right is unreachable.
   test "no page scrolls sideways" do
-    [ root_path, album_path(@album), likes_path, search_path(q: "Desencuentro") ].each do |page|
-      visit page
+    [ root_path, album_path(@album), likes_path, search_path(q: "Desencuentro") ].each do |path|
+      visit path
 
-      assert_no_sideways_scroll page
+      assert_on_a_phone
+      assert_no_sideways_scroll path
     end
   end
 
@@ -31,6 +38,7 @@ class OnAPhoneTest < ApplicationSystemTestCase
   # way out of a profile. On a phone all three have to live somewhere else.
   test "liked songs is reachable with no sidebar" do
     visit root_path
+    assert_on_a_phone
 
     click_on "Liked Songs"
 
@@ -39,6 +47,7 @@ class OnAPhoneTest < ApplicationSystemTestCase
 
   test "a profile can be left with no sidebar" do
     visit root_path
+    assert_on_a_phone
 
     click_on "Switch profile"
 
@@ -55,10 +64,16 @@ class OnAPhoneTest < ApplicationSystemTestCase
 
   private
 
-  def assert_no_sideways_scroll(page)
+  # A test that believes it is on a phone, and is not, proves nothing.
+  def assert_on_a_phone
+    assert_equal WIDTH, evaluate_script("window.innerWidth"),
+      "the viewport is not a phone's, so this test is measuring a desktop"
+  end
+
+  def assert_no_sideways_scroll(path)
     overflow = evaluate_script("document.body.scrollWidth - window.innerWidth")
 
-    assert_operator overflow, :<=, 0, "#{page} is #{overflow}px wider than the screen"
+    assert_operator overflow, :<=, 0, "#{path} is #{overflow}px wider than the screen"
   end
 
   def media(name)

@@ -11,8 +11,11 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
 
   driven_by :selenium, using: :headless_chrome, screen_size: DESKTOP
 
-  # Every test in the run shares one browser window, so a test that shrinks it
-  # shrinks the next one too. Each says what it needs; a subclass's setup runs
-  # after this one and may say otherwise.
-  setup { page.current_window.resize_to(*DESKTOP) }
+  # Every test in the run shares one browser, so a test that narrows it narrows
+  # the next one too. Each says what it needs; a subclass's setup runs after this
+  # one and may say otherwise.
+  setup do
+    page.driver.browser.execute_cdp("Emulation.clearDeviceMetricsOverride")
+    page.current_window.resize_to(*DESKTOP)
+  end
 end
