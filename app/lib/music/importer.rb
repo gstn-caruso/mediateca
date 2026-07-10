@@ -1,9 +1,10 @@
 module Music
-  # Mirrors an external music source into our catalog. The source is anything
-  # that answers #albums with Music::Source::Album values.
+  # Mirrors a music source into our catalog. The source is anything that answers
+  # #albums with Music::Source::Album values.
   #
-  # Importing is idempotent: beets ids are the identity, so re-running against
-  # an unchanged source is a no-op and a changed one updates in place.
+  # Importing is idempotent: a directory identifies an album and a path
+  # identifies a track, so re-running against an unchanged source is a no-op and
+  # a changed one updates in place.
   class Importer
     def import(source)
       ApplicationRecord.transaction do
@@ -14,7 +15,7 @@ module Music
     private
 
     def import_album(album)
-      record = Album.find_or_initialize_by(beets_id: album.beets_id)
+      record = Album.find_or_initialize_by(directory: album.directory)
       record.update!(
         title: album.title,
         year: album.year,
@@ -26,18 +27,24 @@ module Music
       )
 
       album.tracks.each { |track| import_track(track, record) }
+      discard_vanished_tracks(record, album)
     end
 
     def import_track(track, album)
-      record = Track.find_or_initialize_by(beets_id: track.beets_id)
+      record = Track.find_or_initialize_by(path: track.path)
       record.update!(
         title: track.title,
         track_no: track.track_no,
         disc_no: track.disc_no,
         duration: track.duration,
-        path: track.path,
         album: album
       )
+    end
+
+    # A track renamed on disk arrives as a new path, and the old one is gone.
+    # Left alone, the album would collect ghosts that cannot be played.
+    def discard_vanished_tracks(record, album)
+      record.tracks.where.not(path: album.tracks.map(&:path)).destroy_all
     end
 
     def artist_named(name)

@@ -10,20 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_10_031815) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_10_060000) do
   create_table "albums", force: :cascade do |t|
     t.string "album_type"
     t.integer "artist_id", null: false
-    t.integer "beets_id", null: false
     t.string "cover_path"
     t.datetime "created_at", null: false
+    t.string "directory", null: false
     t.integer "disc_total", default: 1, null: false
     t.string "genre"
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.integer "year"
     t.index ["artist_id"], name: "index_albums_on_artist_id"
-    t.index ["beets_id"], name: "index_albums_on_beets_id", unique: true
+    t.index ["directory"], name: "index_albums_on_directory", unique: true
   end
 
   create_table "artists", force: :cascade do |t|
@@ -35,7 +35,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_10_031815) do
 
   create_table "tracks", force: :cascade do |t|
     t.integer "album_id", null: false
-    t.integer "beets_id", null: false
     t.datetime "created_at", null: false
     t.integer "disc_no", default: 1, null: false
     t.float "duration"
@@ -45,7 +44,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_10_031815) do
     t.datetime "updated_at", null: false
     t.index ["album_id", "disc_no", "track_no"], name: "index_tracks_on_album_id_and_disc_no_and_track_no"
     t.index ["album_id"], name: "index_tracks_on_album_id"
-    t.index ["beets_id"], name: "index_tracks_on_beets_id", unique: true
     t.index ["path"], name: "index_tracks_on_path", unique: true
   end
 

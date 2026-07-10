@@ -6,11 +6,11 @@ class BrowsingMusicTest < ActionDispatch::IntegrationTest
   setup do
     @artist = Artist.create!(name: "Almafuerte")
     @album = Album.create!(
-      beets_id: 1, title: "Mundo Guanaco", year: 1995, genre: "", album_type: "album",
+      directory: File.join(Rails.configuration.x.media_root, ALBUM_DIR), title: "Mundo Guanaco", year: 1995, genre: "", album_type: "album",
       disc_total: 1, artist: @artist, cover_path: media("cover.jpg")
     )
     @track = Track.create!(
-      beets_id: 1, title: "Desencuentro", track_no: 2, disc_no: 1, duration: 136.9,
+      title: "Desencuentro", track_no: 2, disc_no: 1, duration: 136.9,
       path: media("01 - Desencuentro.flac"), album: @album
     )
   end
@@ -30,7 +30,7 @@ class BrowsingMusicTest < ActionDispatch::IntegrationTest
   end
 
   test "un álbum muestra sus tracks" do
-    Track.create!(beets_id: 2, title: "Dijo El Droguero", track_no: 1, disc_no: 1, path: media("otro.flac"), album: @album)
+    Track.create!(title: "Dijo El Droguero", track_no: 1, disc_no: 1, path: media("otro.flac"), album: @album)
 
     get album_path(@album)
 
