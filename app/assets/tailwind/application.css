@@ -6,9 +6,27 @@
     "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji";
 
-  /* Apple Music's signature red-pink, and a brighter tint for hover. */
+  /* Apple Music's signature red-pink, and a brighter tint for hover. These are
+     the standing defaults; when a record plays, player#paintAccentFrom pins
+     them to the cover's own dominant color at runtime. */
   --color-accent: #fa2d48;
   --color-accent-bright: #ff5468;
+
+  /* What reads on top of the accent — white by default, flipped to near-black
+     at runtime when the extracted accent is too light to hold white text. */
+  --color-on-accent: #ffffff;
+}
+
+/* The accent, spread as ready-to-use tints for the glows that pick it up: the
+   glass edges, the gel button and the ambient corner light. They live here as
+   whole-value vars (not color-mix) on purpose — the compiler folds a color-mix
+   of a known accent to a static color, but leaves a bare var() to be swapped at
+   runtime, which is how player#setAccent retints every glow to the record. */
+:root {
+  --glass-tint: rgba(250, 45, 72, 0.16);
+  --glass-tint-deep: rgba(250, 45, 72, 0.12);
+  --gel-glow: rgba(250, 45, 72, 0.55);
+  --ambient-tint: rgba(250, 45, 72, 0.14);
 }
 
 /* The dark, faintly-lit backdrop the glass refracts. Fixed, so it stays put
@@ -16,32 +34,62 @@
 @utility bg-ambient {
   background-color: #000000;
   background-image:
-    radial-gradient(55rem 28rem at 12% -6%, rgba(250, 45, 72, 0.13), transparent 60%),
+    radial-gradient(55rem 28rem at 12% -6%, var(--ambient-tint), transparent 60%),
     radial-gradient(50rem 32rem at 106% 6%, rgba(124, 58, 237, 0.10), transparent 55%);
   background-attachment: fixed;
 }
 
-/* Liquid glass: a dark translucent pane that blurs and saturates whatever sits
-   behind it, edged by a bright specular highlight over a hairline border. */
+/* Liquid glass: a dark translucent pane that blurs and heavily saturates the
+   wash behind it. Its light is layered, not a single line — a bright specular
+   rim across the top, a sheen falling from that edge, an accent-tinted glow
+   the pane picks up from the record playing behind it, and a grounding shade
+   along the bottom so it reads as a lit sheet of glass, not a flat panel. */
 @utility glass {
-  background-color: rgba(18, 18, 20, 0.72);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  backdrop-filter: blur(28px) saturate(180%);
+  background-color: rgba(20, 20, 24, 0.62);
+  -webkit-backdrop-filter: blur(30px) saturate(200%) brightness(1.05);
+  backdrop-filter: blur(30px) saturate(200%) brightness(1.05);
   box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
-    0 16px 48px -16px rgba(0, 0, 0, 0.75);
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.28),
+    inset 0 12px 28px -18px rgba(255, 255, 255, 0.16),
+    inset 0 0 34px -8px var(--glass-tint),
+    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.40),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.10),
+    0 24px 64px -20px rgba(0, 0, 0, 0.80);
 }
 
 /* The reading surface: the same glass family, but more opaque and less blurred
    so long lists stay legible while the ambient glow still tints its edges. */
 @utility glass-deep {
   background-color: rgba(10, 10, 12, 0.55);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(170%);
+  backdrop-filter: blur(20px) saturate(170%);
   box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
+    inset 0 0 26px -10px var(--glass-tint-deep),
     inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+/* A colored control given weight and light: a bright top rim, a shaded belly,
+   and a glow cast in its own accent — a solid button that reads as a bead of
+   tinted glass rather than a flat fill. Pairs with bg-accent. */
+@utility gel {
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.45),
+    inset 0 -8px 14px -8px rgba(0, 0, 0, 0.35),
+    0 10px 24px -8px var(--gel-glow);
+}
+
+/* The mini-player is the one pane that floats free of the layout, so it earns
+   the full glass read: a diagonal gloss raked across it and screened over the
+   pane, the way light catches the near edge of a lens. */
+#player::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(125deg, rgba(255, 255, 255, 0.12), transparent 42%);
+  mix-blend-mode: screen;
 }
 
 /* Apple Music's scrubber and volume: a thin capsule track whose bright bead
