@@ -10,15 +10,16 @@ Hoy hace **música**, con una interfaz al estilo Spotify. El video viene despué
 
 ## Cómo está armado
 
-La música sale de la biblioteca de [beets](https://beets.io) que ya vive en el
-NAS. `Beets::Library` la lee (read-only) y devuelve value objects inmutables;
-`Music::Importer` los espeja en el catálogo propio, de forma idempotente: el
-`beets_id` es la identidad, así que reimportar una fuente sin cambios no hace
-nada.
+El disco decide qué música existe; beets solo dice cómo se llama.
 
-El importer recibe **cualquier objeto que responda `#albums`**, así que beets es
-*una* fuente y no *la* fuente. Los ~270 FLAC que beets todavía no conoce van a
-entrar detrás de la misma interfaz, sin tocar el importer.
+`Music::FilesystemSource` escanea la música y lee los tags de cada FLAC con
+ffprobe: los 1171 archivos, no los 934 que beets conoce. `Beets::Library` aporta
+lo que sabe. `Music::Library` los combina, y `Music::Importer` espeja el
+resultado en el catálogo, de forma idempotente: el directorio identifica al
+álbum y el path al track.
+
+La carátula la elige el disco, no beets: beets había elegido la contratapa para
+los seis álbumes de Almafuerte.
 
 Los bytes nunca pasan por Ruby. En producción Rails solo nombra el archivo con
 el header `X-Sendfile` y **Thruster** lo sirve, con soporte de `Range` — o sea,
@@ -58,7 +59,7 @@ en cada página. Por eso la música no se corta al cambiar de vista.
 ```bash
 bin/setup                # dependencias, base, assets
 bin/dev                  # servidor local en :3000
-bin/rails test           # 79 tests
+bin/rails test           # 111 tests
 bin/rails test:system    # 3 system tests con Chrome headless
 bin/ci                   # todo lo que corre GitHub Actions
 ```
