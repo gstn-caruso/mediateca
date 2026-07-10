@@ -1,8 +1,8 @@
 {
   "ignored_warnings": [
     {
-      "fingerprint": "bb0cea5e4b9f798a82580fdddbf979f933cdda53d751eebf9f6111e86387dd97",
-      "note": "The path comes from Track#path or Album#cover_path, but it never reaches send_file raw: MediaFile resolves it through symlinks and rejects it if it falls outside the media root, before anything is opened. Brakeman sees the model attribute and not the guard. Covered by test/models/media_file_test.rb (.., absolute paths, siblings with the same prefix, symlinks that escape) and by the integration test that expects 403."
+      "fingerprint": "2cdaca7eaa5428a02884d04b1adb63d53340e5fd8da7089973b00d1ef5da0cf5",
+      "note": "The path comes from the catalog, and MediaFile is the guard Brakeman cannot see: it refuses anything resolving outside the given root, whether that root is the media root or the portraits directory. Covered by test/models/media_file_test.rb and by the /etc/passwd cases in browsing_music_test.rb and showing_artists_test.rb."
     }
   ],
   "brakeman_version": "7.1.0"

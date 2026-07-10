@@ -42,4 +42,7 @@ Rails.application.configure do
 
   # A handful of fake FLACs and covers stand in for the NAS.
   config.x.media_root = Rails.root.join("test/fixtures/media").to_s
+
+  # Portraits are written by tests; they do not belong in the app's storage.
+  config.x.portraits_root = Rails.root.join("tmp/portraits").to_s
 end

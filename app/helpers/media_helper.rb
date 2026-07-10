@@ -13,4 +13,8 @@ module MediaHelper
   def stream_url(track)
     stream_track_path(track, v: MediaFile.signature(track.path))
   end
+
+  def portrait_url(artist)
+    portrait_artist_path(artist, v: MediaFile.signature(artist.portrait_path))
+  end
 end

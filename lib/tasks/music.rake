@@ -8,4 +8,12 @@ namespace :music do
 
     puts "#{Artist.count} artists, #{Album.count} albums, #{Track.count} tracks"
   end
+
+  desc "Fetches a portrait for every artist that has none (idempotent)"
+  task portraits: :environment do
+    Music::Portraits.new(source: FetchPortraitsJob.chain).collect
+
+    with = Artist.where.not(portrait_path: nil).count
+    puts "#{with} of #{Artist.count} artists have a portrait"
+  end
 end

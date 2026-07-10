@@ -1,23 +1,35 @@
 <% content_for :title, @artist.name %>
 
-<header class="bg-gradient-to-b from-emerald-900/40 to-transparent px-4 pb-8 pt-8 sm:px-8 sm:pt-16">
-  <p class="text-xs font-semibold uppercase tracking-widest text-neutral-300">Artist</p>
-  <h1 class="mt-3 text-4xl font-extrabold tracking-tight text-white sm:text-6xl"><%= @artist.name %></h1>
-  <p class="mt-4 text-sm text-neutral-300">
-    <%= pluralize(@albums.size, "album") %>
-  </p>
+<header class="bg-gradient-to-b from-neutral-700/60 via-neutral-900/40 to-transparent px-4 pb-8 pt-8 sm:px-8 sm:pt-16">
+  <div class="flex flex-col items-center gap-6 text-center sm:flex-row sm:items-end sm:text-left">
+    <div class="size-40 shrink-0 overflow-hidden rounded-full bg-neutral-800 shadow-2xl ring-1 ring-white/10 sm:size-56">
+      <%= render "shared/artist_face", artist: @artist, text: "text-6xl" %>
+    </div>
+
+    <div class="min-w-0 pb-2">
+      <p class="text-sm font-semibold text-white">Artist</p>
+      <h1 class="mt-2 text-4xl font-extrabold tracking-tighter text-white sm:text-7xl"><%= @artist.name %></h1>
+      <p class="mt-4 text-sm text-neutral-300"><%= pluralize(@albums.size, "album") %></p>
+      <% if @artist.portrait_credit.present? %>
+        <%# The licence asks for the photographer's name, so it is here. %>
+        <p class="mt-2 text-xs text-neutral-500"><%= @artist.portrait_credit %></p>
+      <% end %>
+    </div>
+  </div>
 </header>
 
 <div class="px-4 pb-8 sm:px-8">
+  <h2 class="mb-4 text-xl font-bold text-white">Albums</h2>
+
   <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
     <% @albums.each do |album| %>
-      <%= link_to album_path(album), class: "group rounded-lg bg-neutral-900/60 p-4 transition hover:bg-neutral-800" do %>
-        <div class="aspect-square overflow-hidden rounded bg-neutral-800 shadow-xl">
+      <%= link_to album_path(album), class: "group rounded-lg bg-neutral-900/40 p-4 transition hover:bg-neutral-800" do %>
+        <div class="aspect-square overflow-hidden rounded bg-neutral-800 shadow-lg">
           <%= image_tag cover_url(album), alt: "", loading: "lazy",
                         class: "size-full object-cover transition duration-300 group-hover:scale-105" %>
         </div>
-        <p class="mt-4 truncate text-sm font-semibold text-white"><%= album.title %></p>
-        <p class="mt-1 truncate text-xs text-neutral-400">
+        <p class="mt-4 truncate text-base font-bold text-white"><%= album.title %></p>
+        <p class="mt-1 truncate text-sm text-neutral-400">
           <%= album.year %><%= " · #{album.album_type}" if album.album_type.present? %>
         </p>
       <% end %>

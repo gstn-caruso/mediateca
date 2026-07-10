@@ -5,5 +5,8 @@ class ScanMusicJob < ApplicationJob
     Music::Catalog.import
 
     Rails.logger.info "Music: #{Artist.count} artists, #{Album.count} albums, #{Track.count} tracks"
+
+    # New music brings new artists, and nobody photographed them onto the NAS.
+    FetchPortraitsJob.perform_later
   end
 end

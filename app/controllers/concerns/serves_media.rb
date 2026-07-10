@@ -15,10 +15,12 @@ module ServesMedia
 
   private
 
-  def serve(path, as:)
+  # Portraits live under storage/, not under the media root, because the music
+  # is mounted read-only. A different root, but still a root.
+  def serve(path, as:, root: MediaFile.root)
     return head :not_found if path.blank?
 
-    file = MediaFile.new(path)
+    file = MediaFile.new(path, root:)
     return head :not_found unless file.exist?
 
     if front_end_serves_files?

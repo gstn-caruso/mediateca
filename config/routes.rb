@@ -17,7 +17,9 @@ Rails.application.routes.draw do
     resources :entries, only: [ :create, :update, :destroy ], controller: "playlist_entries"
   end
 
-  resources :artists, only: [ :index, :show ]
+  resources :artists, only: [ :index, :show ] do
+    get :portrait, on: :member
+  end
 
   resources :albums, only: [ :show ] do
     get :cover, on: :member

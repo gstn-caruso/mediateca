@@ -1,0 +1,82 @@
+{
+  "relations": [
+    {
+      "type": "allmusic",
+      "url": {
+        "resource": "https://www.allmusic.com/artist/mn0001932258"
+      }
+    },
+    {
+      "type": "bandsintown",
+      "url": {
+        "resource": "https://www.bandsintown.com/a/69922"
+      }
+    },
+    {
+      "type": "discogs",
+      "url": {
+        "resource": "https://www.discogs.com/artist/2351586"
+      }
+    },
+    {
+      "type": "free streaming",
+      "url": {
+        "resource": "https://open.spotify.com/artist/6qYd7xlmeeeDkPfx6mZ9PV"
+      }
+    },
+    {
+      "type": "free streaming",
+      "url": {
+        "resource": "https://www.deezer.com/artist/10910"
+      }
+    },
+    {
+      "type": "last.fm",
+      "url": {
+        "resource": "https://www.last.fm/music/Almafuerte"
+      }
+    },
+    {
+      "type": "myspace",
+      "url": {
+        "resource": "https://myspace.com/almadelentorno"
+      }
+    },
+    {
+      "type": "official homepage",
+      "url": {
+        "resource": "http://www.almafuerte-metal.com.ar/"
+      }
+    },
+    {
+      "type": "other databases",
+      "url": {
+        "resource": "http://rock.com.ar/artistas/almafuerte"
+      }
+    },
+    {
+      "type": "other databases",
+      "url": {
+        "resource": "https://rateyourmusic.com/artist/almafuerte"
+      }
+    },
+    {
+      "type": "other databases",
+      "url": {
+        "resource": "https://www.metal-archives.com/bands/Almafuerte/1766"
+      }
+    },
+    {
+      "type": "setlistfm",
+      "url": {
+        "resource": "https://www.setlist.fm/setlists/almafuerte-7bd63a90.html"
+      }
+    },
+    {
+      "type": "wikidata",
+      "url": {
+        "resource": "https://www.wikidata.org/wiki/Q950768"
+      }
+    }
+  ]
+}

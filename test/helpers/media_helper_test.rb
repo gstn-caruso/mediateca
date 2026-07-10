@@ -36,6 +36,12 @@ class MediaHelperTest < ActionView::TestCase
     assert_equal stream_url(Track.new(id: 3, path:)), stream_url(Track.new(id: 3, path:))
   end
 
+  # And the same for a face.
+  test "two artists handed the same id do not share a portrait URL" do
+    refute_equal portrait_url(Artist.new(id: 4, portrait_path: "/portraits/aaa.jpg")),
+                 portrait_url(Artist.new(id: 4, portrait_path: "/portraits/bbb.jpg"))
+  end
+
   test "an album with no cover on disk still has a URL to ask for it" do
     assert_match %r{/albums/11/cover}, cover_url(Album.new(id: 11, cover_path: nil))
   end

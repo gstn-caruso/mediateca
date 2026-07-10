@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_10_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_10_170000) do
   create_table "albums", force: :cascade do |t|
     t.string "album_type"
     t.integer "artist_id", null: false
@@ -29,6 +29,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_10_150000) do
   create_table "artists", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
+    t.string "portrait_credit"
+    t.string "portrait_path"
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_artists_on_name", unique: true
   end

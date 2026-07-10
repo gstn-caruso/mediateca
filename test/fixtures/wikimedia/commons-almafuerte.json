@@ -1,0 +1,21 @@
+{
+  "query": {
+    "pages": {
+      "-1": {
+        "imageinfo": [
+          {
+            "thumburl": "https://upload.wikimedia.org/wikipedia/commons/d/df/Almafuerte_Willie_Dixon.png",
+            "extmetadata": {
+              "Artist": {
+                "value": "<a href=\"//commons.wikimedia.org/w/index.php?title=User:Braiansib&amp;action=edit&amp;redlink=1\" class=\"new\" title=\"User:Braiansib (page does not exist)\">Braiansib</a>"
+              },
+              "LicenseShortName": {
+                "value": "CC BY-SA 3.0"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

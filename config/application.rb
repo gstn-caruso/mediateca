@@ -37,6 +37,16 @@ module Mediateca
     config.x.music_root = ENV.fetch("MUSIC_ROOT", "/mnt/data/multimedia/Música")
     config.x.beets_database = ENV.fetch("BEETS_DATABASE", "/mnt/data/beets/musiclibrary.db")
 
+    # Nobody photographs an artist onto a NAS. The disk decides first, then
+    # Wikimedia, then Spotify if it was given credentials. The answer is kept
+    # under storage/, the only writable volume: the music is mounted read-only.
+    config.x.musicbrainz_api = ENV.fetch("MUSICBRAINZ_API", "https://musicbrainz.org/ws/2")
+    config.x.wikidata_api = ENV.fetch("WIKIDATA_API", "https://www.wikidata.org/w/api.php")
+    config.x.commons_api = ENV.fetch("COMMONS_API", "https://commons.wikimedia.org/w/api.php")
+    config.x.spotify_client_id = ENV["SPOTIFY_CLIENT_ID"]
+    config.x.spotify_client_secret = ENV["SPOTIFY_CLIENT_SECRET"]
+    config.x.portraits_root = ENV.fetch("PORTRAITS_ROOT", Rails.root.join("storage/portraits").to_s)
+
     # ffmpeg reads what the browser cannot. Both live in the image.
     config.x.ffprobe = ENV.fetch("FFPROBE", "ffprobe")
     config.x.ffmpeg = ENV.fetch("FFMPEG", "ffmpeg")
