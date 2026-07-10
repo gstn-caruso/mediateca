@@ -156,5 +156,21 @@
                 "DURATION": "00:00:00.200000000"
             }
         }
-    ]
+    ],
+    "format": {
+        "filename": "test/fixtures/videos/dos-pistas.mkv",
+        "nb_streams": 3,
+        "nb_programs": 0,
+        "nb_stream_groups": 0,
+        "format_name": "matroska,webm",
+        "format_long_name": "Matroska / WebM",
+        "start_time": "0.000000",
+        "duration": "0.223000",
+        "size": "7061",
+        "bit_rate": "253309",
+        "probe_score": 100,
+        "tags": {
+            "ENCODER": "Lavf62.12.101"
+        }
+    }
 }

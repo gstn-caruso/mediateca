@@ -37,7 +37,7 @@ class FfmpegContractTest < ActiveSupport::TestCase
   end
 
   test "ffprobe rechaza lo que no es un video" do
-    assert_raises(Video::Unreadable) { Video::Ffprobe.new.streams(__FILE__) }
+    assert_raises(Video::Unreadable) { Ffprobe.new.describe(__FILE__) }
   end
 
   test "ffmpeg convierte un avi viejo en algo que el browser entiende" do
@@ -57,7 +57,7 @@ class FfmpegContractTest < ActiveSupport::TestCase
   end
 
   test "ni los capítulos ni las pistas de datos llegan a la salida" do
-    streams = Video::Ffprobe.new.streams(convert("dos-pistas.mkv"))
+    streams = Ffprobe.new.describe(convert("dos-pistas.mkv")).fetch("streams")
 
     assert_empty streams.select { |stream| stream["codec_type"] == "data" }
   end

@@ -3,12 +3,12 @@ module Video
   # speaks. It never runs a process: Video::Ffprobe does that, and can be
   # replaced by anything that answers #streams.
   class Probe
-    def initialize(ffprobe: Ffprobe.new)
+    def initialize(ffprobe: ::Ffprobe.new)
       @ffprobe = ffprobe
     end
 
     def examine(path)
-      streams = ffprobe.streams(path)
+      streams = ffprobe.describe(path).fetch("streams", [])
       raise Unreadable, "#{path} no tiene ninguna pista" if streams.empty?
 
       Media.new(

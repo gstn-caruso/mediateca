@@ -7,22 +7,22 @@ module VideoBuilders
   # test/fixtures/ffprobe. The parsing is exercised against what ffprobe
   # actually says, and no test needs ffmpeg installed to run.
   class RecordedFfprobe
-    def streams(path)
+    def describe(path)
       recording = Rails.root.join("test/fixtures/ffprobe", "#{File.basename(path, '.*')}.json")
-      raise Video::Unreadable, "no grabé la salida de ffprobe para #{path}" unless recording.exist?
+      raise Ffprobe::Unreadable, "no grabé la salida de ffprobe para #{path}" unless recording.exist?
 
-      JSON.parse(recording.read).fetch("streams")
+      JSON.parse(recording.read)
     end
   end
 
   # For the shapes we have no recording of.
   class FakeFfprobe
-    def initialize(streams)
-      @streams = streams
+    def initialize(streams: [], format: {})
+      @description = { "streams" => streams, "format" => format }
     end
 
-    def streams(_path)
-      @streams
+    def describe(_path)
+      @description
     end
   end
 
@@ -31,7 +31,7 @@ module VideoBuilders
   end
 
   def probe_reporting(streams)
-    Video::Probe.new(ffprobe: FakeFfprobe.new(streams))
+    Video::Probe.new(ffprobe: FakeFfprobe.new(streams:))
   end
 
   def media(container: "mkv", video: "h264", audios: [ "aac" ], channels: 2)
