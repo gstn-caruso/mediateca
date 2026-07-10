@@ -195,6 +195,19 @@ jobs:
           cp /home/gaston/mediateca-ci/master.key config/master.key
           cp .kamal/secrets.example .kamal/secrets
 
+      # buildkit (driver docker-container) NO hereda el insecure-registries del
+      # daemon, así que el builder que kamal reutiliza necesita su propio config
+      # marcando el registry de la LAN como http. Lo recreamos en cada corrida
+      # para que sobreviva a que kamal o un prune lo borren: si no, el push del
+      # build reintenta por HTTPS contra un registry HTTP y muere.
+      - name: Point the buildx builder at the LAN registry over HTTP
+        run: |
+          printf '[registry."192.168.1.7:5555"]\n  http = true\n' > /tmp/mediateca-buildkitd.toml
+          docker buildx rm kamal-local-docker-container 2>/dev/null || true
+          docker buildx create --name kamal-local-docker-container \
+            --driver docker-container --driver-opt network=host \
+            --buildkitd-config /tmp/mediateca-buildkitd.toml
+
       # kamal es el gem del sistema (Ruby 3.3), no bin/kamal, que por bundler
       # pediría el Ruby 4.0.5 de la app. C.UTF-8 le da a git mensajes en inglés
       # (para que no re-clone en cada deploy) sin forzar US-ASCII, que en Ruby
