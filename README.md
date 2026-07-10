@@ -69,9 +69,9 @@ se arman en el momento, y `MEDIA_ROOT` apunta a un par de FLAC falsos en
 `test/fixtures/media`.
 
 **Y no necesitan ffmpeg.** `Video::Playback` decide sin abrir nada;
-`Video::Probe` interpreta salida de ffprobe grabada en `test/fixtures/ffprobe`;
-`Video::Conversion` arma el comando y otro lo corre. Correr un proceso es una
-responsabilidad aparte, y vive en `Video::Ffprobe`.
+`Video::Probe` y `Music::Tags` interpretan salida de ffprobe grabada en
+`test/fixtures/ffprobe`; `Video::Conversion` arma el comando y otro lo corre.
+Correr un proceso es una responsabilidad aparte, y vive en `Ffprobe`.
 
 Los únicos que sí lo corren son los de `test/contracts/`, y son los únicos que
 pueden verificar lo que nadie más: que ffprobe siga describiendo los archivos
@@ -140,10 +140,12 @@ open -a Docker                             # el registry local corre acá
 
 bin/kamal setup      # la primera vez
 bin/kamal deploy     # las siguientes
-bin/kamal import     # importa la biblioteca de beets al catálogo
+bin/kamal import     # escanea la música y la mete en el catálogo (~80s)
 bin/kamal logs
 bin/kamal console
 ```
+
+El escaneo también corre solo, todas las madrugadas: `ScanMusicJob` a las 4am.
 
 Y ya está en `http://192.168.1.7/`.
 
@@ -204,9 +206,6 @@ atributo del modelo. La categoría es correcta; el guardián que no ve es
 
 ## Qué falta
 
-- **Los ~270 FLAC fuera de beets** (System of a Down, Spinetta, Indio Solari,
-  los Socios del Desierto). O se reimportan en beets, o se suma un
-  `FilesystemSource` detrás de la misma interfaz `#albums`.
 - **Video.** Ahí esperan 375 `.mkv`, 168 `.mp4` y 61 `.avi`. Muchos mkv son HEVC
   con audio FLAC 5.1 multipista y subtítulos ASS: no son direct-play en ningún
   browser. El plan acordado es remuxear con `ffmpeg -c copy` (cambiar el
