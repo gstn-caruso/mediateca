@@ -81,3 +81,32 @@ input[type="range"]:hover::-moz-range-thumb,
 input[type="range"]:active::-moz-range-thumb {
   opacity: 1;
 }
+
+/* A marquee lane: it clips its text, and the text sits on one line. When the
+   text overruns the lane, JS (player#marquee) measures the overflow and turns
+   this on, and the text slides its own overflow's worth and back, pausing at
+   each end so both the start and the finish are readable. A lane that fits
+   never animates. */
+.marquee {
+  overflow: hidden;
+}
+.marquee__inner {
+  display: inline-block;
+  white-space: nowrap;
+}
+.marquee.is-scrolling .marquee__inner {
+  animation: marquee var(--marquee-duration, 8s) ease-in-out infinite alternate;
+}
+@keyframes marquee {
+  0%, 12% {
+    transform: translateX(0);
+  }
+  88%, 100% {
+    transform: translateX(var(--marquee-shift, 0));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee.is-scrolling .marquee__inner {
+    animation: none;
+  }
+}

@@ -18,7 +18,7 @@ export default class extends Controller {
   static values = { profile: String }
 
   static targets = [
-    "audio", "title", "idle", "subtitle", "cover", "tail",
+    "audio", "title", "titleText", "idle", "subtitle", "subtitleText", "quality", "cover", "tail",
     "playIcon", "pauseIcon", "progress", "elapsed", "duration", "volume",
     "shuffle", "repeat", "repeatOne", "next", "queue", "queueEmpty", "queueToggle", "panel",
     "repeatBadge", "repeatBadgeText", "backdrop", "row"
@@ -296,18 +296,46 @@ export default class extends Controller {
     this.idleTarget.hidden = Boolean(track)
     this.titleTarget.hidden = !track
     if (!track) {
+      this.subtitleTextTarget.textContent = ""
+      this.qualityTarget.hidden = true
       this.clearBackdrop()
       return
     }
 
-    this.titleTarget.textContent = track.title
+    this.titleTextTarget.textContent = track.title
     this.titleTarget.href = track.album
-    this.subtitleTarget.textContent = track.subtitle
+    this.subtitleTextTarget.textContent = track.subtitle
+
+    // The badge only shows for a file we measured; a blank one says nothing.
+    this.qualityTarget.hidden = !track.quality
+    this.qualityTarget.textContent = track.quality || ""
+    this.qualityTarget.title = track.qualityDetail || ""
 
     this.coverTarget.src = track.cover
     this.coverTarget.classList.remove("hidden")
 
+    this.marquee(this.titleTarget, this.titleTextTarget)
+    this.marquee(this.subtitleTarget, this.subtitleTextTarget)
+
     this.setBackdrop(track.cover)
+  }
+
+  // A title or artist too long for its lane scrolls, pausing at each end, and
+  // sits still when it fits. The distance is measured after layout, and drives
+  // both how far it travels and how long it takes — long titles don't race.
+  marquee(lane, text) {
+    lane.classList.remove("is-scrolling")
+    lane.style.removeProperty("--marquee-shift")
+    lane.style.removeProperty("--marquee-duration")
+
+    requestAnimationFrame(() => {
+      const overflow = text.scrollWidth - lane.clientWidth
+      if (overflow <= 2) return
+
+      lane.style.setProperty("--marquee-shift", `-${overflow}px`)
+      lane.style.setProperty("--marquee-duration", `${Math.max(6, overflow / 25)}s`)
+      lane.classList.add("is-scrolling")
+    })
   }
 
   // The cover of what's playing washes the whole floor. Two layers cross-fade:
