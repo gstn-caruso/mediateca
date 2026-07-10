@@ -149,15 +149,15 @@ class PlayingMusicTest < ApplicationSystemTestCase
     assert_selector "[data-player-target='title']", text: "Dijo El Droguero Al Drogador"
   end
 
-  # Home and Search sit above the library, where you reach for them without
-  # looking.
-  test "the sidebar goes home, and to search" do
+  # The search box and Home live in the top bar, reached without looking.
+  test "the header searches, and goes home" do
     visit album_path(@album)
 
-    within("nav") { click_on "Search" }
-    assert_text "Search your library"
+    fill_in "Search", with: "Desencuentro"
+    find_field("Search").send_keys(:return)
+    assert_text "Songs"
 
-    within("nav") { click_on "Home" }
+    within("header") { click_on "Home" }
     assert_selector "main h1", text: "Your Library"
   end
 

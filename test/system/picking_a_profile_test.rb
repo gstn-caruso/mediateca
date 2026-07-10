@@ -11,7 +11,7 @@ class PickingAProfileTest < ApplicationSystemTestCase
     click_on "Ana"
 
     assert_text "Your Library"
-    assert_selector "nav", text: "Ana"
+    assert_selector "header", text: "Ana"
   end
 
   test "somebody new is added from the picker, then listens" do
@@ -21,7 +21,7 @@ class PickingAProfileTest < ApplicationSystemTestCase
     click_on "Add profile"
     click_on "Beto"
 
-    assert_selector "nav", text: "Beto"
+    assert_selector "header", text: "Beto"
   end
 
   test "a name nobody can read is refused" do

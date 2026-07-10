@@ -27,18 +27,19 @@
     <%# With nobody listening the picker owns the screen: no sidebar, no player.
         So leaving a profile stops the music, which is what leaving means. %>
     <% if Current.profile %>
-      <div class="flex h-full flex-col">
-        <div class="flex min-h-0 flex-1 gap-2 p-2">
+      <div class="flex h-full flex-col gap-2 p-2">
+        <%= render "shared/header" %>
+
+        <div class="flex min-h-0 flex-1 gap-2">
           <%= render "shared/sidebar" %>
 
           <main class="min-w-0 flex-1 overflow-y-auto rounded-lg bg-gradient-to-b from-neutral-900 to-neutral-950">
-            <%= render "shared/topbar" %>
             <%= yield %>
           </main>
         </div>
 
         <%# relative: the queue positions itself against the player, and opens upward. %>
-        <div id="player" data-turbo-permanent class="relative shrink-0 border-t border-white/5 bg-black">
+        <div id="player" data-turbo-permanent class="relative shrink-0 rounded-lg border-t border-white/5 bg-black">
           <%= render "shared/player" %>
         </div>
       </div>
