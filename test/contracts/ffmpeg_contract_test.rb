@@ -2,76 +2,77 @@ require "test_helper"
 require "open3"
 require "tmpdir"
 
-# Los únicos tests que corren ffmpeg de verdad.
+# The only tests that run real ffmpeg.
 #
-# El resto de la suite trabaja contra salida de ffprobe grabada y contra
-# comandos que nadie ejecuta, así que no necesita tenerlo instalado. Lo que
-# nadie más puede verificar es lo que estos tests verifican: que ffprobe siga
-# describiendo los archivos como los grabamos, y que ffmpeg entienda los
-# argumentos que armamos.
+# The rest of the suite works against recorded ffprobe output and against
+# commands that nobody runs, so it doesn't need ffmpeg installed. What nothing
+# else can verify is exactly what these tests verify: that ffprobe still
+# describes the files the way we recorded them, and that ffmpeg understands
+# the arguments we build.
 #
-# Se saltean si ffmpeg no está. En CI está, así que no se saltean nunca.
+# They're skipped if ffmpeg isn't there. It's there in CI, so they're never
+# skipped there.
 class FfmpegContractTest < ActiveSupport::TestCase
   include VideoBuilders
 
-  RECORDED = %w[directo.mp4 dos-pistas.mkv mudo.mkv viejo.avi].freeze
+  RECORDED = %w[direct.mp4 two-tracks.mkv silent.mkv old.avi].freeze
 
   setup do
     next if ffmpeg_installed?
 
-    # Saltearse en silencio donde se supone que tienen que correr sería peor que
-    # no tenerlos: la suite quedaría verde sin haber verificado nada.
-    flunk "ffmpeg no está instalado y REQUIRE_FFMPEG lo exige" if ENV["REQUIRE_FFMPEG"].present?
+    # Silently skipping where these are supposed to run would be worse than
+    # not having them at all: the suite would go green without verifying anything.
+    flunk "ffmpeg is not installed and REQUIRE_FFMPEG demands it" if ENV["REQUIRE_FFMPEG"].present?
 
-    skip "ffmpeg no está instalado"
+    skip "ffmpeg is not installed"
   end
 
-  test "la salida grabada de ffprobe sigue coincidiendo con la real" do
+  test "the recorded ffprobe output still matches the real thing" do
     RECORDED.each do |name|
       real = Video::Probe.new.examine(fixture(name))
       recorded = recorded_probe.examine(name)
 
       assert_equal recorded, real,
-        "la grabación en test/fixtures/ffprobe/#{name.sub(/\.\w+$/, '.json')} quedó vieja"
+        "the recording at test/fixtures/ffprobe/#{name.sub(/\.\w+$/, '.json')} is stale"
     end
   end
 
-  test "ffprobe rechaza lo que no es un video" do
+  test "ffprobe rejects something that isn't a video" do
     assert_raises(Video::Unreadable) { Ffprobe.new.describe(__FILE__) }
   end
 
-  test "ffmpeg convierte un avi viejo en algo que el browser entiende" do
-    found = Video::Probe.new.examine(convert("viejo.avi"))
+  test "ffmpeg converts an old avi into something the browser understands" do
+    found = Video::Probe.new.examine(convert("old.avi"))
 
     assert_equal "mp4", found.container
     assert_equal "h264", found.video.codec
   end
 
-  test "ffmpeg remuxea sin recomprimir el video" do
-    assert_equal "h264", Video::Probe.new.examine(convert("dos-pistas.mkv")).video.codec
+  test "ffmpeg remuxes the video without recompressing it" do
+    assert_equal "h264", Video::Probe.new.examine(convert("two-tracks.mkv")).video.codec
   end
 
-  test "ffmpeg entrega la pista de audio que se le pide" do
-    # La pista 1 es FLAC, que el browser no entiende: sale recodificada a aac.
-    assert_equal "aac", Video::Probe.new.examine(convert("dos-pistas.mkv", audio: 1)).audios.sole.codec
+  test "ffmpeg delivers the audio track that was requested" do
+    # Track 1 is FLAC, which the browser doesn't understand: it comes out recoded to aac.
+    assert_equal "aac", Video::Probe.new.examine(convert("two-tracks.mkv", audio: 1)).audios.sole.codec
   end
 
-  test "ni los capítulos ni las pistas de datos llegan a la salida" do
-    streams = Ffprobe.new.describe(convert("dos-pistas.mkv")).fetch("streams")
+  test "neither chapters nor data tracks make it into the output" do
+    streams = Ffprobe.new.describe(convert("two-tracks.mkv")).fetch("streams")
 
     assert_empty streams.select { |stream| stream["codec_type"] == "data" }
   end
 
-  test "entrega los bytes de a pedazos, sin juntar el archivo entero en memoria" do
+  test "delivers the bytes in chunks, without buffering the whole file in memory" do
     chunks = 0
-    Video::Conversion.new.stream(fixture("viejo.avi"), playback_for("viejo.avi")) { chunks += 1 }
+    Video::Conversion.new.stream(fixture("old.avi"), playback_for("old.avi")) { chunks += 1 }
 
     assert_operator chunks, :>, 0
   end
 
-  test "un archivo que ffmpeg no puede leer levanta un error" do
+  test "a file ffmpeg can't read raises an error" do
     assert_raises(Video::Conversion::Failed) do
-      Video::Conversion.new.stream(__FILE__, playback_for("viejo.avi")) { |chunk| chunk }
+      Video::Conversion.new.stream(__FILE__, playback_for("old.avi")) { |chunk| chunk }
     end
   end
 

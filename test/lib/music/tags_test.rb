@@ -1,9 +1,9 @@
 require "test_helper"
 
 module Music
-  # Los casos salen de los tags reales del NAS, leídos con ffprobe.
+  # The cases come from the NAS's real tags, read with ffprobe.
   class TagsTest < ActiveSupport::TestCase
-    test "lee lo que el archivo dice de sí mismo" do
+    test "reads what the file says about itself" do
       tags = read({
         "ALBUM" => "El perfume de la tempestad",
         "ARTIST" => "Indio Solari",
@@ -25,52 +25,52 @@ module Music
       assert_in_delta 266.4, tags.duration
     end
 
-    # ffprobe devuelve las claves como las escribió quien tagueó: ALBUM,
-    # album_artist, Track... Todas quieren decir lo mismo.
-    test "las claves se leen sin importar cómo estén escritas" do
+    # ffprobe returns the keys the way whoever tagged the file wrote them:
+    # ALBUM, album_artist, Track... They all mean the same thing.
+    test "keys are read no matter how they're capitalized" do
       assert_equal "Hypnotize", read({ "album" => "Hypnotize" }).album
       assert_equal "Hypnotize", read({ "ALBUM" => "Hypnotize" }).album
       assert_equal "Hypnotize", read({ "Album" => "Hypnotize" }).album
     end
 
-    # DATE viene a veces como '2010' y a veces como '2005-11-22'.
-    test "el año se extrae de una fecha completa" do
+    # DATE sometimes comes as '2010' and sometimes as '2005-11-22'.
+    test "the year is extracted from a full date" do
       assert_equal 2005, read({ "DATE" => "2005-11-22" }).year
       assert_equal 2010, read({ "DATE" => "2010" }).year
       assert_nil read({}).year
     end
 
-    test "el número de track puede venir como 3/12" do
+    test "the track number can come as 3/12" do
       assert_equal 3, read({ "track" => "3/12" }).track_no
       assert_equal 3, read({ "tracknumber" => "3" }).track_no
       assert_nil read({}).track_no
     end
 
-    test "sin número de disco, el disco es el uno" do
+    test "without a disc number, the disc is one" do
       assert_equal 1, read({}).disc_no
       assert_equal 2, read({ "disc" => "2/3" }).disc_no
       assert_equal 2, read({ "discnumber" => "2" }).disc_no
     end
 
-    # Un archivo sin ALBUMARTIST pero con ARTIST: el artista del álbum es ese.
-    test "sin artista de álbum, vale el del track" do
+    # A file with no ALBUMARTIST but with ARTIST: that's the album artist.
+    test "without an album artist, the track's artist works" do
       assert_equal "Hermética", read({ "ARTIST" => "Hermética" }).album_artist
     end
 
-    test "sin título, vale el nombre del archivo" do
+    test "without a title, the file name works" do
       tags = read({}, path: "/m/Indio Solari/2010 - X/05 - Satelital.flac")
 
       assert_equal "05 - Satelital", tags.title
     end
 
-    test "un tag vacío es como no tenerlo" do
+    test "an empty tag is the same as not having it" do
       assert_nil read({ "GENRE" => "", "ALBUM" => "  " }).genre
       assert_nil read({ "GENRE" => "", "ALBUM" => "  " }).album
     end
 
     private
 
-    def read(tags, duration: "1.0", path: "/m/Artista/1995 - Album/01 - Tema.flac")
+    def read(tags, duration: "1.0", path: "/m/Artist/1995 - Album/01 - Track.flac")
       probe = VideoBuilders::FakeFfprobe.new(format: { "duration" => duration, "tags" => tags })
 
       Tags.new(ffprobe: probe).read(path)

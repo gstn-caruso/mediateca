@@ -6,7 +6,7 @@ module Music
 
     ENTORNO = "#{MUSIC_ROOT}/Almafuerte/1996 - Del entorno".freeze
 
-    test "una fuente sin álbumes no importa nada" do
+    test "a source with no albums imports nothing" do
       Importer.new.import(source(albums: []))
 
       assert_equal 0, Artist.count
@@ -14,7 +14,7 @@ module Music
       assert_equal 0, Track.count
     end
 
-    test "importa un álbum con su artista y sus tracks" do
+    test "imports an album with its artist and its tracks" do
       Importer.new.import(source(albums: [ source_album(
         directory: ENTORNO,
         title: "Del entorno",
@@ -48,9 +48,9 @@ module Music
       assert_equal album, track.album
     end
 
-    # El escaneo va a correr cada vez que cambie la biblioteca; importar dos
-    # veces la misma fuente no puede duplicar nada.
-    test "importar dos veces la misma fuente no duplica nada" do
+    # The scan will run every time the library changes; importing the same
+    # source twice can't duplicate anything.
+    test "importing the same source twice doesn't duplicate anything" do
       albums = [ source_album(tracks: [ source_track ]) ]
 
       2.times { Importer.new.import(source(albums:)) }
@@ -60,7 +60,7 @@ module Music
       assert_equal 1, Track.count
     end
 
-    test "dos álbumes del mismo artista comparten una sola fila de artista" do
+    test "two albums by the same artist share a single artist row" do
       Importer.new.import(source(albums: [
         source_album(directory: GUANACO, title: "Mundo Guanaco", artist: "Almafuerte"),
         source_album(directory: ENTORNO, title: "Del entorno", artist: "Almafuerte")
@@ -71,9 +71,9 @@ module Music
       assert_equal [ "Almafuerte" ], Album.all.map { |album| album.artist.name }.uniq
     end
 
-    # El directorio es la identidad: el álbum es el mismo aunque le cambien el
-    # título, el año o el género.
-    test "reimportar un álbum que cambió lo actualiza en su lugar" do
+    # The directory is the identity: the album is the same even if its title,
+    # year, or genre changed.
+    test "reimporting a changed album updates it in place" do
       Importer.new.import(source(albums: [ source_album(directory: ENTORNO, title: "Del Entorno", year: 1996, genre: "") ]))
       Importer.new.import(source(albums: [ source_album(directory: ENTORNO, title: "Del entorno", year: 1997, genre: "heavy metal") ]))
 
@@ -83,23 +83,23 @@ module Music
       assert_equal "heavy metal", album.genre
     end
 
-    # Un track que se renombró en disco es un track nuevo, y el viejo ya no está
-    # ahí. Si no se limpian, el álbum acumula fantasmas que no se pueden sonar.
-    test "los tracks que la fuente ya no reporta desaparecen del álbum" do
+    # A track that got renamed on disk is a new track, and the old one is no
+    # longer there. If they aren't cleaned up, the album accumulates ghosts that can't play.
+    test "tracks the source no longer reports disappear from the album" do
       Importer.new.import(source(albums: [ source_album(tracks: [
-        source_track(path: "#{GUANACO}/01 - viejo.flac", track_no: 1),
-        source_track(path: "#{GUANACO}/02 - se queda.flac", track_no: 2)
+        source_track(path: "#{GUANACO}/01 - old.flac", track_no: 1),
+        source_track(path: "#{GUANACO}/02 - stays.flac", track_no: 2)
       ]) ]))
 
       Importer.new.import(source(albums: [ source_album(tracks: [
-        source_track(path: "#{GUANACO}/02 - se queda.flac", track_no: 2)
+        source_track(path: "#{GUANACO}/02 - stays.flac", track_no: 2)
       ]) ]))
 
-      assert_equal [ "#{GUANACO}/02 - se queda.flac" ], Track.pluck(:path)
+      assert_equal [ "#{GUANACO}/02 - stays.flac" ], Track.pluck(:path)
     end
 
-    # Un disco borrado del NAS no puede seguir apareciendo en la biblioteca.
-    test "un álbum que la fuente ya no reporta desaparece" do
+    # An album deleted from the NAS can't keep appearing in the library.
+    test "an album the source no longer reports disappears" do
       Importer.new.import(source(albums: [
         source_album(directory: GUANACO, title: "Mundo Guanaco"),
         source_album(directory: ENTORNO, title: "Del entorno")
@@ -110,16 +110,16 @@ module Music
       assert_equal [ "Mundo Guanaco" ], Album.pluck(:title)
     end
 
-    test "un artista que se quedó sin álbumes desaparece" do
+    test "an artist left with no albums disappears" do
       Importer.new.import(source(albums: [ source_album(artist: "Almafuerte"), source_album(directory: ENTORNO, artist: "Hermética") ]))
       Importer.new.import(source(albums: [ source_album(artist: "Almafuerte") ]))
 
       assert_equal [ "Almafuerte" ], Artist.pluck(:name)
     end
 
-    # Vaciar la fuente por error no puede vaciar la biblioteca: un NAS que no
-    # montó se ve exactamente igual que una biblioteca borrada.
-    test "una fuente vacía no borra la biblioteca entera" do
+    # Emptying the source by mistake can't empty the library: a NAS that
+    # didn't mount looks exactly like a deleted library.
+    test "an empty source doesn't wipe out the whole library" do
       Importer.new.import(source(albums: [ source_album ]))
 
       Importer.new.import(source(albums: []))
@@ -127,24 +127,24 @@ module Music
       assert_equal 1, Album.count
     end
 
-    test "los tracks de un álbum multi-disco quedan ordenados por disco y número" do
+    test "a multi-disc album's tracks end up ordered by disc and number" do
       Importer.new.import(source(albums: [ source_album(disc_total: 2, tracks: [
-        source_track(path: "#{GUANACO}/CD2/01.flac", disc_no: 2, track_no: 1, title: "primera del disco dos"),
-        source_track(path: "#{GUANACO}/CD1/01.flac", disc_no: 1, track_no: 1, title: "primera del disco uno"),
-        source_track(path: "#{GUANACO}/CD1/02.flac", disc_no: 1, track_no: 2, title: "segunda del disco uno")
+        source_track(path: "#{GUANACO}/CD2/01.flac", disc_no: 2, track_no: 1, title: "first of disc two"),
+        source_track(path: "#{GUANACO}/CD1/01.flac", disc_no: 1, track_no: 1, title: "first of disc one"),
+        source_track(path: "#{GUANACO}/CD1/02.flac", disc_no: 1, track_no: 2, title: "second of disc one")
       ]) ]))
 
       assert_equal [ [ 1, 1 ], [ 1, 2 ], [ 2, 1 ] ], Album.sole.tracks.map { |track| [ track.disc_no, track.track_no ] }
     end
 
-    # 23 de los 75 álbumes del NAS traen genre = '' y no NULL.
-    test "un género vacío se guarda como string vacío" do
+    # 23 of the NAS's 75 albums have genre = '' and not NULL.
+    test "an empty genre is stored as an empty string" do
       Importer.new.import(source(albums: [ source_album(genre: "") ]))
 
       assert_equal "", Album.sole.genre
     end
 
-    test "un álbum sin carátula se importa igual" do
+    test "an album with no cover is imported all the same" do
       Importer.new.import(source(albums: [ source_album(cover_path: nil) ]))
 
       assert_nil Album.sole.cover_path

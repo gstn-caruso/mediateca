@@ -1,7 +1,7 @@
-<% content_for :title, "Tu biblioteca" %>
+<% content_for :title, "Your Library" %>
 
 <div class="p-8">
-  <h1 class="mb-8 text-3xl font-bold tracking-tight text-white">Tu biblioteca</h1>
+  <h1 class="mb-8 text-3xl font-bold tracking-tight text-white">Your Library</h1>
 
   <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
     <% library_artists.each do |artist| %>
@@ -14,7 +14,7 @@
         </div>
         <p class="mt-4 truncate text-center text-base font-semibold text-white"><%= artist.name %></p>
         <p class="mt-1 text-center text-sm text-neutral-400">
-          <%= pluralize(artist.albums.size, "álbum", plural: "álbumes") %>
+          <%= pluralize(artist.albums.size, "album") %>
         </p>
       <% end %>
     <% end %>

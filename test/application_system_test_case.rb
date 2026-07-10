@@ -1,7 +1,7 @@
 require "test_helper"
 
-# Los controles del player son botones de solo ícono: su nombre accesible es el
-# aria-label. Si un test no lo encuentra, un lector de pantalla tampoco.
+# The player controls are icon-only buttons: their accessible name is the
+# aria-label. If a test can't find it, a screen reader can't either.
 Capybara.enable_aria_label = true
 
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase

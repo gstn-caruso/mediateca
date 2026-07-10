@@ -1,6 +1,7 @@
 module Video
-  # Los errores viven en Ffprobe, que es quien los conoce. Se re-exportan acá
-  # para que quien trabaja con video no tenga que saber de dónde vienen.
+  # The errors live in Ffprobe, which is the one that knows them. They are
+  # re-exported here so whoever works with video doesn't need to know where
+  # they come from.
   Unreadable = Ffprobe::Unreadable
   NotInstalled = Ffprobe::NotInstalled
 end

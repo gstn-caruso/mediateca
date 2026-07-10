@@ -9,7 +9,7 @@ module Video
 
     def examine(path)
       streams = ffprobe.describe(path).fetch("streams", [])
-      raise Unreadable, "#{path} no tiene ninguna pista" if streams.empty?
+      raise Unreadable, "#{path} has no streams" if streams.empty?
 
       Media.new(
         container: container_of(path),

@@ -140,7 +140,7 @@ export default class extends Controller {
     this.pauseIconTarget.classList.toggle("hidden", !playing)
   }
 
-  // --- Estado, que vive en el <audio> porque el <audio> sobrevive a Turbo ----
+  // --- State, which lives in the <audio> because the <audio> survives Turbo -
 
   get queue() { return this.audioTarget.queue ?? [] }
   set queue(tracks) { this.audioTarget.queue = tracks }
@@ -159,7 +159,7 @@ export default class extends Controller {
 
   get current() { return this.queue[this.order[this.cursor]] }
 
-  // --- Privado -------------------------------------------------------------
+  // --- Private ---------------------------------------------------------------
 
   start() {
     const track = this.current

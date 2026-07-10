@@ -4,11 +4,11 @@ require "fileutils"
 
 module Music
   class FilesystemSourceTest < ActiveSupport::TestCase
-    test "una raíz vacía no reporta álbumes" do
+    test "an empty root reports no albums" do
       within_root { |root| assert_empty source(root).albums }
     end
 
-    test "un directorio de álbum con sus flac es un álbum" do
+    test "an album directory with its flacs is an album" do
       within_root do |root|
         create(root, "Indio Solari/2010 - El perfume de la tempestad/05 - Satelital.flac",
           album: "El perfume de la tempestad", album_artist: "Indio Solari", year: 2010,
@@ -30,9 +30,9 @@ module Music
       end
     end
 
-    # 1074 de los 1171 flac del NAS viven a profundidad 2. Los otros 97 cuelgan
-    # de un CDn dentro del álbum, y siguen siendo del mismo álbum.
-    test "los tracks en subcarpetas por disco pertenecen al álbum, no a la subcarpeta" do
+    # 1074 of the NAS's 1171 flacs live at depth 2. The other 97 hang off a
+    # CDn inside the album, and still belong to the same album.
+    test "tracks in subfolders by disc belong to the album, not the subfolder" do
       within_root do |root|
         create(root, "Green Day/2025 - Warning/CD01/01 - Uno.flac", disc_no: 1, track_no: 1)
         create(root, "Green Day/2025 - Warning/CD02/01 - Dos.flac", disc_no: 2, track_no: 1)
@@ -45,7 +45,7 @@ module Music
       end
     end
 
-    test "los tracks salen ordenados por disco y número" do
+    test "tracks come out ordered by disc and number" do
       within_root do |root|
         create(root, "A/1990 - B/z.flac", disc_no: 2, track_no: 1, title: "d2t1")
         create(root, "A/1990 - B/a.flac", disc_no: 1, track_no: 2, title: "d1t2")
@@ -55,7 +55,7 @@ module Music
       end
     end
 
-    test "dos álbumes del mismo artista son dos álbumes" do
+    test "two albums by the same artist are two albums" do
       within_root do |root|
         create(root, "Hermética/1989 - Hermética/01.flac", album: "Hermética")
         create(root, "Hermética/1991 - Ácido Argentino/01.flac", album: "Ácido Argentino")
@@ -64,9 +64,9 @@ module Music
       end
     end
 
-    # Beets eligió cover.1.jpg para los 6 álbumes de Almafuerte, y pesa
-    # exactamente lo mismo que "Cover back.jpg": es la contratapa.
-    test "la carátula es la tapa, nunca la contratapa" do
+    # Beets picked cover.1.jpg for Almafuerte's 6 albums, and it weighs
+    # exactly the same as "Cover back.jpg": it's the back cover.
+    test "the cover is the front, never the back" do
       within_root do |root|
         create(root, "Almafuerte/1995 - Mundo guanaco/01.flac")
         directory = "#{root}/Almafuerte/1995 - Mundo guanaco"
@@ -76,7 +76,7 @@ module Music
       end
     end
 
-    test "sin cover.jpg vale front.jpg" do
+    test "without cover.jpg, front.jpg works" do
       within_root do |root|
         create(root, "A/1990 - B/01.flac")
         touch("#{root}/A/1990 - B/back.jpg")
@@ -86,7 +86,7 @@ module Music
       end
     end
 
-    test "un álbum sin ninguna imagen no tiene carátula" do
+    test "an album with no image at all has no cover" do
       within_root do |root|
         create(root, "A/1990 - B/01.flac")
 
@@ -94,8 +94,8 @@ module Music
       end
     end
 
-    # Sin tags, el nombre de las carpetas es lo único que queda.
-    test "sin tags, el álbum y el artista salen de los nombres de carpeta" do
+    # Without tags, the folder names are all that's left.
+    test "without tags, album and artist come from the folder names" do
       within_root do |root|
         create(root, "Indio Solari/2010 - El perfume de la tempestad/01.flac", album: nil, album_artist: nil, year: nil)
 
@@ -107,7 +107,7 @@ module Music
       end
     end
 
-    test "lo que no es un flac se ignora" do
+    test "whatever isn't a flac is ignored" do
       within_root do |root|
         create(root, "A/1990 - B/01.flac")
         touch("#{root}/A/1990 - B/notas.txt")
@@ -119,8 +119,8 @@ module Music
 
     private
 
-    # Un lector de tags de mentira: los tags salen de lo que declaró el test, no
-    # de leer el archivo. Así el scanner se prueba sin ffmpeg y sin FLACs reales.
+    # A fake tag reader: tags come from what the test declared, not from
+    # reading the file. This way the scanner is tested without ffmpeg and without real FLACs.
     class DeclaredTags
       def initialize = @by_path = {}
 

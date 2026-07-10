@@ -100,7 +100,7 @@
         }
     ],
     "format": {
-        "filename": "test/fixtures/videos/viejo.avi",
+        "filename": "test/fixtures/videos/old.avi",
         "nb_streams": 2,
         "nb_programs": 0,
         "nb_stream_groups": 0,

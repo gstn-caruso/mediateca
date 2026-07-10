@@ -4,14 +4,14 @@ module Music
   class LibraryTest < ActiveSupport::TestCase
     include SourceBuilders
 
-    test "sin beets, la biblioteca es lo que hay en disco" do
+    test "without beets, the library is whatever is on disk" do
       library = Library.new(disk: source(albums: [ source_album(title: "Toxicity") ]))
 
       assert_equal [ "Toxicity" ], library.albums.map(&:title)
     end
 
-    # 270 flac del NAS no están en beets, y 4 artistas enteros con ellos.
-    test "un álbum que beets no conoce igual aparece" do
+    # 270 of the NAS's flacs aren't in beets, along with 4 whole artists.
+    test "an album beets doesn't know about still shows up" do
       library = Library.new(
         disk: source(albums: [ source_album(directory: "/m/Indio Solari/2010 - X", title: "X") ]),
         beets: source(albums: [])
@@ -20,9 +20,9 @@ module Music
       assert_equal [ "X" ], library.albums.map(&:title)
     end
 
-    # beets tiene 3 álbumes de System of a Down apuntando a archivos que ya no
-    # existen. Nada que no esté en disco puede sonar.
-    test "un álbum que solo conoce beets no aparece" do
+    # beets has 3 System of a Down albums pointing at files that no longer
+    # exist. Nothing that isn't on disk can play.
+    test "an album only beets knows about doesn't appear" do
       library = Library.new(
         disk: source(albums: []),
         beets: source(albums: [ source_album(directory: "/m/System of a Down/2001 - Toxicity") ])
@@ -31,7 +31,7 @@ module Music
       assert_empty library.albums
     end
 
-    test "beets mejora la metadata del álbum que comparte directorio" do
+    test "beets enriches the metadata of the album that shares its directory" do
       library = Library.new(
         disk: source(albums: [ source_album(directory: GUANACO, title: "mundo guanaco", artist: "almafuerte", year: nil, genre: nil) ]),
         beets: source(albums: [ source_album(directory: GUANACO, title: "Mundo Guanaco", artist: "Almafuerte", year: 1995, genre: "heavy metal", album_type: "album") ])
@@ -45,10 +45,9 @@ module Music
       assert_equal "album", album.album_type
     end
 
-    # beets eligió la contratapa para los 6 álbumes de Almafuerte: cover.1.jpg
-    # pesa exactamente lo mismo que "Cover back.jpg". En carátulas el disco sabe
-    # más.
-    test "la carátula la elige el disco, no beets" do
+    # beets picked the back cover for Almafuerte's 6 albums: cover.1.jpg weighs
+    # exactly the same as "Cover back.jpg". On covers, the disc knows better.
+    test "the disc picks the cover, not beets" do
       library = Library.new(
         disk: source(albums: [ source_album(directory: GUANACO, cover_path: "#{GUANACO}/cover.jpg") ]),
         beets: source(albums: [ source_album(directory: GUANACO, cover_path: "#{GUANACO}/cover.1.jpg") ])
@@ -57,7 +56,7 @@ module Music
       assert_equal "#{GUANACO}/cover.jpg", library.albums.sole.cover_path
     end
 
-    test "un dato que beets no tiene no pisa al del disco" do
+    test "data beets doesn't have doesn't overwrite the disc's" do
       library = Library.new(
         disk: source(albums: [ source_album(directory: GUANACO, title: "Mundo guanaco", genre: "metal") ]),
         beets: source(albums: [ source_album(directory: GUANACO, title: nil, genre: "") ])
@@ -68,7 +67,7 @@ module Music
       assert_equal "metal", album.genre
     end
 
-    test "los tracks son los del disco, con los títulos de beets donde los haya" do
+    test "tracks are the disc's, with beets' titles wherever available" do
       disk_tracks = [
         source_track(path: "#{GUANACO}/01.flac", title: "dijo el droguero al drogador", track_no: 1),
         source_track(path: "#{GUANACO}/02.flac", title: "desencuentro", track_no: 2)
@@ -84,7 +83,7 @@ module Music
       assert_equal [ "Dijo El Droguero Al Drogador", "desencuentro" ], titles
     end
 
-    test "un track que solo conoce beets no se inventa" do
+    test "a track only beets knows about isn't invented" do
       library = Library.new(
         disk: source(albums: [ source_album(directory: GUANACO, tracks: [ source_track(path: "#{GUANACO}/01.flac") ]) ]),
         beets: source(albums: [ source_album(directory: GUANACO, tracks: [

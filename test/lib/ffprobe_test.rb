@@ -1,15 +1,15 @@
 require "test_helper"
 
 class FfprobeTest < ActiveSupport::TestCase
-  # Sin ffprobe, Open3 tira Errno::ENOENT y el mensaje no dice qué instalar.
-  # Este test no necesita ffmpeg: necesita justamente su ausencia.
-  test "si ffprobe no está instalado, el error lo dice" do
+  # Without ffprobe, Open3 raises Errno::ENOENT and the message doesn't say what to install.
+  # This test doesn't need ffmpeg: it needs precisely its absence.
+  test "if ffprobe isn't installed, the error says so" do
     original = Rails.configuration.x.ffprobe
-    Rails.configuration.x.ffprobe = "ffprobe-que-no-existe"
+    Rails.configuration.x.ffprobe = "ffprobe-that-does-not-exist"
 
-    error = assert_raises(Ffprobe::NotInstalled) { Ffprobe.new.describe("cualquier.mkv") }
-    assert_match(/ffprobe-que-no-existe/, error.message)
-    assert_match(/instalá ffmpeg/, error.message)
+    error = assert_raises(Ffprobe::NotInstalled) { Ffprobe.new.describe("whatever.mkv") }
+    assert_match(/ffprobe-that-does-not-exist/, error.message)
+    assert_match(/install ffmpeg/, error.message)
   ensure
     Rails.configuration.x.ffprobe = original
   end

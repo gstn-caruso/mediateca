@@ -15,47 +15,47 @@ class BrowsingMusicTest < ActionDispatch::IntegrationTest
     )
   end
 
-  test "la portada lista los artistas" do
+  test "the front page lists the artists" do
     get root_path
 
     assert_response :success
     assert_match "Almafuerte", response.body
   end
 
-  test "un artista muestra sus álbumes" do
+  test "an artist shows its albums" do
     get artist_path(@artist)
 
     assert_response :success
     assert_match "Mundo Guanaco", response.body
   end
 
-  test "un álbum muestra sus tracks" do
+  test "an album shows its tracks" do
     Track.create!(title: "Dijo El Droguero", track_no: 1, disc_no: 1, path: media("otro.flac"), album: @album)
 
     get album_path(@album)
 
     assert_response :success
     assert_operator response.body.index("Dijo El Droguero"), :<, response.body.index("Desencuentro"),
-      "los tracks tienen que salir en orden de reproducción, no de creación"
+      "tracks have to come out in playback order, not creation order"
   end
 
-  test "la carátula de un álbum se sirve como imagen" do
+  test "an album's cover is served as an image" do
     get cover_album_path(@album)
 
     assert_response :success
     assert_equal "image/jpeg", response.media_type
   end
 
-  # 3 de los 75 álbumes del NAS apuntan a carátulas que ya no están en disco.
-  test "una carátula que ya no está en disco da 404" do
-    @album.update!(cover_path: media("no-existe.jpg"))
+  # 3 of the NAS's 75 albums point to covers that are no longer on disk.
+  test "a cover that is no longer on disk returns 404" do
+    @album.update!(cover_path: media("missing.jpg"))
 
     get cover_album_path(@album)
 
     assert_response :not_found
   end
 
-  test "un álbum sin carátula da 404" do
+  test "an album with no cover returns 404" do
     @album.update!(cover_path: nil)
 
     get cover_album_path(@album)
@@ -63,17 +63,17 @@ class BrowsingMusicTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "un track se sirve como audio" do
+  test "a track is served as audio" do
     get stream_track_path(@track)
 
     assert_response :success
     assert_equal "audio/flac", response.media_type
   end
 
-  # Sin Range no hay seek: arrastrar la barra del reproductor se vuelve
-  # imposible y el browser tiene que bajar el FLAC entero para empezar.
-  # (Rack 3 normaliza los headers a minúscula.)
-  test "un track responde a un Range request con contenido parcial" do
+  # Without Range there's no seek: dragging the player's progress bar becomes
+  # impossible and the browser has to download the whole FLAC to start.
+  # (Rack 3 normalizes headers to lowercase.)
+  test "a track responds to a Range request with partial content" do
     get stream_track_path(@track), headers: { "Range" => "bytes=0-9" }
 
     assert_response :partial_content
@@ -81,22 +81,22 @@ class BrowsingMusicTest < ActionDispatch::IntegrationTest
     assert_equal 10, response.body.bytesize
   end
 
-  test "un track anuncia que acepta rangos, así el reproductor ofrece seek" do
+  test "a track announces that it accepts ranges, so the player offers seek" do
     get stream_track_path(@track)
 
     assert_response :success
     assert_equal "bytes", response.headers["accept-ranges"]
   end
 
-  test "un track cuyo archivo ya no está en disco da 404" do
-    @track.update!(path: media("borrado.flac"))
+  test "a track whose file is no longer on disk returns 404" do
+    @track.update!(path: media("deleted.flac"))
 
     get stream_track_path(@track)
 
     assert_response :not_found
   end
 
-  test "un track cuyo path se escapa de la raíz de medios da 403" do
+  test "a track whose path escapes the media root returns 403" do
     @track.update_column(:path, "/etc/passwd")
 
     get stream_track_path(@track)

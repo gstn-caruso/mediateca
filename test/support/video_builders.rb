@@ -9,7 +9,7 @@ module VideoBuilders
   class RecordedFfprobe
     def describe(path)
       recording = Rails.root.join("test/fixtures/ffprobe", "#{File.basename(path, '.*')}.json")
-      raise Ffprobe::Unreadable, "no grabé la salida de ffprobe para #{path}" unless recording.exist?
+      raise Ffprobe::Unreadable, "no recorded ffprobe output for #{path}" unless recording.exist?
 
       JSON.parse(recording.read)
     end

@@ -9,7 +9,7 @@
          class="size-56 shrink-0 rounded object-cover shadow-2xl ring-1 ring-white/10">
 
     <div class="min-w-0 pb-2">
-      <p class="text-sm font-semibold text-white"><%= @album.album_type.presence || "Álbum" %></p>
+      <p class="text-sm font-semibold text-white"><%= @album.album_type.presence || "Album" %></p>
       <h1 class="mt-2 text-6xl font-extrabold tracking-tighter text-white"><%= @album.title %></h1>
       <p class="mt-6 flex flex-wrap items-center gap-x-1.5 text-sm text-neutral-300">
         <%= link_to @album.artist.name, artist_path(@album.artist), class: "font-semibold text-white hover:underline" %>
@@ -17,7 +17,7 @@
           <span aria-hidden="true">•</span> <span><%= @album.year %></span>
         <% end %>
         <span aria-hidden="true">•</span>
-        <span><%= pluralize(@album.tracks.size, "canción", plural: "canciones") %><%= ", #{length}" if length %></span>
+        <span><%= pluralize(@album.tracks.size, "song") %><%= ", #{length}" if length %></span>
         <% if @album.genre.present? %>
           <span aria-hidden="true">•</span> <span class="text-neutral-400"><%= @album.genre %></span>
         <% end %>
@@ -30,7 +30,7 @@
   <div class="mb-4 flex items-center gap-6">
     <button type="button"
             data-action="player#play" data-player-index-param="0"
-            aria-label="Reproducir <%= @album.title %>"
+            aria-label="Play <%= @album.title %>"
             class="flex size-14 items-center justify-center rounded-full bg-emerald-500 text-black shadow-xl transition hover:scale-105 hover:bg-emerald-400">
       <svg class="size-6 translate-x-px" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
         <path d="M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713Z"/>
@@ -38,18 +38,18 @@
     </button>
   </div>
 
-  <%# El índice tiene que ser el de la cola entera, no el del disco: en un álbum
-      de dos discos, el primer track del segundo no es el número 1 de la cola. %>
+  <%# The index has to be the whole queue's, not the disc's: on a two-disc
+      album, the first track of the second disc is not queue position 1. %>
   <% @album.tracks.each_with_index.group_by { |track, _| track.disc_no }.each do |disc_no, numbered_tracks| %>
     <% if @album.disc_total > 1 %>
       <h2 class="mb-2 mt-8 px-4 text-xs font-semibold uppercase tracking-widest text-neutral-500">
-        Disco <%= disc_no %>
+        Disc <%= disc_no %>
       </h2>
     <% end %>
 
     <div class="grid grid-cols-[2rem_1fr_auto] items-center gap-4 border-b border-white/10 px-4 pb-2 text-xs text-neutral-400">
       <span class="text-right">#</span>
-      <span>Título</span>
+      <span>Title</span>
       <svg class="size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
         <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8.75-4.5v4.19l2.72 1.57-.75 1.3-3.47-2V3.5h1.5Z"/>
       </svg>
@@ -74,7 +74,7 @@
               <span class="text-sm tabular-nums text-neutral-400 group-hover:invisible group-aria-[current=true]:invisible">
                 <%= track.track_no %>
               </span>
-              <%# El que suena muestra el ecualizador en lugar de su número. %>
+              <%# The one playing shows the equalizer instead of its number. %>
               <span aria-hidden="true" class="absolute inset-y-0 right-0 hidden items-center text-emerald-400 group-aria-[current=true]:flex">
                 <svg class="size-3.5" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M1 14V9h2v5H1Zm4.5 0V2h2v12h-2ZM10 14V6h2v8h-2Zm4.5 0v-4h1.5v4h-1.5Z"/>

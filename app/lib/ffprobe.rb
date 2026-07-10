@@ -15,13 +15,13 @@ class Ffprobe
 
   def describe(path)
     output, complaints, status = Open3.capture3(binary, *ARGUMENTS, path.to_s)
-    raise Unreadable, "ffprobe no pudo leer #{path}: #{complaints.strip}" unless status.success?
+    raise Unreadable, "ffprobe could not read #{path}: #{complaints.strip}" unless status.success?
 
     JSON.parse(output)
   rescue Errno::ENOENT
-    raise NotInstalled, "no encuentro #{binary.inspect}: instalá ffmpeg o apuntá FFPROBE al binario"
+    raise NotInstalled, "can't find #{binary.inspect}: install ffmpeg or point FFPROBE at the binary"
   rescue JSON::ParserError => e
-    raise Unreadable, "ffprobe devolvió algo que no es JSON para #{path}: #{e.message}"
+    raise Unreadable, "ffprobe returned something that isn't JSON for #{path}: #{e.message}"
   end
 
   private

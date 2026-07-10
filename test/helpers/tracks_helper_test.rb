@@ -1,38 +1,38 @@
 require "test_helper"
 
 class TracksHelperTest < ActionView::TestCase
-  test "una duración se muestra en minutos y segundos" do
+  test "a duration shows in minutes and seconds" do
     assert_equal "2:17", track_duration(136.9)
   end
 
-  test "los segundos van con dos dígitos" do
+  test "seconds are padded to two digits" do
     assert_equal "3:05", track_duration(185.0)
   end
 
-  test "una duración de más de una hora sigue contándose en minutos" do
+  test "a duration over an hour is still counted in minutes" do
     assert_equal "74:30", track_duration(4470.0)
   end
 
-  # beets deja length en NULL para algún archivo suelto.
-  test "una duración desconocida se muestra como guiones" do
+  # beets leaves length as NULL for the odd stray file.
+  test "an unknown duration shows as dashes" do
     assert_equal "–:––", track_duration(nil)
   end
 
-  # La duración de un disco entero se lee distinto que la de un tema: nadie
-  # dice que un álbum dura 111 minutos.
-  test "un álbum de más de una hora se mide en horas y minutos" do
+  # A whole album's duration reads differently from a single track's: nobody
+  # says an album runs 111 minutes.
+  test "an album over an hour is measured in hours and minutes" do
     assert_equal "1 h 51 min", album_length(6660)
   end
 
-  test "un álbum de menos de una hora se mide en minutos" do
+  test "an album under an hour is measured in minutes" do
     assert_equal "40 min", album_length(2400)
   end
 
-  test "un álbum de exactamente dos horas no muestra minutos de más" do
+  test "an album of exactly two hours doesn't show extra minutes" do
     assert_equal "2 h", album_length(7200)
   end
 
-  test "un álbum sin duraciones conocidas no dice cuánto dura" do
+  test "an album with no known durations doesn't say how long it runs" do
     assert_nil album_length(0)
     assert_nil album_length(nil)
   end

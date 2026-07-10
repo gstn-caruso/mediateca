@@ -18,15 +18,15 @@ class PlayingMusicTest < ApplicationSystemTestCase
     end
   end
 
-  test "la biblioteca muestra los artistas" do
+  test "the library shows the artists" do
     visit root_path
 
-    assert_text "Tu biblioteca"
+    assert_text "Your Library"
     assert_text "Almafuerte"
     take_screenshot
   end
 
-  test "un álbum muestra sus tracks y se puede reproducir" do
+  test "an album shows its tracks and can be played" do
     visit album_path(@album)
 
     assert_text "Mundo Guanaco"
@@ -35,90 +35,90 @@ class PlayingMusicTest < ApplicationSystemTestCase
     take_screenshot
   end
 
-  # El player vive fuera del body que Turbo Drive reemplaza. Si la música se
-  # cortara al navegar, esto lo detecta.
-  test "la música sigue sonando al navegar a otra página" do
+  # The player lives outside the body that Turbo Drive replaces. If the music
+  # stopped when navigating, this would catch it.
+  test "the music keeps playing when navigating to another page" do
     play "Desencuentro"
 
     click_link "Mediateca"
 
-    assert_text "Tu biblioteca"
+    assert_text "Your Library"
     assert_selector "[data-player-target='title']", text: "Desencuentro"
     assert page.evaluate_script("document.querySelector('audio').currentSrc.length > 0"),
-      "el <audio> perdió su fuente al navegar"
+      "the <audio> lost its source when navigating"
   end
 
-  test "el track que suena queda marcado en la lista" do
+  test "the track that's playing is marked in the list" do
     play "Desencuentro"
 
     assert_selector "[data-player-track][aria-current='true']", text: "Desencuentro"
     assert_selector "[data-player-track][aria-current='true']", count: 1
   end
 
-  # Hacer click en un track encola el álbum entero: lo que sigue tiene que
-  # poder verse, no solo intuirse.
-  test "la cola muestra lo que sigue" do
+  # Clicking a track queues the whole album: what comes next has to be
+  # visible, not just implied.
+  test "the queue shows what's next" do
     play "Dijo El Droguero Al Drogador"
 
-    click_button "Ver la cola"
+    click_button "Queue"
 
     within "[data-player-target='queue']" do
       assert_text "Desencuentro"
       assert_text "El Pibe Tigre"
-      # Lo que ya sonó no es lo que sigue.
+      # What already played isn't what's next.
       assert_no_text "Dijo El Droguero Al Drogador"
     end
     take_screenshot
   end
 
-  test "desde la cola se salta a cualquier track" do
+  test "from the queue you can jump to any track" do
     play "Dijo El Droguero Al Drogador"
-    click_button "Ver la cola"
+    click_button "Queue"
 
     within("[data-player-target='queue']") { click_button "El Pibe Tigre" }
 
     assert_selector "[data-player-target='title']", text: "El Pibe Tigre"
   end
 
-  test "el siguiente reproduce el track siguiente del álbum" do
+  test "next plays the album's next track" do
     play "Dijo El Droguero Al Drogador"
 
-    click_button "Siguiente"
+    click_button "Next"
 
     assert_selector "[data-player-target='title']", text: "Desencuentro"
   end
 
-  # Con la cola dada vuelta, el último track no es el final de nada.
-  test "con repetición, el último track vuelve al primero" do
+  # With the queue wrapped around, the last track isn't the end of anything.
+  test "with repeat on, the last track loops back to the first" do
     play "El Pibe Tigre"
-    click_button "Repetir"
+    click_button "Repeat"
 
-    click_button "Siguiente"
+    click_button "Next"
 
     assert_selector "[data-player-target='title']", text: "Dijo El Droguero Al Drogador"
   end
 
-  test "sin repetición, el último track es el último" do
+  test "without repeat, the last track is the last one" do
     play "El Pibe Tigre"
 
-    click_button "Siguiente"
+    click_button "Next"
 
     assert_selector "[data-player-target='title']", text: "El Pibe Tigre"
   end
 
-  test "con aleatorio, lo que sigue deja de ser el orden del disco" do
+  test "with shuffle on, what's next stops being the album's order" do
     play "Dijo El Droguero Al Drogador"
 
-    click_button "Aleatorio"
+    click_button "Shuffle"
 
     assert_selector "[data-player-target='shuffle'][aria-pressed='true']"
   end
 
-  # Después de navegar por media biblioteca, volver a lo que suena.
-  test "desde el player se vuelve al álbum que está sonando" do
+  # After browsing through half the library, get back to what's playing.
+  test "from the player you can get back to the album that's playing" do
     play "Desencuentro"
     click_link "Mediateca"
-    assert_text "Tu biblioteca"
+    assert_text "Your Library"
 
     click_link "Desencuentro"
 

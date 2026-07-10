@@ -25,7 +25,7 @@ module Video
         verify(ffmpeg.value, complaints.value, path)
       end
     rescue Errno::ENOENT
-      raise NotInstalled, "no encuentro #{ffmpeg.inspect}: instalá ffmpeg o apuntá FFMPEG al binario"
+      raise NotInstalled, "can't find #{ffmpeg.inspect}: install ffmpeg or point FFMPEG at the binary"
     end
 
     def command(path, playback, from: 0)
@@ -60,7 +60,7 @@ module Video
     def verify(status, complaints, path)
       return if status.success?
 
-      raise Failed, "ffmpeg falló con #{path}: #{complaints.to_s.strip}"
+      raise Failed, "ffmpeg failed on #{path}: #{complaints.to_s.strip}"
     end
 
     def ffmpeg

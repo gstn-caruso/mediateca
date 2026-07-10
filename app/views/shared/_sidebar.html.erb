@@ -9,7 +9,7 @@
   </div>
 
   <div class="flex min-h-0 flex-1 flex-col rounded-lg bg-neutral-900">
-    <h2 class="px-5 py-4 text-sm font-semibold text-neutral-400">Tu biblioteca</h2>
+    <h2 class="px-5 py-4 text-sm font-semibold text-neutral-400">Your Library</h2>
 
     <ul class="min-h-0 flex-1 space-y-1 overflow-y-auto px-2 pb-3">
       <% library_artists.each do |artist| %>
@@ -24,7 +24,7 @@
             <div class="min-w-0">
               <p class="truncate text-sm font-medium text-neutral-100"><%= artist.name %></p>
               <p class="truncate text-xs text-neutral-400">
-                <%= pluralize(artist.albums.size, "álbum", plural: "álbumes") %>
+                <%= pluralize(artist.albums.size, "album") %>
               </p>
             </div>
           <% end %>

@@ -4,13 +4,13 @@ module Beets
   class LibraryTest < ActiveSupport::TestCase
     GUANACO = "/mnt/data/multimedia/Música/Almafuerte/1995 - Mundo guanaco".freeze
 
-    test "una biblioteca sin álbumes no devuelve ninguno" do
+    test "a library with no albums returns none" do
       library = Library.new(BeetsFixture.empty)
 
       assert_empty library.albums
     end
 
-    test "lee los datos de un álbum" do
+    test "reads an album's data" do
       library = Library.new(BeetsFixture.build(
         albums: [ {
           id: 7,
@@ -36,7 +36,7 @@ module Beets
       assert_equal "/mnt/data/multimedia/Música/Almafuerte/1996 - Del entorno/cover.jpg", album.cover_path
     end
 
-    test "un álbum expone sus tracks" do
+    test "an album exposes its tracks" do
       library = Library.new(BeetsFixture.build(
         albums: [ { id: 1 } ],
         items: [ {
@@ -58,9 +58,9 @@ module Beets
       assert_equal "#{GUANACO}/02 - Desencuentro.flac", track.path
     end
 
-    # El directorio del álbum es su identidad, y es lo único que beets y el
-    # filesystem pueden acordar sin conocerse.
-    test "el directorio del álbum es el de sus tracks" do
+    # The album's directory is its identity, and it's the only thing beets and
+    # the filesystem can agree on without knowing each other.
+    test "the album's directory is that of its tracks" do
       library = Library.new(BeetsFixture.build(
         albums: [ { id: 1 } ],
         items: [ { album_id: 1, path: "#{GUANACO}/01.flac" }, { album_id: 1, path: "#{GUANACO}/02.flac" } ]
@@ -69,9 +69,9 @@ module Beets
       assert_equal GUANACO, library.albums.sole.directory
     end
 
-    # El Warning deluxe de Green Day tiene sus tracks en CD01, CD02 y CD03. El
-    # directorio del álbum es el que comparten, no el de ninguno de ellos.
-    test "un álbum repartido en subcarpetas por disco vive en la carpeta que comparten" do
+    # Green Day's Warning deluxe has its tracks in CD01, CD02 and CD03. The
+    # album's directory is the one they share, not any single one of them.
+    test "an album split across subfolders by disc lives in the folder they share" do
       warning = "/mnt/data/multimedia/Música/Green Day/2025 - Warning (25th Anniversary Deluxe Edition)"
       library = Library.new(BeetsFixture.build(
         albums: [ { id: 1, disctotal: 3 } ],
@@ -85,15 +85,15 @@ module Beets
       assert_equal warning, library.albums.sole.directory
     end
 
-    # beets guarda álbumes cuyos archivos ya no existen —los 6 de System of a
-    # Down, por ejemplo. Sin tracks no hay directorio ni nada que sonar.
-    test "un álbum sin tracks no se reporta" do
+    # beets keeps albums whose files no longer exist — the 6 System of a Down
+    # ones, for example. With no tracks there's no directory and nothing to play.
+    test "an album with no tracks isn't reported" do
       library = Library.new(BeetsFixture.build(albums: [ { id: 1 } ]))
 
       assert_empty library.albums
     end
 
-    test "los tracks de un álbum multi-disco van ordenados por disco y número" do
+    test "a multi-disc album's tracks are ordered by disc and number" do
       library = Library.new(BeetsFixture.build(
         albums: [ { id: 1, disctotal: 2 } ],
         items: [
@@ -109,26 +109,26 @@ module Beets
       assert_equal [ [ 1, 1 ], [ 1, 2 ], [ 2, 1 ] ], album.tracks.map { |track| [ track.disc_no, track.track_no ] }
     end
 
-    # beets guarda los paths como bytes crudos en columnas BLOB. En el NAS hay
-    # acentos ("Música") y cirílico ("Ленинград"); si se leen sin re-etiquetar
-    # el encoding, llegan como binario y no matchean nada.
-    test "los paths salen del BLOB como UTF-8 legible" do
-      leningrado = "/mnt/data/multimedia/Música/Кино/1982 - Ленинград"
+    # beets stores paths as raw bytes in BLOB columns. The NAS has accents
+    # ("Música") and Cyrillic ("Ленинград"); if they're read without re-tagging
+    # the encoding, they arrive as binary and match nothing.
+    test "paths come out of the BLOB as readable UTF-8" do
+      leningrad = "/mnt/data/multimedia/Música/Кино/1982 - Ленинград"
       library = Library.new(BeetsFixture.build(
-        albums: [ { id: 1, artpath: "#{leningrado}/cover.jpg" } ],
-        items: [ { album_id: 1, path: "#{leningrado}/01 - Бездельник.flac" } ]
+        albums: [ { id: 1, artpath: "#{leningrad}/cover.jpg" } ],
+        items: [ { album_id: 1, path: "#{leningrad}/01 - Бездельник.flac" } ]
       ))
 
       album = library.albums.sole
 
       assert_equal Encoding::UTF_8, album.cover_path.encoding
-      assert_equal leningrado, album.directory
-      assert_equal "#{leningrado}/01 - Бездельник.flac", album.tracks.sole.path
+      assert_equal leningrad, album.directory
+      assert_equal "#{leningrad}/01 - Бездельник.flac", album.tracks.sole.path
       assert_equal Encoding::UTF_8, album.tracks.sole.path.encoding
     end
 
-    # 23 de los 75 álbumes del NAS tienen genre = '' (string vacío), no NULL.
-    test "un género vacío se preserva como string vacío" do
+    # 23 of the NAS's 75 albums have genre = '' (empty string), not NULL.
+    test "an empty genre is preserved as an empty string" do
       library = Library.new(BeetsFixture.build(
         albums: [ { id: 1, genre: "" } ],
         items: [ { album_id: 1 } ]
@@ -137,7 +137,7 @@ module Beets
       assert_equal "", library.albums.sole.genre
     end
 
-    test "un álbum sin carátula la expone como nil" do
+    test "an album with no cover exposes it as nil" do
       library = Library.new(BeetsFixture.build(
         albums: [ { id: 1, artpath: nil } ],
         items: [ { album_id: 1 } ]

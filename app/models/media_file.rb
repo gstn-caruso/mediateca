@@ -27,7 +27,7 @@ class MediaFile
   def within_root(candidate)
     resolved = resolve_symlinks(::File.expand_path(candidate))
 
-    raise Forbidden, "#{candidate.inspect} cae fuera de #{@root.inspect}" unless resolved.start_with?("#{@root}/")
+    raise Forbidden, "#{candidate.inspect} falls outside #{@root.inspect}" unless resolved.start_with?("#{@root}/")
 
     resolved
   end

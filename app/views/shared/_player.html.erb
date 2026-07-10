@@ -1,31 +1,31 @@
-<%# La cola. Vive dentro de #player, que es data-turbo-permanent, así que sigue
-    abierta y llena mientras navegás. %>
+<%# The queue. Lives inside #player, which is data-turbo-permanent, so it stays
+    open and filled while you navigate. %>
 <aside data-player-target="panel" hidden
        class="pointer-events-auto absolute bottom-24 right-4 z-20 w-80 rounded-lg border border-white/10 bg-neutral-900 shadow-2xl">
-  <h2 class="border-b border-white/5 px-4 py-3 text-sm font-semibold text-white">A continuación</h2>
+  <h2 class="border-b border-white/5 px-4 py-3 text-sm font-semibold text-white">Next up</h2>
   <ol data-player-target="queue" class="max-h-80 overflow-y-auto p-2"></ol>
-  <p data-player-target="queueEmpty" class="px-4 pb-4 pt-1 text-sm text-neutral-500">No sigue nada.</p>
+  <p data-player-target="queueEmpty" class="px-4 pb-4 pt-1 text-sm text-neutral-500">Nothing up next.</p>
 </aside>
 
 <div class="grid h-24 grid-cols-[1fr_auto_1fr] items-center gap-4 px-4">
-  <%# Suena qué %>
+  <%# What's playing %>
   <div class="flex min-w-0 items-center gap-3">
     <img data-player-target="cover" alt=""
          class="hidden size-14 rounded object-cover shadow-lg ring-1 ring-white/10">
     <div class="min-w-0">
-      <%# Después de navegar por media biblioteca, el título es el camino de vuelta. %>
+      <%# After navigating through half the library, the title is the way back. %>
       <a data-player-target="title" href="#" hidden
          class="block truncate text-sm font-medium text-neutral-100 hover:underline"></a>
-      <p data-player-target="idle" class="truncate text-sm font-medium text-neutral-400">Nada sonando</p>
+      <p data-player-target="idle" class="truncate text-sm font-medium text-neutral-400">Nothing playing</p>
       <p data-player-target="subtitle" class="truncate text-xs text-neutral-400"></p>
     </div>
   </div>
 
-  <%# Controles %>
+  <%# Controls %>
   <div class="flex w-[36rem] max-w-full flex-col items-center gap-2 py-1">
     <div class="flex items-center gap-4">
       <button type="button" data-action="player#toggleShuffle" data-player-target="shuffle"
-              aria-label="Aleatorio" aria-pressed="false"
+              aria-label="Shuffle" aria-pressed="false"
               class="text-neutral-400 transition hover:text-white aria-pressed:text-emerald-400">
         <svg class="size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
           <path d="M13.151.922a.75.75 0 1 0-1.06 1.06L13.109 3H11.16a3.75 3.75 0 0 0-2.873 1.34l-6.173 7.356A2.25 2.25 0 0 1 .39 12.5H0V14h.391a3.75 3.75 0 0 0 2.873-1.34l6.173-7.356a2.25 2.25 0 0 1 1.724-.804h1.947l-1.017 1.018a.75.75 0 0 0 1.06 1.06L15.98 3.75 13.15.922ZM.391 3.5H0V2h.391c1.109 0 2.16.49 2.873 1.34L4.89 5.277l-.979 1.167-1.796-2.14A2.25 2.25 0 0 0 .39 3.5Z"/>
@@ -33,14 +33,14 @@
         </svg>
       </button>
 
-      <button type="button" data-action="player#previous" aria-label="Anterior"
+      <button type="button" data-action="player#previous" aria-label="Previous"
               class="text-neutral-400 transition hover:text-white">
         <svg class="size-5" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
           <path d="M3.3 1a.7.7 0 0 1 .7.7v5.15l9.95-5.744a.7.7 0 0 1 1.05.606v12.575a.7.7 0 0 1-1.05.607L4 9.149V14.3a.7.7 0 0 1-.7.7H1.7a.7.7 0 0 1-.7-.7V1.7a.7.7 0 0 1 .7-.7h1.6Z"/>
         </svg>
       </button>
 
-      <button type="button" data-action="player#toggle" aria-label="Reproducir o pausar"
+      <button type="button" data-action="player#toggle" aria-label="Play or pause"
               class="flex size-10 items-center justify-center rounded-full bg-white text-black transition hover:scale-105">
         <svg data-player-target="playIcon" class="size-5 translate-x-px" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
           <path d="M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713Z"/>
@@ -50,7 +50,7 @@
         </svg>
       </button>
 
-      <button type="button" data-action="player#next" aria-label="Siguiente"
+      <button type="button" data-action="player#next" aria-label="Next"
               class="text-neutral-400 transition hover:text-white">
         <svg class="size-5" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
           <path d="M12.7 1a.7.7 0 0 0-.7.7v5.15L2.05 1.106A.7.7 0 0 0 1 1.712v12.575a.7.7 0 0 0 1.05.607L12 9.149V14.3a.7.7 0 0 0 .7.7h1.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7h-1.6Z"/>
@@ -58,7 +58,7 @@
       </button>
 
       <button type="button" data-action="player#cycleRepeat" data-player-target="repeat"
-              aria-label="Repetir" aria-pressed="false"
+              aria-label="Repeat" aria-pressed="false"
               class="text-neutral-400 transition hover:text-white aria-pressed:text-emerald-400">
         <svg class="size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
           <path d="M0 4.75A3.75 3.75 0 0 1 3.75 1h8.5A3.75 3.75 0 0 1 16 4.75v5a3.75 3.75 0 0 1-3.75 3.75H9.81l1.018 1.018a.75.75 0 1 1-1.06 1.06L6.939 12.75l2.829-2.828a.75.75 0 1 1 1.06 1.06L9.811 12h2.439a2.25 2.25 0 0 0 2.25-2.25v-5a2.25 2.25 0 0 0-2.25-2.25h-8.5A2.25 2.25 0 0 0 1.5 4.75v5A2.25 2.25 0 0 0 3.75 12H5v1.5H3.75A3.75 3.75 0 0 1 0 9.75v-5Z"/>
@@ -70,16 +70,16 @@
     <div class="flex w-full items-center gap-2">
       <span data-player-target="elapsed" class="w-10 text-right text-xs tabular-nums text-neutral-400">0:00</span>
       <input type="range" min="0" max="1000" value="0" step="1"
-             data-player-target="progress" data-action="input->player#scrub" aria-label="Progreso"
+             data-player-target="progress" data-action="input->player#scrub" aria-label="Progress"
              class="h-1 w-full cursor-pointer appearance-none rounded-full bg-neutral-600 accent-white">
       <span data-player-target="duration" class="w-10 text-xs tabular-nums text-neutral-400">–:––</span>
     </div>
   </div>
 
-  <%# Cola y volumen %>
+  <%# Queue and volume %>
   <div class="flex items-center justify-end gap-3">
     <button type="button" data-action="player#toggleQueue" data-player-target="queueToggle"
-            aria-label="Ver la cola" aria-expanded="false"
+            aria-label="Queue" aria-expanded="false"
             class="text-neutral-400 transition hover:text-white aria-expanded:text-emerald-400">
       <svg class="size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
         <path d="M15 15H1v-1.5h14V15Zm0-4.5H1V9h14v1.5Zm-14-7A2.5 2.5 0 0 1 3.5 1h9a2.5 2.5 0 0 1 0 5h-9A2.5 2.5 0 0 1 1 3.5Z"/>
@@ -90,13 +90,13 @@
       <path d="M9.741.85a.8.8 0 0 1 .375.65v13a.8.8 0 0 1-1.298.624L4.905 12H1.5A1.5 1.5 0 0 1 0 10.5v-5A1.5 1.5 0 0 1 1.5 4h3.405l3.913-3.124a.8.8 0 0 1 .923-.026Zm3.416 3.183a.75.75 0 0 1 1.06 0 6.75 6.75 0 0 1 0 9.546.75.75 0 1 1-1.06-1.06 5.25 5.25 0 0 0 0-7.425.75.75 0 0 1 0-1.06Z"/>
     </svg>
     <input type="range" min="0" max="100" value="100" step="1"
-           data-player-target="volume" data-action="input->player#changeVolume" aria-label="Volumen"
+           data-player-target="volume" data-action="input->player#changeVolume" aria-label="Volume"
            class="h-1 w-24 cursor-pointer appearance-none rounded-full bg-neutral-600 accent-white">
   </div>
 </div>
 
-<%# preload=metadata pide solo la cabecera del FLAC: alcanza para saber la
-    duración sin bajar los 34MB. %>
+<%# preload=metadata asks for just the FLAC header: enough to know the
+    duration without downloading the 34MB. %>
 <audio data-player-target="audio"
        data-action="timeupdate->player#tick loadedmetadata->player#tick play->player#refreshIcons pause->player#refreshIcons ended->player#advance"
        preload="metadata"

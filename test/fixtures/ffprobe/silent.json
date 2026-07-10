@@ -58,7 +58,7 @@
         }
     ],
     "format": {
-        "filename": "test/fixtures/videos/mudo.mkv",
+        "filename": "test/fixtures/videos/silent.mkv",
         "nb_streams": 1,
         "nb_programs": 0,
         "nb_stream_groups": 0,
