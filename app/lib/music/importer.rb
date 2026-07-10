@@ -1,6 +1,6 @@
 module Music
   # Mirrors an external music source into our catalog. The source is anything
-  # that answers #albums with Beets::Album-shaped values.
+  # that answers #albums with Music::Source::Album values.
   #
   # Importing is idempotent: beets ids are the identity, so re-running against
   # an unchanged source is a no-op and a changed one updates in place.

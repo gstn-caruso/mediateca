@@ -44,7 +44,7 @@ module Beets
     def album_from(row, tracks)
       beets_id, title, artist, year, genre, album_type, disc_total, cover_path = row
 
-      Album.new(
+      Music::Source::Album.new(
         beets_id:, title:, artist:, year:, genre:, album_type:,
         disc_total: disc_total || 1,
         cover_path: text(cover_path),
@@ -55,7 +55,7 @@ module Beets
     def track_from(row)
       _album_id, beets_id, title, track_no, disc_no, duration, path = row
 
-      Track.new(beets_id:, title:, track_no:, duration:, disc_no: disc_no || 1, path: text(path))
+      Music::Source::Track.new(beets_id:, title:, track_no:, duration:, disc_no: disc_no || 1, path: text(path))
     end
 
     # beets keeps filesystem paths as raw bytes in BLOB columns, so they arrive
