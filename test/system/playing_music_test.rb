@@ -110,7 +110,9 @@ class PlayingMusicTest < ApplicationSystemTestCase
   test "with shuffle on, what's next stops being the album's order" do
     play "Dijo El Droguero Al Drogador"
 
-    click_button "Shuffle"
+    # The record now has its own "Shuffle" button in the header, so ask for the
+    # player's toggle by name, not by a label two buttons answer to.
+    find("[data-player-target='shuffle']").click
 
     assert_selector "[data-player-target='shuffle'][aria-pressed='true']"
   end
