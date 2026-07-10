@@ -1,0 +1,30 @@
+{
+  "data": [
+    {
+      "id": 10910,
+      "name": "Almafuerte",
+      "picture_xl": "https://cdn-images.dzcdn.net/images/artist/66e2b09769b9e6ef5cde3816f3aefacb/1000x1000-000000-80-0-0.jpg"
+    },
+    {
+      "id": 127698932,
+      "name": "Aguafuertes",
+      "picture_xl": "https://cdn-images.dzcdn.net/images/artist/d48112454a7716fcffb0c6eab8397303/1000x1000-000000-80-0-0.jpg"
+    },
+    {
+      "id": 94352532,
+      "name": "Griselda de Almafuerte",
+      "picture_xl": "https://cdn-images.dzcdn.net/images/artist/31376535662b94a8d539ba77b7b35b47/1000x1000-000000-80-0-0.jpg"
+    },
+    {
+      "id": 281444121,
+      "name": "Almafuerte Woodstock Band",
+      "picture_xl": "https://cdn-images.dzcdn.net/images/artist/ec70861acd98d3c73e03b3a020532bf9/1000x1000-000000-80-0-0.jpg"
+    },
+    {
+      "id": 134927432,
+      "name": "Alma Fuerte",
+      "picture_xl": "https://cdn-images.dzcdn.net/images/artist/5a3cbe40a3bb5edbc9ef0338d39da5c4/1000x1000-000000-80-0-0.jpg"
+    }
+  ],
+  "total": 8
+}
