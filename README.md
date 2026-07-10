@@ -1,113 +1,115 @@
 # Mediateca
 
-Servidor de medios propio, para reemplazar Jellyfin. Corre en Docker sobre el
-NAS y lee los archivos de `/mnt/data/multimedia` sin copiarlos ni
-transcodificarlos.
+A self-hosted media server, meant to replace Jellyfin. It runs in Docker on the
+NAS and reads the files under `/mnt/data/multimedia` without copying or
+transcoding them.
 
-Hoy hace **música**, con una interfaz al estilo Spotify. El video viene después.
-
----
-
-## Cómo está armado
-
-El disco decide qué música existe; beets solo dice cómo se llama.
-
-`Music::FilesystemSource` escanea la música y lee los tags de cada FLAC con
-ffprobe: los 1171 archivos, no los 934 que beets conoce. `Beets::Library` aporta
-lo que sabe. `Music::Library` los combina, y `Music::Importer` espeja el
-resultado en el catálogo, de forma idempotente: el directorio identifica al
-álbum y el path al track.
-
-La carátula la elige el disco, no beets: beets había elegido la contratapa para
-los seis álbumes de Almafuerte.
-
-Los bytes nunca pasan por Ruby. En producción Rails solo nombra el archivo con
-el header `X-Sendfile` y **Thruster** lo sirve, con soporte de `Range` — o sea,
-el reproductor puede hacer seek sin bajar el FLAC entero. En desarrollo no hay
-nada adelante, así que Rails sirve con `Rack::Files`, que también implementa
-`Range`. La regla, escrita en `ServesMedia`: *quien sirve el archivo sirve
-también el rango.*
-
-`MediaFile` es el límite de confianza. Los paths salen de la base, y él rechaza
-cualquiera que caiga fuera de la raíz de medios: `..`, paths absolutos,
-directorios hermanos con el mismo prefijo (`/mnt/data-secreto` no está dentro de
-`/mnt/data`) y symlinks que apuntan afuera.
-
-Nada se transcodifica. Los FLAC se sirven crudos y todos los browsers modernos
-los reproducen nativamente.
-
-El player vive fuera del `<body>` que Turbo Drive reemplaza al navegar
-(`data-turbo-permanent`), y la cola de reproducción se guarda **en el elemento
-`<audio>`**, no en el controller de Stimulus — que Turbo destruye y reconstruye
-en cada página. Por eso la música no se corta al cambiar de vista.
+Right now it does **music**, with a Spotify-style interface. Video comes later.
 
 ---
 
-## Requisitos
+## How it's built
+
+The disk decides what music exists; beets only says what it's called.
+
+`Music::FilesystemSource` scans the music and reads each FLAC's tags with
+ffprobe: all 1171 files, not the 934 beets knows about. `Beets::Library`
+contributes what it knows. `Music::Library` combines them, and `Music::Importer`
+mirrors the result into the catalog, idempotently: the directory identifies the
+album and the path identifies the track.
+
+The cover art is chosen by the disk, not beets: beets had picked the back cover
+for all six Almafuerte albums.
+
+The bytes never pass through Ruby. In production Rails only names the file with
+the `X-Sendfile` header and **Thruster** serves it, with `Range` support — that
+is, the player can seek without downloading the whole FLAC. In development
+there's nothing in front, so Rails serves with `Rack::Files`, which also
+implements `Range`. The rule, written down in `ServesMedia`: *whoever serves the
+file serves the range too.*
+
+`MediaFile` is the trust boundary. The paths come out of the database, and it
+rejects any that fall outside the media root: `..`, absolute paths, sibling
+directories with the same prefix (`/mnt/data-secreto` is not inside `/mnt/data`)
+and symlinks that point outside.
+
+Nothing gets transcoded. The FLACs are served raw and every modern browser plays
+them natively.
+
+The player lives outside the `<body>` that Turbo Drive replaces when you
+navigate (`data-turbo-permanent`), and the playback queue is stored **in the
+`<audio>` element**, not in the Stimulus controller — which Turbo destroys and
+rebuilds on every page. That's why the music doesn't cut out when you switch
+views.
+
+---
+
+## Requirements
 
 | | |
 |---|---|
-| Ruby | 4.0.5 (`.ruby-version`). Ojo: no existe Ruby 3.5 estable — esa serie se renombró a 4.0 |
+| Ruby | 4.0.5 (`.ruby-version`). Heads up: there is no stable Ruby 3.5 — that series was renamed to 4.0 |
 | Rails | 8.1.3 |
-| Base | SQLite (primary, cache, queue, cable) |
-| Docker | solo para deployar. Docker Desktop tiene que estar **corriendo**: Kamal levanta el registry local ahí |
+| Database | SQLite (primary, cache, queue, cable) |
+| Docker | only for deploying. Docker Desktop has to be **running**: Kamal brings up the local registry there |
 
 ---
 
-## Desarrollo
+## Development
 
 ```bash
-bin/setup                # dependencias, base, assets
-bin/dev                  # servidor local en :3000
-bin/rails test           # 111 tests
-bin/rails test:system    # 3 system tests con Chrome headless
-bin/ci                   # todo lo que corre GitHub Actions
+bin/setup                # dependencies, database, assets
+bin/dev                  # local server on :3000
+bin/rails test           # unit, integration and contract tests
+bin/rails test:system    # system tests, with headless Chrome
+bin/ci                   # everything GitHub Actions runs
 ```
 
-Los tests **nunca tocan el NAS**: `Beets::Library` corre contra bases SQLite que
-se arman en el momento, y `MEDIA_ROOT` apunta a un par de FLAC falsos en
+The tests **never touch the NAS**: `Beets::Library` runs against SQLite
+databases built on the fly, and `MEDIA_ROOT` points at a couple of fake FLACs in
 `test/fixtures/media`.
 
-**Y no necesitan ffmpeg.** `Video::Playback` decide sin abrir nada;
-`Video::Probe` y `Music::Tags` interpretan salida de ffprobe grabada en
-`test/fixtures/ffprobe`; `Video::Conversion` arma el comando y otro lo corre.
-Correr un proceso es una responsabilidad aparte, y vive en `Ffprobe`.
+**And they don't need ffmpeg.** `Video::Playback` decides without opening
+anything; `Video::Probe` and `Music::Tags` interpret ffprobe output recorded in
+`test/fixtures/ffprobe`; `Video::Conversion` assembles the command and something
+else runs it. Running a process is a separate responsibility, and it lives in
+`Ffprobe`.
 
-Los únicos que sí lo corren son los de `test/contracts/`, y son los únicos que
-pueden verificar lo que nadie más: que ffprobe siga describiendo los archivos
-como cuando grabamos su salida, y que ffmpeg entienda los argumentos que
-armamos. Si ffmpeg no está, se saltean — salvo con `REQUIRE_FFMPEG=1`, que es
-como los corre el CI, para que nunca queden verdes sin haber corrido.
+The only ones that do run it are those in `test/contracts/`, and they're the
+only ones that can verify what nobody else can: that ffprobe still describes the
+files the way it did when we recorded its output, and that ffmpeg understands the
+arguments we build. If ffmpeg isn't there, they're skipped — except with
+`REQUIRE_FFMPEG=1`, which is how CI runs them, so they never come up green
+without having actually run.
 
-Para levantar la app con tu música real, copiate la base de beets:
+To bring the app up with your real music, copy the beets database over:
 
 ```bash
 scp nas:/mnt/data/beets/musiclibrary.db /tmp/
 BEETS_DATABASE=/tmp/musiclibrary.db bin/rails music:import
 ```
 
-Los paths que guarda beets son absolutos (`/mnt/data/multimedia/...`), así que
-en la Mac vas a ver el catálogo pero los archivos no van a existir. Para
-reproducir de verdad, deployá.
+The paths beets stores are absolute (`/mnt/data/multimedia/...`), so on the Mac
+you'll see the catalog but the files won't exist. To actually play anything,
+deploy.
 
 ---
 
-## Preparar el NAS (una sola vez)
+## Setting up the NAS (one time only)
 
-Kamal puede instalar Docker solo, pero solo si entra como root por SSH. En este
-NAS root está denegado, así que se instala a mano:
+Kamal can install Docker on its own, but only if it logs in as root over SSH. On
+this NAS root is denied, so we install it by hand:
 
 ```bash
 ssh nas 'curl -fsSL https://get.docker.com | sudo sh'
-ssh nas 'sudo usermod -aG docker gaston'   # para no necesitar sudo
+ssh nas 'sudo usermod -aG docker gaston'   # so we don't need sudo
 ```
 
-**`/var` es una partición chica** (6,4 GB) y ahí van, por defecto, tanto el
-`data-root` de Docker como el de containerd. Con dos imágenes y el build cache
-se llena, y la app muere con `SQLite3::FullException: database or disk is full`.
-`/srv` tiene 195 GB. Hay que mover **los dos** — mover solo el de Docker no
-alcanza, porque desde Docker 23 las imágenes viven en el content store de
-containerd:
+**`/var` is a small partition** (6.4 GB) and that's where both Docker's
+`data-root` and containerd's go by default. With two images and the build cache
+it fills up, and the app dies with `SQLite3::FullException: database or disk is
+full`. `/srv` has 195 GB. You have to move **both** — moving only Docker's isn't
+enough, because since Docker 23 the images live in containerd's content store:
 
 ```bash
 ssh nas 'sudo systemctl stop docker.socket docker containerd
@@ -123,8 +125,8 @@ ssh nas 'sudo systemctl stop docker.socket docker containerd
   sudo systemctl start containerd docker'
 ```
 
-**Liberar el `:80`.** kamal-proxy lo necesita, y ahí vivía el nginx que proxeaba
-a Jellyfin. Jellyfin sigue accesible directo en `:8096`:
+**Free up `:80`.** kamal-proxy needs it, and that's where the nginx that proxied
+to Jellyfin used to live. Jellyfin is still reachable directly on `:8096`:
 
 ```bash
 ssh nas 'sudo systemctl disable --now nginx'
@@ -135,79 +137,81 @@ ssh nas 'sudo systemctl disable --now nginx'
 ## Deploy
 
 ```bash
-cp .kamal/secrets.example .kamal/secrets   # no tiene secretos, solo lookups
-open -a Docker                             # el registry local corre acá
+cp .kamal/secrets.example .kamal/secrets   # no secrets, just lookups
+open -a Docker                             # the local registry runs here
 
-bin/kamal setup      # la primera vez
-bin/kamal deploy     # las siguientes
-bin/kamal import     # escanea la música y la mete en el catálogo (~80s)
+bin/kamal setup      # the first time
+bin/kamal deploy     # every time after
+bin/kamal import     # scans the music and loads it into the catalog (~80s)
 bin/kamal logs
 bin/kamal console
 ```
 
-El escaneo también corre solo, todas las madrugadas: `ScanMusicJob` a las 4am.
+The scan also runs on its own, every night before dawn: `ScanMusicJob` at 4am.
 
-Y ya está en `http://192.168.1.7/`.
+And there it is at `http://192.168.1.7/`.
 
-No hay token de registry ni imágenes privadas dando vueltas por internet: el
-registry es local (`localhost:5555`), Kamal lo levanta como contenedor en tu
-máquina y abre un port-forward SSH inverso para que el NAS pullee de su propio
-localhost. La imagen nunca sale de la LAN.
+There's no registry token and no private images floating around the internet:
+the registry is local (`localhost:5555`), Kamal brings it up as a container on
+your machine and opens a reverse SSH port-forward so the NAS pulls from its own
+localhost. The image never leaves the LAN.
 
-La imagen se buildea **en el NAS**, que es amd64. Cross-compilar desde la Mac
-(arm64) con QEMU funciona, pero es mucho más lento.
+The image is built **on the NAS**, which is amd64. Cross-compiling from the Mac
+(arm64) with QEMU works, but it's much slower.
 
-La música se monta read-only y **bajo el mismo path que en el host**, así un path
-guardado en el catálogo significa lo mismo adentro y afuera del contenedor. El
-contenedor corre como uid 1000, que en el NAS es `gaston`, dueño de los archivos.
+The music is mounted read-only and **under the same path as on the host**, so a
+path stored in the catalog means the same thing inside and outside the
+container. The container runs as uid 1000, which on the NAS is `gaston`, the
+owner of the files.
 
-### Tres trampas que ya pagamos
+### Three traps we already paid for
 
-**El puerto 5000 no sirve en macOS.** El receptor de AirPlay (ControlCenter)
-escucha en `*:5000` sobre IPv4 e IPv6. Docker bindea `127.0.0.1:5000`, pero
-`localhost` resuelve primero a `::1`, así que el push del registry termina
-hablándole a AirTunes, que contesta `403 Forbidden` con un `Server:
-AirTunes/...` en el header. De ahí el `5555`.
+**Port 5000 is useless on macOS.** The AirPlay receiver (ControlCenter) listens
+on `*:5000` over both IPv4 and IPv6. Docker binds `127.0.0.1:5000`, but
+`localhost` resolves to `::1` first, so the registry push ends up talking to
+AirTunes, which answers `403 Forbidden` with a `Server: AirTunes/...` header.
+Hence the `5555`.
 
-**Kamal y un git en español.** Kamal decide si su clon de build ya existe
-matcheando el error de git contra `already exists and is not an empty
-directory`. Un git localizado dice otra cosa, el regex no matchea, y en vez de
-resetear el clon Kamal lo borra y lo vuelve a clonar en **cada** deploy, después
-de imprimir un `Error preparing clone` que asusta y no significa nada. `bin/kamal`
-fija `LC_ALL=C` por eso: el deploy pasa de 79 s a 9 s.
+**Kamal and a git in Spanish.** Kamal decides whether its build clone already
+exists by matching git's error against `already exists and is not an empty
+directory`. A localized git says something else, the regex doesn't match, and
+instead of resetting the clone Kamal deletes it and clones it again on **every**
+deploy, after printing an `Error preparing clone` that looks scary and means
+nothing. That's why `bin/kamal` sets `LC_ALL=C`: the deploy drops from 79 s to
+9 s.
 
-**Rails 8.1 deja comentados los paths de SQLite de producción** en
-`config/database.yml`. Sin completarlos el contenedor muere al arrancar con
-`No database file specified`.
+**Rails 8.1 leaves the production SQLite paths commented out** in
+`config/database.yml`. Without filling them in, the container dies on startup
+with `No database file specified`.
 
 ---
 
 ## CI
 
-Seis jobs en GitHub Actions, en cada push y cada PR:
+Six jobs in GitHub Actions, on every push and every PR:
 
-| Job | Qué hace |
+| Job | What it does |
 |---|---|
 | Tests | `bin/rails test` |
-| Tests de sistema | Chrome headless, sube screenshots si falla |
-| Estilo | RuboCop (rubocop-rails-omakase) con caché |
-| Seguridad (Ruby) | Brakeman + bundler-audit |
-| Seguridad (JavaScript) | `importmap audit` |
-| Imagen Docker (amd64) | buildea la imagen, la levanta y verifica que `/up` conteste |
+| System tests | Headless Chrome, uploads screenshots on failure |
+| Style | RuboCop (rubocop-rails-omakase) with cache |
+| Security (Ruby) | Brakeman + bundler-audit |
+| Security (JavaScript) | `importmap audit` |
+| Docker image (amd64) | builds the image, brings it up and checks that `/up` answers |
 
-Ese último job existe porque un build que compila pero no arranca no prueba
-nada, y un deploy no es el momento de enterarse.
+That last job exists because a build that compiles but doesn't start proves
+nothing, and a deploy is not the moment to find out.
 
-Brakeman marca el `send_file` de `ServesMedia` porque el path viene de un
-atributo del modelo. La categoría es correcta; el guardián que no ve es
-`MediaFile`. Está ignorado con nota en `config/brakeman.ignore`.
+Brakeman flags the `send_file` in `ServesMedia` because the path comes from a
+model attribute. The category is right; the guard it can't see is `MediaFile`.
+It's ignored with a note in `config/brakeman.ignore`.
 
 ---
 
-## Qué falta
+## What's missing
 
-- **Video.** Ahí esperan 375 `.mkv`, 168 `.mp4` y 61 `.avi`. Muchos mkv son HEVC
-  con audio FLAC 5.1 multipista y subtítulos ASS: no son direct-play en ningún
-  browser. El plan acordado es remuxear con `ffmpeg -c copy` (cambiar el
-  contenedor sin recomprimir el video), no transcodificar.
-- **Búsqueda**, y una vista de álbumes que no pase por el artista.
+- **Video.** Waiting there are 375 `.mkv`, 168 `.mp4` and 61 `.avi`. Many of the
+  mkv are HEVC with multitrack FLAC 5.1 audio and ASS subtitles: they're not
+  direct-play in any browser. The agreed plan is to remux with `ffmpeg -c copy`
+  (change the container without recompressing the video), not to transcode.
+- **Search**, and an album view that doesn't go through the artist.
