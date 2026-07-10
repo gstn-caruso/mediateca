@@ -1,0 +1,18 @@
+<%# A native <details> menu: no JavaScript, and Escape closes it because the
+    browser says so. %>
+<details class="relative shrink-0">
+  <summary aria-label="Add <%= track.title %> to a playlist"
+           class="flex size-8 cursor-pointer list-none items-center justify-center rounded-full
+                  text-lg text-neutral-500 transition hover:bg-white/10 hover:text-white">+</summary>
+
+  <div class="absolute right-0 z-20 mt-1 w-56 rounded-lg border border-white/10 bg-neutral-900 p-1 shadow-2xl">
+    <% if playlists.any? %>
+      <% playlists.each do |playlist| %>
+        <%= button_to playlist.name, playlist_entries_path(playlist), params: { track_id: track.id },
+                      class: "w-full cursor-pointer truncate rounded px-3 py-2 text-left text-sm text-neutral-300 transition hover:bg-white/10 hover:text-white" %>
+      <% end %>
+    <% else %>
+      <p class="px-3 py-2 text-sm text-neutral-500">No playlists yet.</p>
+    <% end %>
+  </div>
+</details>

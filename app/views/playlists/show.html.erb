@@ -1,0 +1,78 @@
+<% content_for :title, @playlist.name %>
+<% length = album_length(@playlist.tracks.sum { |track| track.duration.to_f }) %>
+
+<header class="bg-gradient-to-b from-violet-800/50 via-violet-950/20 to-transparent px-4 pb-6 pt-10 sm:px-8 sm:pt-16">
+  <p class="text-sm font-semibold text-white">Playlist</p>
+  <h1 class="mt-2 text-4xl font-extrabold tracking-tighter text-white sm:text-6xl"><%= @playlist.name %></h1>
+  <p class="mt-4 text-sm text-neutral-300">
+    <%= pluralize(@playlist.entries.size, "song") %><%= ", #{length}" if length %>
+  </p>
+</header>
+
+<div class="px-4 pb-10 sm:px-8">
+  <div class="mb-4 flex items-center gap-4">
+    <% if @playlist.entries.any? %>
+      <button type="button" data-action="player#play" data-player-index-param="0"
+              aria-label="Play <%= @playlist.name %>"
+              class="flex size-14 items-center justify-center rounded-full bg-emerald-500 text-black shadow-xl transition hover:scale-105 hover:bg-emerald-400">
+        <svg class="size-6 translate-x-px" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713Z"/>
+        </svg>
+      </button>
+    <% end %>
+
+    <%= form_with model: @playlist, class: "flex items-center gap-2" do |form| %>
+      <%= form.text_field :name, "aria-label": "Playlist name",
+                          class: "w-48 rounded-md border border-white/10 bg-neutral-900 px-3 py-1.5 text-sm text-white focus:border-emerald-500 focus:outline-none" %>
+      <%= form.submit "Rename", class: "cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold text-neutral-400 transition hover:bg-white/10 hover:text-white" %>
+    <% end %>
+
+    <%= button_to "Delete playlist", @playlist, method: :delete,
+                  form: { data: { turbo_confirm: "Delete “#{@playlist.name}”?" } },
+                  class: "cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold text-neutral-400 transition hover:bg-white/10 hover:text-rose-400" %>
+  </div>
+
+  <% if @playlist.entries.empty? %>
+    <p class="py-12 text-center text-sm text-neutral-500">
+      Nothing here yet. Add songs from any album.
+    </p>
+  <% else %>
+    <ol>
+      <% @playlist.entries.each_with_index do |entry, index| %>
+        <li class="flex items-center gap-1">
+          <button type="button"
+                  data-player-track
+                  data-player-target="row"
+                  data-src="<%= stream_track_path(entry.track) %>"
+                  data-title="<%= entry.track.title %>"
+                  data-subtitle="<%= entry.track.album.artist.name %>"
+                  data-cover="<%= cover_album_path(entry.track.album) %>"
+                  data-album="<%= album_path(entry.track.album) %>"
+                  data-action="player#play"
+                  data-player-index-param="<%= index %>"
+                  aria-current="false"
+                  class="group flex min-w-0 flex-1 items-center gap-4 rounded px-3 py-2 text-left transition hover:bg-white/10 aria-[current=true]:text-emerald-400">
+            <span class="w-6 shrink-0 text-right text-sm tabular-nums text-neutral-400"><%= index + 1 %></span>
+            <span class="min-w-0 flex-1">
+              <span class="block truncate text-sm font-medium text-neutral-100 group-aria-[current=true]:text-emerald-400">
+                <%= entry.track.title %>
+              </span>
+              <span class="block truncate text-xs text-neutral-400"><%= entry.track.album.artist.name %></span>
+            </span>
+            <span class="shrink-0 text-sm tabular-nums text-neutral-400"><%= track_duration(entry.track.duration) %></span>
+          </button>
+
+          <%= button_to "▲", playlist_entry_path(@playlist, entry, by: -1), method: :patch,
+                        "aria-label": "Move #{entry.track.title} up",
+                        class: "cursor-pointer rounded px-2 py-1 text-xs text-neutral-500 transition hover:bg-white/10 hover:text-white" %>
+          <%= button_to "▼", playlist_entry_path(@playlist, entry, by: 1), method: :patch,
+                        "aria-label": "Move #{entry.track.title} down",
+                        class: "cursor-pointer rounded px-2 py-1 text-xs text-neutral-500 transition hover:bg-white/10 hover:text-white" %>
+          <%= button_to "✕", playlist_entry_path(@playlist, entry), method: :delete,
+                        "aria-label": "Remove #{entry.track.title}",
+                        class: "cursor-pointer rounded px-2 py-1 text-xs text-neutral-500 transition hover:bg-white/10 hover:text-rose-400" %>
+        </li>
+      <% end %>
+    </ol>
+  <% end %>
+</div>

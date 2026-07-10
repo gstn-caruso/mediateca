@@ -7,7 +7,7 @@ class ApplicationController < ActionController::Base
 
   before_action :require_profile
 
-  helper_method :library_artists
+  helper_method :library_artists, :playlists
 
   private
 
@@ -27,5 +27,10 @@ class ApplicationController < ActionController::Base
   # Lazily, so serving a FLAC never pays for a query nobody reads.
   def library_artists
     @library_artists ||= Artist.ordered
+  end
+
+  # The listener's own playlists, in the sidebar of every page they see.
+  def playlists
+    @playlists ||= Current.profile.playlists.ordered
   end
 end

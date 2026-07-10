@@ -7,6 +7,10 @@ Rails.application.routes.draw do
 
   get "search", to: "searches#show", as: :search
 
+  resources :playlists, only: [ :show, :create, :update, :destroy ] do
+    resources :entries, only: [ :create, :update, :destroy ], controller: "playlist_entries"
+  end
+
   resources :artists, only: [ :index, :show ]
 
   resources :albums, only: [ :show ] do

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_10_132546) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_10_140000) do
   create_table "albums", force: :cascade do |t|
     t.string "album_type"
     t.integer "artist_id", null: false
@@ -31,6 +31,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_10_132546) do
     t.string "name", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_artists_on_name", unique: true
+  end
+
+  create_table "playlist_entries", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "playlist_id", null: false
+    t.integer "position", null: false
+    t.integer "track_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["playlist_id", "position"], name: "index_playlist_entries_on_playlist_id_and_position"
+    t.index ["playlist_id"], name: "index_playlist_entries_on_playlist_id"
+    t.index ["track_id"], name: "index_playlist_entries_on_track_id"
+  end
+
+  create_table "playlists", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.integer "profile_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["profile_id", "name"], name: "index_playlists_on_profile_id_and_name", unique: true
+    t.index ["profile_id"], name: "index_playlists_on_profile_id"
   end
 
   create_table "profiles", force: :cascade do |t|
@@ -55,5 +75,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_10_132546) do
   end
 
   add_foreign_key "albums", "artists"
+  add_foreign_key "playlist_entries", "playlists"
+  add_foreign_key "playlist_entries", "tracks"
+  add_foreign_key "playlists", "profiles"
   add_foreign_key "tracks", "albums"
 end
