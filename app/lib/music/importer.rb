@@ -53,7 +53,11 @@ module Music
         track_no: track.track_no,
         disc_no: track.disc_no,
         duration: track.duration,
-        album: album
+        album: album,
+        codec: track.audio&.codec,
+        bit_depth: track.audio&.bit_depth,
+        sample_rate: track.audio&.sample_rate,
+        bit_rate: track.audio&.bit_rate
       )
     end
 

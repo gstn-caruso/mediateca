@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_10_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_10_215051) do
   create_table "albums", force: :cascade do |t|
     t.string "album_type"
     t.integer "artist_id", null: false
@@ -84,10 +84,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_10_170000) do
 
   create_table "tracks", force: :cascade do |t|
     t.integer "album_id", null: false
+    t.integer "bit_depth"
+    t.integer "bit_rate"
+    t.string "codec"
     t.datetime "created_at", null: false
     t.integer "disc_no", default: 1, null: false
     t.float "duration"
     t.string "path", null: false
+    t.integer "sample_rate"
     t.string "title", null: false
     t.integer "track_no"
     t.datetime "updated_at", null: false

@@ -48,6 +48,30 @@ module Music
       assert_equal album, track.album
     end
 
+    # The encoding a source measured is written onto the track, so the player can
+    # show how good the file is without opening it again.
+    test "a track's audio encoding is stored on it" do
+      audio = Music::Audio.new(codec: "flac", bit_depth: 24, sample_rate: 96000, bit_rate: 2500000)
+      Importer.new.import(source(albums: [ source_album(
+        tracks: [ source_track(audio: audio) ]
+      ) ]))
+
+      track = Track.sole
+      assert_equal "flac", track.codec
+      assert_equal 24, track.bit_depth
+      assert_equal 96000, track.sample_rate
+      assert_equal 2500000, track.bit_rate
+    end
+
+    # Old rows scanned before we knew to look, and a source that never measured
+    # (beets), both arrive without audio. That is not an error; the columns stay
+    # empty until the next scan.
+    test "a track with no audio is imported all the same" do
+      Importer.new.import(source(albums: [ source_album(tracks: [ source_track(audio: nil) ]) ]))
+
+      assert_nil Track.sole.codec
+    end
+
     # The scan will run every time the library changes; importing the same
     # source twice can't duplicate anything.
     test "importing the same source twice doesn't duplicate anything" do
