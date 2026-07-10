@@ -5,7 +5,7 @@
 <%= button_to [ album, :like ],
               method: liked ? :delete : :post,
               "aria-label": "#{liked ? "Unlike" : "Like"} #{album.title}",
-              class: "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold uppercase tracking-wide transition
+              class: "inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold uppercase tracking-wide transition hover:scale-105
                       #{liked ? "bg-accent/20 text-accent ring-1 ring-inset ring-accent/40 hover:bg-accent/30" : "text-white ring-1 ring-inset ring-white/25 hover:bg-white/10"}" do %>
   <svg class="size-4 shrink-0" viewBox="0 0 16 16" fill="<%= liked ? "currentColor" : "none" %>"
        stroke="currentColor" stroke-width="1.5" aria-hidden="true">
