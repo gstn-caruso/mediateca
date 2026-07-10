@@ -18,9 +18,9 @@ export default class extends Controller {
   static values = { profile: String }
 
   static targets = [
-    "audio", "title", "idle", "subtitle", "cover",
+    "audio", "title", "idle", "subtitle", "cover", "tail",
     "playIcon", "pauseIcon", "progress", "elapsed", "duration", "volume",
-    "shuffle", "repeat", "repeatOne", "queue", "queueEmpty", "queueToggle", "panel",
+    "shuffle", "repeat", "repeatOne", "next", "queue", "queueEmpty", "queueToggle", "panel",
     "row"
   ]
 
@@ -30,6 +30,7 @@ export default class extends Controller {
   audioTargetConnected() {
     this.restore()
     this.refreshIcons()
+    this.paint(this.volumeTarget)
     this.tick()
     this.render()
   }
@@ -137,6 +138,7 @@ export default class extends Controller {
 
   changeVolume() {
     this.audioTarget.volume = this.volumeTarget.value / 100
+    this.paint(this.volumeTarget)
   }
 
   tick() {
@@ -145,7 +147,16 @@ export default class extends Controller {
     this.elapsedTarget.textContent = this.clock(currentTime)
     this.durationTarget.textContent = Number.isFinite(duration) ? this.clock(duration) : "–:––"
     this.progressTarget.value = Number.isFinite(duration) && duration > 0 ? (currentTime / duration) * 1000 : 0
+    this.paint(this.progressTarget)
     this.save()
+  }
+
+  // Paints the played portion of a slider bright and the rest dim, so the fill
+  // reads the same in every engine instead of leaning on accent-color.
+  paint(range) {
+    const filled = (range.value / range.max) * 100
+    range.style.background =
+      `linear-gradient(to right, #fff ${filled}%, rgba(255, 255, 255, 0.2) ${filled}%)`
   }
 
   refreshIcons() {
@@ -174,6 +185,14 @@ export default class extends Controller {
   set repeating(mode) { this.audioTarget.repeating = mode }
 
   get current() { return this.queue[this.order[this.cursor]] }
+
+  // Whether next has anywhere to go: another track ahead, or repeat-all to wrap
+  // back to the top. Mirrors what next() actually does.
+  get hasNext() {
+    if (this.cursor + 1 < this.order.length) return true
+
+    return this.repeating === ALL && this.order.length > 0
+  }
 
   // --- Private ---------------------------------------------------------------
 
@@ -218,6 +237,7 @@ export default class extends Controller {
   render() {
     this.renderNowPlaying()
     this.renderControls()
+    this.renderTail()
     this.renderQueue()
     this.renderRows()
     this.save()
@@ -286,6 +306,13 @@ export default class extends Controller {
     this.shuffleTarget.setAttribute("aria-pressed", String(this.shuffled))
     this.repeatTarget.setAttribute("aria-pressed", String(this.repeating !== OFF))
     this.repeatOneTarget.hidden = this.repeating !== ONE
+  }
+
+  // The end of the queue, said out loud: next has nowhere to go, so dim it, and
+  // if a track is actually playing it out (not looping on one), name the end.
+  renderTail() {
+    this.nextTarget.disabled = !this.hasNext
+    this.tailTarget.hidden = !(this.current && !this.hasNext && this.repeating !== ONE)
   }
 
   renderQueue() {

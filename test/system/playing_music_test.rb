@@ -41,7 +41,7 @@ class PlayingMusicTest < ApplicationSystemTestCase
   test "the music keeps playing when navigating to another page" do
     play "Desencuentro"
 
-    click_link "Mediateca"
+    within("#topbar") { click_on "Home" }
 
     assert_text "Your Library"
     assert_selector "[data-player-target='title']", text: "Desencuentro"
@@ -72,7 +72,7 @@ class PlayingMusicTest < ApplicationSystemTestCase
   test "another profile does not inherit the queue left in the browser" do
     play "Desencuentro"
 
-    click_on "Switch profile"
+    switch_profile
     listening_as "Otro"
 
     assert_selector "[data-player-target='idle']", text: "Nothing playing"
@@ -129,11 +129,13 @@ class PlayingMusicTest < ApplicationSystemTestCase
     assert_selector "[data-player-target='title']", text: "Dijo El Droguero Al Drogador"
   end
 
-  test "without repeat, the last track is the last one" do
+  # The last track says so: next has nowhere to go, so it goes dim and the end
+  # is named out loud.
+  test "without repeat, the last track is the end of the line" do
     play "El Pibe Tigre"
 
-    click_button "Next"
-
+    assert_button "Next", disabled: true
+    assert_text "End of playlist"
     assert_selector "[data-player-target='title']", text: "El Pibe Tigre"
   end
 
@@ -150,7 +152,7 @@ class PlayingMusicTest < ApplicationSystemTestCase
   # After browsing through half the library, get back to what's playing.
   test "from the player you can get back to the album that's playing" do
     play "Desencuentro"
-    click_link "Mediateca"
+    within("#topbar") { click_on "Home" }
     assert_text "Your Library"
 
     click_link "Desencuentro"
@@ -165,7 +167,7 @@ class PlayingMusicTest < ApplicationSystemTestCase
     play "Desencuentro"
     assert_selector "audio", visible: :all
 
-    click_on "Switch profile"
+    switch_profile
 
     assert_text "Who's listening?"
     assert_no_selector "audio", visible: :all
@@ -189,7 +191,7 @@ class PlayingMusicTest < ApplicationSystemTestCase
     find_field("Search").send_keys(:return)
     assert_text "Songs"
 
-    within("header") { click_on "Home" }
+    within("#topbar") { click_on "Home" }
     assert_selector "main h1", text: "Your Library"
   end
 

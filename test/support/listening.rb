@@ -15,4 +15,14 @@ module ListeningInABrowser
       click_on name
     end
   end
+
+  # The name and the way out now live behind the avatar in the header.
+  def open_profile_menu
+    within("#topbar") { find("summary[aria-label='Profile']").click }
+  end
+
+  def switch_profile
+    open_profile_menu
+    within("#topbar") { click_on "Switch profile" }
+  end
 end

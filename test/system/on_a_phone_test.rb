@@ -49,7 +49,7 @@ class OnAPhoneTest < ApplicationSystemTestCase
     visit root_path
     assert_on_a_phone
 
-    click_on "Switch profile"
+    switch_profile
 
     assert_text "Who's listening?"
   end

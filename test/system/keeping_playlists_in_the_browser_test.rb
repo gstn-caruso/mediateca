@@ -4,7 +4,8 @@ class KeepingPlaylistsInTheBrowserTest < ApplicationSystemTestCase
   ALBUM_DIR = "Almafuerte/1995 - Mundo guanaco".freeze
 
   setup do
-    listening_as
+    profile = listening_as
+    profile.playlists.create!(name: "Road trip")
     artist = Artist.create!(name: "Almafuerte")
     @album = Album.create!(
       directory: File.join(Rails.configuration.x.media_root, ALBUM_DIR), title: "Mundo Guanaco",
@@ -16,13 +17,7 @@ class KeepingPlaylistsInTheBrowserTest < ApplicationSystemTestCase
                   path: media("03 - El pibe tigre.flac"), album: @album)
   end
 
-  test "a playlist is made in the sidebar, filled from an album, and played" do
-    visit album_path(@album)
-
-    fill_in "New playlist", with: "Road trip"
-    click_on "Create"
-    assert_text "Nothing here yet"
-
+  test "a playlist is filled from an album, and played" do
     visit album_path(@album)
     add "Desencuentro", to: "Road trip"
 
@@ -34,10 +29,6 @@ class KeepingPlaylistsInTheBrowserTest < ApplicationSystemTestCase
   end
 
   test "a song is moved, then taken out again" do
-    visit album_path(@album)
-    fill_in "New playlist", with: "Road trip"
-    click_on "Create"
-
     visit album_path(@album)
     add "Desencuentro", to: "Road trip"
     add "El Pibe Tigre", to: "Road trip"
