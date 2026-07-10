@@ -87,11 +87,9 @@
               <span class="text-sm tabular-nums text-neutral-300 group-hover:invisible group-aria-[current=true]:invisible">
                 <%= track.track_no %>
               </span>
-              <%# The one playing shows the equalizer instead of its number. %>
+              <%# The one playing shows a bouncing equalizer instead of its number. %>
               <span aria-hidden="true" class="absolute inset-y-0 right-0 hidden items-center text-accent group-aria-[current=true]:flex">
-                <svg class="size-3.5" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M1 14V9h2v5H1Zm4.5 0V2h2v12h-2ZM10 14V6h2v8h-2Zm4.5 0v-4h1.5v4h-1.5Z"/>
-                </svg>
+                <span class="eq"><i></i><i></i><i></i><i></i></span>
               </span>
               <span aria-hidden="true" class="absolute inset-y-0 right-0 hidden items-center text-white group-hover:flex group-aria-[current=true]:hidden">
                 <svg class="size-3.5" viewBox="0 0 16 16" fill="currentColor">

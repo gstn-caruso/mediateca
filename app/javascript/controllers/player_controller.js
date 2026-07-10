@@ -553,7 +553,8 @@ export default class extends Controller {
 
     const meter = document.createElement("span")
     meter.className = "shrink-0 pr-0.5 text-accent"
-    meter.innerHTML = '<svg class="size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M1 14V9h2v5H1Zm4.5 0V2h2v12h-2ZM10 14V6h2v8h-2Zm4.5 0v-4h1.5v4h-1.5Z"/></svg>'
+    meter.setAttribute("aria-hidden", "true")
+    meter.innerHTML = '<span class="eq"><i></i><i></i><i></i><i></i></span>'
 
     item.append(this.queueArt(track), this.queueText(track, "text-accent"), meter)
     return item
