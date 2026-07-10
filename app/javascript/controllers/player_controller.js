@@ -30,7 +30,7 @@ export default class extends Controller {
   audioTargetConnected() {
     this.restore()
     this.refreshIcons()
-    this.paint(this.volumeTarget)
+    if (this.hasVolumeTarget) this.paint(this.volumeTarget)
     this.tick()
     this.render()
   }
@@ -305,7 +305,11 @@ export default class extends Controller {
     this.coverTarget.classList.remove("hidden")
   }
 
+  // Shuffle and repeat moved off the mini-player; when their buttons aren't on
+  // the page there is nothing to keep in sync.
   renderControls() {
+    if (!this.hasShuffleTarget) return
+
     this.shuffleTarget.setAttribute("aria-pressed", String(this.shuffled))
     this.repeatTarget.setAttribute("aria-pressed", String(this.repeating !== OFF))
     this.repeatOneTarget.hidden = this.repeating !== ONE

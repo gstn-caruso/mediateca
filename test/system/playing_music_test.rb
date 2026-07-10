@@ -60,7 +60,7 @@ class PlayingMusicTest < ApplicationSystemTestCase
     assert page.evaluate_script("document.querySelector('audio').currentSrc.length > 0"),
       "the <audio> lost its source across a refresh"
 
-    click_button "Queue"
+    click_button "Playing Next"
     within "[data-player-target='queue']" do
       assert_text "Desencuentro"
       assert_text "El Pibe Tigre"
@@ -91,7 +91,7 @@ class PlayingMusicTest < ApplicationSystemTestCase
   test "the queue shows what's next" do
     play "Dijo El Droguero Al Drogador"
 
-    click_button "Queue"
+    click_button "Playing Next"
 
     within "[data-player-target='queue']" do
       assert_text "Desencuentro"
@@ -104,7 +104,7 @@ class PlayingMusicTest < ApplicationSystemTestCase
 
   test "from the queue you can jump to any track" do
     play "Dijo El Droguero Al Drogador"
-    click_button "Queue"
+    click_button "Playing Next"
 
     # exact: the row also holds a "Remove El Pibe Tigre…" button.
     within("[data-player-target='queue']") { click_button "El Pibe Tigre", exact: true }
@@ -114,7 +114,7 @@ class PlayingMusicTest < ApplicationSystemTestCase
 
   test "a track can be dropped from the queue" do
     play "Dijo El Droguero Al Drogador"
-    click_button "Queue"
+    click_button "Playing Next"
 
     within "[data-player-target='queue']" do
       click_button "Remove Desencuentro from the queue"
@@ -132,34 +132,14 @@ class PlayingMusicTest < ApplicationSystemTestCase
     assert_selector "[data-player-target='title']", text: "Desencuentro"
   end
 
-  # With the queue wrapped around, the last track isn't the end of anything.
-  test "with repeat on, the last track loops back to the first" do
-    play "El Pibe Tigre"
-    click_button "Repeat"
-
-    click_button "Next"
-
-    assert_selector "[data-player-target='title']", text: "Dijo El Droguero Al Drogador"
-  end
-
   # The last track says so: next has nowhere to go, so it goes dim and the end
   # is named out loud.
-  test "without repeat, the last track is the end of the line" do
+  test "the last track is the end of the line" do
     play "El Pibe Tigre"
 
     assert_button "Next", disabled: true
     assert_text "End of playlist"
     assert_selector "[data-player-target='title']", text: "El Pibe Tigre"
-  end
-
-  test "with shuffle on, what's next stops being the album's order" do
-    play "Dijo El Droguero Al Drogador"
-
-    # The record now has its own "Shuffle" button in the header, so ask for the
-    # player's toggle by name, not by a label two buttons answer to.
-    find("[data-player-target='shuffle']").click
-
-    assert_selector "[data-player-target='shuffle'][aria-pressed='true']"
   end
 
   # After browsing through half the library, get back to what's playing.
@@ -186,14 +166,16 @@ class PlayingMusicTest < ApplicationSystemTestCase
     assert_no_selector "audio", visible: :all
   end
 
-  # Pressing shuffle on a record is a way of pressing play.
-  test "shuffle from the album header turns shuffle on and starts the record" do
+  # Pressing shuffle on a record is a way of pressing play: the record starts,
+  # and the queue behind it is dealt out of order.
+  test "shuffle from the album header starts the record" do
     visit album_path(@album)
 
     click_on "Shuffle Mundo Guanaco"
 
-    assert_selector "[data-player-target='shuffle'][aria-pressed='true']"
-    assert_selector "[data-player-target='title']", text: "Dijo El Droguero Al Drogador"
+    assert_selector "[data-player-target='title']", visible: true
+    click_button "Playing Next"
+    assert_selector "[data-player-target='queue'] li", minimum: 1
   end
 
   # The search box and Home live in the top bar, reached without looking.

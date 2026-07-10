@@ -43,9 +43,12 @@
           <%= render "shared/queue" %>
         </div>
 
-        <%# relative: the queue positions itself against the player, and opens upward. %>
-        <div id="player" data-turbo-permanent class="relative shrink-0 rounded-2xl glass">
-          <%= render "shared/player" %>
+        <%# The player floats free of the edges: a centred pill, a touch up from
+            the bottom, the way Apple Music's mini-player sits. %>
+        <div class="flex shrink-0 justify-center pb-1">
+          <div id="player" data-turbo-permanent class="rounded-2xl glass">
+            <%= render "shared/player" %>
+          </div>
         </div>
       </div>
     <% else %>
