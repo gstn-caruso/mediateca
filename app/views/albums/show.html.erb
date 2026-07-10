@@ -115,7 +115,7 @@
                   read 24/96 where the rest read 16/44.1. Full detail on hover. %>
               <% if (quality = track_quality(track)).present? %>
                 <span title="<%= track_quality_detail(track) %>"
-                      class="hidden text-[10px] font-medium uppercase tracking-wide text-neutral-500 sm:inline-block"><%= quality %></span>
+                      class="hidden shrink-0 whitespace-nowrap rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-300 ring-1 ring-inset ring-white/10 sm:inline-block"><%= quality %></span>
               <% end %>
               <span class="text-sm tabular-nums text-neutral-400"><%= track_duration(track.duration) %></span>
             </span>
