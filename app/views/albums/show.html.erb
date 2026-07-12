@@ -4,13 +4,18 @@
 
 <%# No sleeve-blur here anymore: the playing cover already washes the whole floor
     behind the glass, and a second one boxed into the header only doubled up. %>
-<header class="px-4 pb-6 pt-10 sm:px-8 sm:pt-20">
-  <div class="flex flex-col gap-6 sm:flex-row sm:items-end sm:gap-8">
+<%# @container, not a breakpoint: the title's room depends on the sidebar and the
+    queue, not on the window. At iPad width with the rail open, `sm:text-7xl` fired
+    on the viewport while the column it had to fit in was 186px wide — and the
+    record's name, the one thing the page is about, got cut in half. Sized against
+    the container, it fits whatever column it lands in. %>
+<header class="@container px-4 pb-6 pt-10 sm:px-8 sm:pt-20">
+  <div class="flex flex-col gap-6 @2xl:flex-row @2xl:items-end @2xl:gap-8">
     <img src="<%= cover %>" alt=""
-         class="size-44 shrink-0 rounded-xl object-cover shadow-2xl shadow-black/50 ring-1 ring-white/10 sm:size-60">
+         class="size-44 shrink-0 rounded-xl object-cover shadow-2xl shadow-black/50 ring-1 ring-white/10 @2xl:size-60">
 
     <div class="min-w-0 pb-2">
-      <h1 class="text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-7xl"><%= @album.title %></h1>
+      <h1 class="text-[clamp(1.75rem,7cqi,4.5rem)] font-bold leading-[1.05] tracking-tight text-balance break-words hyphens-auto text-white"><%= @album.title %></h1>
       <p class="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-neutral-300">
         <%= link_to @album.artist.name, artist_path(@album.artist), class: "font-semibold text-white hover:underline" %>
         <span aria-hidden="true" class="text-neutral-600">•</span>
