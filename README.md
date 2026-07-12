@@ -4,8 +4,10 @@ A self-hosted media server, meant to replace Jellyfin. It runs in Docker on the
 NAS and reads the files under `/mnt/data/multimedia` without copying or
 transcoding them.
 
-Right now it does **music**, with a Spotify-style interface and Netflix-style
-profiles. Video comes later.
+It does **music**, and nothing else, with a Spotify-style interface and
+Netflix-style profiles. There was a `Video::` tree in here once, waiting for a
+feature nobody had started; it was a plan sitting in `app/`, and a plan is not
+code. Git remembers it.
 
 ---
 
@@ -21,6 +23,32 @@ album and the path identifies the track.
 
 The cover art is chosen by the disk, not beets: beets had picked the back cover
 for all six Almafuerte albums.
+
+**A song that moved is still the song.** A directory names an album and a path
+names a track, which means renaming a file makes the scan meet the same song as a
+stranger: the old row goes, and `dependent: :destroy` takes the playlists, the
+hearts and the whole play history with it — at 4am, silently. So before anything
+is discarded, `Music::Move` pairs what vanished with what arrived, each side
+naming itself: a record by whose it is and what it is called, a song by where it
+sits on the record and what it is called. It refuses to guess — a name two things
+answer to names neither of them, and handing a playlist a song nobody put there
+is worse than losing the entry.
+
+**One unreadable file does not cost the scan.** ffprobe raises on a truncated
+copy, and nothing caught it: `ScanMusicJob` died on the first bad file and every
+night after did the same, so the library just stopped growing and nothing said
+why. A file nothing can read is a file nothing can play; the scan steps over it
+and carries on. A *missing binary* is not a bad file, though — that one still
+raises, because swallowing it would skip every track and call the library empty.
+
+**A song says who sings it.** Usually that is simply whoever made the record, and
+`tracks.artist` is null — but a guest, a duet or a compilation says otherwise on
+the file itself, and the file is the one to believe. It is a credit, not an
+`artist_id`: of the 934 tracks beets knows, exactly one is credited to somebody
+other than its album's artist, and it reads *"Luis Alberto Spinetta, Pedro Aznar
+y Charly García"*. That is a credit line, not somebody you own records by, and
+rows for names like it would fill the library rail with artists who have no
+albums.
 
 The bytes never pass through Ruby. In production Rails only names the file with
 the `X-Sendfile` header and **Thruster** serves it, with `Range` support — that
@@ -41,7 +69,30 @@ The player lives outside the `<body>` that Turbo Drive replaces when you
 navigate (`data-turbo-permanent`), and the playback queue is stored **in the
 `<audio>` element**, not in the Stimulus controller — which Turbo destroys and
 rebuilds on every page. That's why the music doesn't cut out when you switch
-views.
+views. A full reload does throw the element away, so the queue is also written
+to `localStorage`, tagged with whose it is: the next listener does not inherit
+the last one's music. That write happens **when the queue changes**, and the
+passing of the song at most every five seconds — it used to serialise the whole
+queue on every `timeupdate`, four times a second, forever, synchronously, on the
+main thread.
+
+The OS is told what's playing (`MediaSession`), so the media keys, Control Center
+and the lock screen drive it. Without that the app is a tab that makes noise.
+
+**Nothing that isn't navigation navigates.** A heart, and a song added to a
+playlist, answer with a Turbo Stream and change in place. They used to be full
+page visits: the scroll jumped back to the top of the record, the page faded in
+again, and the history took one more entry pointing at the URL you were already
+on, once per heart — so Back walked you through your own hearting. A system test
+counts `history.length` and fails if it grows.
+
+The one page where swapping the heart isn't enough is the list of hearts itself:
+a song unhearted is not a liked song, so the stream removes its row too. It says
+so unconditionally — on every other page there is no such row and Turbo removes
+nothing. And when that takes the last row, the page has to *become* the page it
+now is: no buttons to play nothing with, and a line saying so. That is already
+true in the DOM, so `:has` reads it off the list instead of asking the server to
+re-render everything to discover it.
 
 Whoever is listening picks themselves off a grid, the way Netflix asks. **There
 is no password**: whoever holds the cookie is whoever it names. On a home LAN
@@ -58,15 +109,31 @@ Search is a `LIKE` scan, not FTS5: a thousand tracks scan faster than the page
 paints, and an index would be a second copy of the truth to keep in step with
 the disk. `%` and `_` are wildcards there, so both are escaped — and the escape
 character is *declared*, because SQLite reads a backslash as a backslash
-otherwise, and the escaping quietly does nothing.
+otherwise, and the escaping quietly does nothing. It is capped at 50 per kind: a
+search is for finding something, not for reading the library out, and nobody
+scrolls the six hundredth song with an "a" in it — but the page would have
+rendered all six hundred, and clicking one would have queued them.
+
+**No page asks the database one question per row.** The sidebar is on every page
+in the app, and it counted each artist's records one `COUNT` at a time; the album
+page asked, per song, whether that song was hearted; the playlist page walked
+entry → track → album → artist a row at a time. None of it announced itself — it
+just got slower with every record added. `test/integration/asking_the_database_once_test.rb`
+holds every page to the rule: render it, grow the library tenfold, render it
+again, and the number of queries must not move. Counting queries exactly is
+brittle; counting the *slope* is the thing we mean.
 
 The play history is written by the player when a track starts, not by the stream
 endpoint: `preload=metadata` asks for the file before anybody presses play, and
 every seek asks for it again.
 
 The sidebar is desktop-only, so on a phone the library, the hearts and the way
-out of a profile live in the top bar instead. A system test at 390 px holds
-every page to no sideways scroll.
+out of a profile live in the top bar instead. The queue used to be desktop-only
+too — twice over, since the button that opened it was hidden below `md` and the
+class it toggled had no effect there anyway — so a phone had no queue at all. It
+opens over the content now rather than beside it: 390px split in two is two
+columns of nothing. A system test at 390 px holds every page to no sideways
+scroll.
 
 ---
 
@@ -92,21 +159,27 @@ bin/ci                   # everything GitHub Actions runs
 ```
 
 The tests **never touch the NAS**: `Beets::Library` runs against SQLite
-databases built on the fly, and `MEDIA_ROOT` points at a couple of fake FLACs in
-`test/fixtures/media`.
+databases built on the fly, and `MEDIA_ROOT` points at a few real FLACs in
+`test/fixtures/media` — thirty seconds of silence each, which FLAC packs into
+12KB. They used to be 50-byte stubs: enough to be *served*, so the `Range` test
+meant something, but not enough to be *played*. Which meant no system test had
+ever played a note — every one of them was watching a player that had silently
+failed to load, and neither the end of a song nor the equalizer could be tested
+at all.
 
-**And they don't need ffmpeg.** `Video::Playback` decides without opening
-anything; `Video::Probe` and `Music::Tags` interpret ffprobe output recorded in
-`test/fixtures/ffprobe`; `Video::Conversion` assembles the command and something
-else runs it. Running a process is a separate responsibility, and it lives in
-`Ffprobe`.
+**And they don't need ffprobe.** `Music::Tags` reads a description we wrote
+ourselves (`FakeFfprobe`), so the whole suite runs with no binary and no file.
+Running a process is a separate responsibility, and it lives in `Ffprobe`.
 
-The only ones that do run it are those in `test/contracts/`, and they're the
-only ones that can verify what nobody else can: that ffprobe still describes the
-files the way it did when we recorded its output, and that ffmpeg understands the
-arguments we build. If ffmpeg isn't there, they're skipped — except with
-`REQUIRE_FFMPEG=1`, which is how CI runs them, so they never come up green
-without having actually run.
+The one that *does* run it is `test/contracts/ffprobe_contract_test.rb`, and it
+verifies the one thing nothing else can: that ffprobe still describes a FLAC the
+way `Music::Tags` assumes it does. Those assumptions are not obvious — ffprobe
+hands back `TITLE` and `album_artist` and `track` in whatever case the tagger
+typed them, a `DATE` that may be a whole date, and a track number that may carry
+its total. Change ffprobe and any of them could quietly stop being true; the scan
+would keep running and the library would come back nameless. It is skipped when
+ffprobe isn't installed — except under `REQUIRE_FFPROBE=1`, which is how CI runs
+it, so it can never come up green without having actually run.
 
 To bring the app up with your real music, copy the beets database over:
 
@@ -236,11 +309,16 @@ It's ignored with a note in `config/brakeman.ignore`.
 
 ## What's missing
 
-- **Video.** Waiting there are 375 `.mkv`, 168 `.mp4` and 61 `.avi`. Many of the
-  mkv are HEVC with multitrack FLAC 5.1 audio and ASS subtitles: they're not
-  direct-play in any browser. The agreed plan is to remux with `ffmpeg -c copy`
-  (change the container without recompressing the video), not to transcode.
 - **A page for liked albums.** An album can be hearted, but only songs have a
   page listing them.
-- **Drag-and-drop reordering.** A playlist moves a song one place at a time.
+- **Dragging a song up a playlist.** The queue reorders by drag; a playlist still
+  moves a song one place at a time, with ▲ and ▼. And the queue's drag is
+  mouse-only — HTML5 drag-and-drop does not fire on touch, so on a phone the
+  queue can be seen and dropped from, but not rearranged.
 - **A PIN on a profile**, for when a home LAN stops being the whole story.
+- **Video.** It was here, unreachable from any route or view, and it is gone —
+  see the top. Waiting on the NAS are 375 `.mkv`, 168 `.mp4` and 61 `.avi`; many
+  of the mkv are HEVC with multitrack FLAC 5.1 and ASS subtitles, so they are not
+  direct-play in any browser. The plan, when it comes, is to remux with
+  `ffmpeg -c copy` — change the container, don't recompress the video. It will be
+  written against what is true then, not against what we guessed a month ago.
