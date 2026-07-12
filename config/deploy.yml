@@ -1,71 +1,111 @@
-# Mediateca runs on the home NAS, on the LAN, with no certificate.
-#
-# It replaces Jellyfin, which stays alive on :8096 in the meantime. kamal-proxy
-# claims the host's :80 — that's why nginx is turned off.
+<%#
+  Mediateca deploys to one machine on your own network — a NAS, a mini PC, an
+  old laptop — over SSH, with no certificate and no public DNS.
+
+  Nothing about that machine is written down here. Where it lives, who you are
+  on it, and where the music sits are yours, not the project's, so they arrive
+  from the environment: copy `.kamal/deploy.env.example` to `.kamal/deploy.env`
+  and fill it in. `bin/kamal` loads that file before handing over to Kamal.
+
+  A missing value stops the deploy and names what is missing. The ones that
+  matter have no default on purpose: a deploy that guessed the host would SSH
+  into whatever machine answers at that address on *your* network, and a deploy
+  that guessed the music directory would mount the wrong disk.
+%>
+<%
+  def deploy_env(name)
+    value = ENV[name].to_s.strip
+    raise "#{name} is not set. Copy .kamal/deploy.env.example to .kamal/deploy.env and fill it in — bin/kamal reads it, and nothing in it is committed." if value.empty?
+    value
+  end
+
+  def optional_env(name)
+    value = ENV[name].to_s.strip
+    value.empty? ? nil : value
+  end
+
+  host       = deploy_env("MEDIATECA_HOST")
+  ssh_user   = deploy_env("MEDIATECA_SSH_USER")
+  media_root = deploy_env("MEDIATECA_MEDIA_ROOT")
+  music_root = optional_env("MEDIATECA_MUSIC_ROOT") || media_root
+  beets      = optional_env("MEDIATECA_BEETS_DATABASE")
+  registry   = optional_env("MEDIATECA_REGISTRY") || "#{host}:5555"
+%>
 service: mediateca
-image: gstn-caruso/mediateca
+image: <%= optional_env("MEDIATECA_IMAGE") || "mediateca" %>
 
 servers:
   web:
-    - 192.168.1.7
+    - <%= host %>
 
 proxy:
-  # LAN by hostname, no public DNS: there's no certificate to terminate.
+  # Reached by address on the LAN, with no public name: there is no certificate
+  # to terminate. kamal-proxy claims the host's :80, so nothing else may hold it.
   ssl: false
   # Thruster listens on 80 inside the container.
   app_port: 80
   healthcheck:
     path: /up
 
-# The registry runs on the NAS itself, on the LAN. The image is built on the NAS
-# and pulled by the NAS, so it never leaves the house — no token to store, no
-# private image on anyone's internet. It has no real auth: on this LAN anybody
-# can already be anybody, so the credentials below are a formality Kamal insists
-# on for a non-`localhost` server. The daemon trusts it over plain HTTP through
-# `insecure-registries` in /etc/docker/daemon.json.
+# The registry runs on the server itself. The image is built there and pulled
+# from there, so it never leaves the house — no token to store, no private image
+# on anybody's internet. It has no real auth: on a home LAN anybody can already
+# be anybody, so the password below is a formality Kamal insists on for a
+# non-`localhost` server, and the daemon is told to trust it over plain HTTP
+# through `insecure-registries` in /etc/docker/daemon.json.
 #
-# Why a registry on the NAS and not `localhost` on the deployer: when the thing
-# that deploys IS the server (the CI runner lives on the NAS), Kamal's localhost
-# registry opens a reverse SSH forward that binds :5555 on the server — the port
-# its own registry already holds — and the deploy dies. A registry addressed by
-# the NAS's LAN IP sidesteps the forward entirely.
+# Why a registry on the server and not `localhost` on the deployer: when the
+# thing that deploys IS the server — a CI runner living on the NAS — Kamal's
+# localhost registry opens a reverse SSH forward that binds the registry port on
+# the server, the very port its own registry already holds, and the deploy dies.
+# A registry addressed by the server's own LAN address sidesteps the forward.
 registry:
-  server: 192.168.1.7:5555
+  server: <%= registry %>
   username: kamal
   password:
     - KAMAL_REGISTRY_PASSWORD
 
-# The NAS is amd64 and the Mac is arm64. Building on the NAS is native;
-# cross-compiling with QEMU from the Mac works but is much slower.
+# Build on the server, natively. Cross-compiling to it from an arm64 Mac with
+# QEMU works, and is much slower.
 builder:
-  arch: amd64
-  remote: ssh://gaston@192.168.1.7
+  arch: <%= optional_env("MEDIATECA_ARCH") || "amd64" %>
+  remote: ssh://<%= ssh_user %>@<%= host %>
   # The version the app shows is the tag this deploy was cut from, read here —
   # where there is still a git clone to read it from — and baked into the image.
   # An untagged checkout hands in nothing, and the app shows no version.
   args:
     VERSION: <%= `git describe --tags --abbrev=0 2>/dev/null`.strip %>
 
-# root over SSH is denied on the NAS; gaston is in the docker group.
+# root over SSH is denied on most NAS boxes. This user has to be in the docker
+# group, and has to be able to read the music.
 ssh:
-  user: gaston
+  user: <%= ssh_user %>
 
 env:
   clear:
-    MEDIA_ROOT: /mnt/data/multimedia
-    BEETS_DATABASE: /mnt/data/beets/musiclibrary.db
-    # Single process: the NAS has 8 cores and there's no concurrency to spread.
+    # The trust boundary: no request may name a file outside this directory.
+    MEDIA_ROOT: <%= media_root %>
+    # Where the scan goes looking for music — often a subdirectory of the media
+    # root, when the same disk also holds things that are not music.
+    MUSIC_ROOT: <%= music_root %>
+<% if beets %>
+    # beets is an optional guest. Without it the library is still the library.
+    BEETS_DATABASE: <%= beets %>
+<% end %>
+    # Single process: there is no concurrency here worth spreading over more.
     SOLID_QUEUE_IN_PUMA: true
   secret:
     - RAILS_MASTER_KEY
 
-# Music is mounted read-only under the SAME path as on the host, so a path
-# stored in the catalog means the same thing inside and outside the container.
-# The container runs as uid 1000, which on the NAS is gaston, the owner of the
-# files.
+# The music is mounted read-only, and under the SAME path as on the host, so a
+# path stored in the catalog means the same thing inside and outside the
+# container. The container runs as uid 1000; that has to be somebody who can
+# read the files.
 volumes:
-  - "/mnt/data/multimedia:/mnt/data/multimedia:ro"
-  - "/mnt/data/beets/musiclibrary.db:/mnt/data/beets/musiclibrary.db:ro"
+  - "<%= media_root %>:<%= media_root %>:ro"
+<% if beets %>
+  - "<%= beets %>:<%= beets %>:ro"
+<% end %>
   - "mediateca_storage:/rails/storage"
 
 aliases:

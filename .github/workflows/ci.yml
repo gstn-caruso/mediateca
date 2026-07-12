@@ -213,12 +213,15 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "$(git log -1 --pretty=%s)  ->  $TAG"
 
-      # config/master.key y .kamal/secrets están gitignoreados: no vienen en el
-      # checkout. La key sale de la copia local del NAS; secrets son solo
-      # lookups (RAILS_MASTER_KEY=$(cat config/master.key)).
-      - name: Provide secrets from the NAS
+      # El repo es público, así que ni la key ni las coordenadas del deploy —
+      # dónde vive el server, quién sos ahí, dónde está la música — están en el
+      # checkout: config/master.key, .kamal/secrets y .kamal/deploy.env están
+      # gitignoreados. Salen de la copia local del NAS; secrets son solo lookups
+      # (RAILS_MASTER_KEY=$(cat config/master.key)).
+      - name: Provide the deploy's coordinates and secrets from the NAS
         run: |
-          cp /home/gaston/mediateca-ci/master.key config/master.key
+          cp "$HOME/mediateca-ci/master.key" config/master.key
+          cp "$HOME/mediateca-ci/deploy.env" .kamal/deploy.env
           cp .kamal/secrets.example .kamal/secrets
 
       # buildkit (driver docker-container) NO hereda el insecure-registries del
@@ -228,20 +231,25 @@ jobs:
       # build reintenta por HTTPS contra un registry HTTP y muere.
       - name: Point the buildx builder at the LAN registry over HTTP
         run: |
-          printf '[registry."192.168.1.7:5555"]\n  http = true\n' > /tmp/mediateca-buildkitd.toml
+          set -a; . .kamal/deploy.env; set +a
+          printf '[registry."%s"]\n  http = true\n' "${MEDIATECA_REGISTRY:-$MEDIATECA_HOST:5555}" \
+            > /tmp/mediateca-buildkitd.toml
           docker buildx rm kamal-local-docker-container 2>/dev/null || true
           docker buildx create --name kamal-local-docker-container \
             --driver docker-container --driver-opt network=host \
             --buildkitd-config /tmp/mediateca-buildkitd.toml
 
       # kamal es el gem del sistema (Ruby 3.3), no bin/kamal, que por bundler
-      # pediría el Ruby 4.0.5 de la app. C.UTF-8 le da a git mensajes en inglés
-      # (para que no re-clone en cada deploy) sin forzar US-ASCII, que en Ruby
-      # 3.3 rompe a SSHKit al leer output con bytes no-ASCII.
+      # pediría el Ruby 4.0.5 de la app. Y como no es bin/kamal, nadie carga
+      # deploy.env por él: lo exportamos acá. C.UTF-8 le da a git mensajes en
+      # inglés (para que no re-clone en cada deploy) sin forzar US-ASCII, que en
+      # Ruby 3.3 rompe a SSHKit al leer output con bytes no-ASCII.
       - name: Deploy with Kamal
         env:
           LC_ALL: C.UTF-8
-        run: kamal deploy
+        run: |
+          set -a; . .kamal/deploy.env; set +a
+          kamal deploy
 
       # Recién ahora: el tag nombra un build que está vivo y sirviendo. Publicarlo
       # antes habría dejado una versión anunciada que un deploy fallido nunca puso
