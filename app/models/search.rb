@@ -7,20 +7,28 @@ class Search
   # declared too.
   ESCAPE = "\\".freeze
 
+  # A search is for finding something, not for reading the library out. Nobody
+  # scrolls the six hundredth song that has an "a" in it — but the page would
+  # render all six hundred, and clicking one would queue all six hundred.
+  MOST = 50
+
   def initialize(term)
     @term = term.to_s.strip
   end
 
+  # Each scan is run once and kept. The page asks whether there are any results
+  # and then asks for them, and the same LIKE over the same table twice is one
+  # scan too many.
   def artists
-    matching Artist.ordered, :name
+    @artists ||= matching(Artist.ordered, :name)
   end
 
   def albums
-    matching Album.ordered.includes(:artist), :title
+    @albums ||= matching(Album.ordered.includes(:artist), :title)
   end
 
   def tracks
-    matching Track.includes(album: :artist), :title
+    @tracks ||= matching(Track.ordered.includes(album: :artist), :title)
   end
 
   def blank?
@@ -28,7 +36,7 @@ class Search
   end
 
   def any?
-    !blank? && [ artists, albums, tracks ].any?(&:exists?)
+    !blank? && [ artists, albums, tracks ].any?(&:any?)
   end
 
   private
@@ -38,10 +46,10 @@ class Search
   # And % and _ are wildcards in LIKE: somebody who types one means the
   # character, so it is escaped rather than obeyed.
   def matching(scope, column)
-    return scope.none if blank?
+    return [] if blank?
 
     pattern = "%#{ApplicationRecord.sanitize_sql_like(@term)}%"
 
-    scope.where(scope.arel_table[column].matches(pattern, ESCAPE))
+    scope.where(scope.arel_table[column].matches(pattern, ESCAPE)).limit(MOST).to_a
   end
 end

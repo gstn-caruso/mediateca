@@ -25,12 +25,20 @@ class ApplicationController < ActionController::Base
 
   # The library sits in the sidebar of every page, the way a music app keeps it.
   # Lazily, so serving a FLAC never pays for a query nobody reads.
+  #
+  # The rail counts each artist's records and each playlist's songs, and asking
+  # the database once per row would put that cost on every page in the app. So
+  # they arrive together: a home library's worth of albums is one small query,
+  # and counting them in Ruby costs nothing anybody can feel.
   def library_artists
-    @library_artists ||= Artist.ordered
+    @library_artists ||= Artist.ordered.includes(:albums).to_a
   end
 
-  # The listener's own playlists, in the sidebar of every page they see.
+  # The listener's own playlists, in the sidebar of every page they see — and in
+  # the menu behind every song's +, which asks whether there are any at all. A
+  # remembered *query* would run that question again for every song on the page;
+  # remembering the answer asks it once.
   def playlists
-    @playlists ||= Current.profile.playlists.ordered
+    @playlists ||= Current.profile.playlists.ordered.includes(:entries).to_a
   end
 end

@@ -14,24 +14,26 @@ class Profile < ApplicationRecord
   # click by mistake.
   scope :ordered, -> { order(:id) }
 
+  # Pressed twice — a double click, or the phone and the tablet at once — both
+  # presses find nothing and both insert. The database has the last word on that
+  # (it holds a unique index), and create_or_find_by lets it have it, rather than
+  # raising in the listener's face over a heart they already gave.
   def like(thing)
-    likes.find_or_create_by!(likeable: thing)
+    likes.create_or_find_by!(likeable: thing).tap { forget_hearts }
   end
 
   def unlike(thing)
     likes.where(likeable: thing).destroy_all
+    forget_hearts
   end
 
   def likes?(thing)
-    likes.exists?(likeable: thing)
+    hearts.include?([ thing.class.name, thing.id ])
   end
 
   # Newest first: the song you just hearted is the one you came looking for.
   def liked_tracks
-    Track.joins("INNER JOIN likes ON likes.likeable_id = tracks.id AND likes.likeable_type = 'Track'")
-         .where(likes: { profile_id: id })
-         .includes(album: :artist)
-         .order("likes.id DESC")
+    Track.joins(:likes).where(likes: { profile_id: id }).includes(album: :artist).order("likes.id DESC")
   end
 
   def played(track)
@@ -49,5 +51,19 @@ class Profile < ApplicationRecord
 
     found = Album.where(id: ids).includes(:artist).index_by(&:id)
     ids.filter_map { |id| found[id] }
+  end
+
+  private
+
+  # A page full of songs asks about every one of them, and asking the database
+  # each time is a query per row. A listener's hearts are a handful of rows, so
+  # they come back once and the page reads them off memory. Current.profile is
+  # this request's, so the memo cannot outlive the answer it holds.
+  def hearts
+    @hearts ||= likes.pluck(:likeable_type, :likeable_id).to_set
+  end
+
+  def forget_hearts
+    @hearts = nil
   end
 end
