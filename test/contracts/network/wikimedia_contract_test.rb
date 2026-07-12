@@ -14,9 +14,28 @@ require "test_helper"
 # Skipped when they cannot be reached. REQUIRE_NETWORK turns the skip into a
 # failure, so a green suite never means "we quietly checked nothing".
 class WikimediaContractTest < ActiveSupport::TestCase
+  # One client for the whole class. MusicBrainz asks to be called once a second,
+  # and the throttle that keeps that promise lives inside the client — so a fresh
+  # client for every test remembers nothing, and six calls land in a heartbeat.
+  # That is how you get a 503 out of a service that was never down. The other half
+  # of the promise is one process: lib/tasks/contracts.rake.
+  def self.api = @api ||= Wikimedia::Api.new
+
+  # Asked once, for the same reason.
+  def self.reachable?
+    return @reachable unless @reachable.nil?
+
+    @reachable = begin
+      api.search("Almafuerte")
+      true
+    rescue StandardError
+      false
+    end
+  end
+
   setup do
-    @api = Wikimedia::Api.new
-    next if reachable?
+    @api = self.class.api
+    next if self.class.reachable?
 
     flunk "Wikimedia is unreachable and REQUIRE_NETWORK demands it" if ENV["REQUIRE_NETWORK"].present?
 
@@ -42,14 +61,5 @@ class WikimediaContractTest < ActiveSupport::TestCase
     claims = @api.image("Q1605212")["claims"]
 
     assert(claims.blank? || !claims.key?("P18"))
-  end
-
-  private
-
-  def reachable?
-    @api.search("Almafuerte")
-    true
-  rescue StandardError
-    false
   end
 end
