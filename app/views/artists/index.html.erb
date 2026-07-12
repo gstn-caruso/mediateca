@@ -18,34 +18,89 @@
     </div>
   <% end %>
 
-  <h1 class="mb-4 mt-4 text-2xl font-bold tracking-tight text-white sm:text-3xl">Your Library</h1>
+  <%# The same three turns as the rail, and the same control — one library, and
+      you say which way you want to be shown it. %>
+  <div data-controller="tabs" data-tabs-showing-value="artists" data-tabs-remember-value="mediateca:library-page">
+    <div class="mb-6 mt-4 flex items-center justify-between gap-4">
+      <h1 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">Your Library</h1>
 
-  <%# A fresh install used to show that heading over nothing at all, which reads
-      like a bug rather than an empty shelf. The music is on the disk; nothing
-      has looked at it yet, and that is a sentence somebody can act on. %>
-  <% if library_artists.empty? %>
-    <div class="py-16 text-center">
-      <p class="text-sm text-neutral-400">Nothing here yet.</p>
-      <p class="mt-2 text-sm text-neutral-500">
-        The catalog is filled by scanning the disk — <code class="rounded bg-white/10 px-1.5 py-0.5 text-xs text-neutral-300">bin/kamal import</code>,
-        or every night at four.
-      </p>
+      <div role="tablist" aria-label="Your Library" data-action="keydown->tabs#step"
+           class="segmented flex w-40 shrink-0 rounded-full bg-black/30 p-1 ring-1 ring-inset ring-white/10">
+        <%= render "shared/library_tabs", size: "size-5", pad: "py-2" %>
+      </div>
     </div>
-  <% end %>
 
-  <%# Artists are round, records are square. You can tell a person from a sleeve
-      without reading either. %>
-  <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-    <% library_artists.each do |artist| %>
-      <%= link_to artist_path(artist), class: "group rounded-lg p-4 transition hover:bg-white/5" do %>
-        <div class="aspect-square overflow-hidden rounded-full bg-neutral-800 shadow-lg">
-          <%= render "shared/artist_face", artist: artist, text: "text-5xl" %>
+    <%# Artists are round, records are square. You can tell a person from a sleeve
+        without reading either. %>
+    <div role="tabpanel" aria-label="Artists" data-tabs-target="panel" data-tabs-name="artists"
+         class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      <% library_artists.each do |artist| %>
+        <%= link_to artist_path(artist), class: "group rounded-lg p-4 transition hover:bg-white/5" do %>
+          <div class="aspect-square overflow-hidden rounded-full bg-neutral-800 shadow-lg">
+            <%= render "shared/artist_face", artist: artist, text: "text-5xl" %>
+          </div>
+          <p class="mt-4 truncate text-center text-base font-bold text-white"><%= artist.name %></p>
+          <p class="mt-1 truncate text-center text-sm text-neutral-400">
+            <%= pluralize(artist.albums.size, "album") %>
+          </p>
+        <% end %>
+      <% end %>
+    </div>
+
+    <div role="tabpanel" aria-label="Albums" data-tabs-target="panel" data-tabs-name="albums" hidden
+         class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      <% library_albums.each do |album| %>
+        <%= link_to album_path(album), class: "group rounded-lg p-4 transition hover:bg-white/5" do %>
+          <div class="aspect-square overflow-hidden rounded bg-neutral-800 shadow-lg">
+            <%= image_tag cover_url(album), alt: "", loading: "lazy",
+                          class: "size-full object-cover transition duration-300 group-hover:scale-105" %>
+          </div>
+          <p class="mt-4 truncate text-base font-bold text-white"><%= album.title %></p>
+          <p class="mt-1 truncate text-sm text-neutral-400">
+            <%= album.artist.name %><%= " · #{album.year}" if album.year %>
+          </p>
+        <% end %>
+      <% end %>
+    </div>
+
+    <div role="tabpanel" aria-label="Playlists" data-tabs-target="panel" data-tabs-name="playlists" hidden
+         class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      <%= link_to likes_path, class: "group rounded-lg p-4 transition hover:bg-white/5" do %>
+        <div aria-hidden="true" class="flex aspect-square items-center justify-center rounded bg-gradient-to-br from-indigo-500 to-violet-700 shadow-lg">
+          <svg class="size-12 text-white transition duration-300 group-hover:scale-110" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 14S1.5 9.7 1.5 5.6A3.6 3.6 0 0 1 8 3.5a3.6 3.6 0 0 1 6.5 2.1C14.5 9.7 8 14 8 14Z"/>
+          </svg>
         </div>
-        <p class="mt-4 truncate text-center text-base font-bold text-white"><%= artist.name %></p>
-        <p class="mt-1 truncate text-center text-sm text-neutral-400">
-          <%= pluralize(artist.albums.size, "album") %>
+        <p class="mt-4 truncate text-base font-bold text-white">Liked Songs</p>
+        <p class="mt-1 truncate text-sm text-neutral-400">
+          <%= pluralize(Current.profile.liked_songs_count, "song") %>
         </p>
       <% end %>
+
+      <% playlists.each do |playlist| %>
+        <%= link_to playlist, class: "group rounded-lg p-4 transition hover:bg-white/5" do %>
+          <div aria-hidden="true" class="flex aspect-square items-center justify-center rounded bg-neutral-800 text-neutral-300 shadow-lg ring-1 ring-inset ring-white/10">
+            <svg class="size-12 transition duration-300 group-hover:scale-110" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M6 3h9v1.5H6V3ZM6 7h9v1.5H6V7ZM1 11h14v1.5H1V11ZM1 3h3v1.5H1V3ZM1 7h3v1.5H1V7Z"/>
+            </svg>
+          </div>
+          <p class="mt-4 truncate text-base font-bold text-white"><%= playlist.name %></p>
+          <p class="mt-1 truncate text-sm text-neutral-400"><%= pluralize(playlist.entries.size, "song") %></p>
+        <% end %>
+      <% end %>
+    </div>
+
+    <%# A fresh install used to show that heading over nothing at all, which reads
+        like a bug rather than an empty shelf. The music is on the disk; nothing
+        has looked at it yet, and that is a sentence somebody can act on. %>
+    <% if library_artists.empty? %>
+      <div class="py-16 text-center">
+        <p class="text-sm text-neutral-400">Nothing here yet.</p>
+        <p class="mt-2 text-sm text-neutral-500">
+          The catalog is filled by scanning the disk — <code class="rounded bg-white/10 px-1.5 py-0.5 text-xs text-neutral-300">bin/kamal import</code>,
+          or every night at four.
+        </p>
+      </div>
     <% end %>
   </div>
 </div>

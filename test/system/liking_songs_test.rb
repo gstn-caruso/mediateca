@@ -25,7 +25,7 @@ class LikingSongsTest < ApplicationSystemTestCase
     click_on "Like Desencuentro"
     assert_selector "button[aria-label='Unlike Desencuentro']"
 
-    within("nav") { click_on "Liked Songs" }
+    in_the_library("Playlists") { click_on "Liked Songs" }
     assert_selector "h1", text: "Liked Songs"
     assert_text "Desencuentro"
 

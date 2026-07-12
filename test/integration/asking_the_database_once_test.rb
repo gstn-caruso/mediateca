@@ -26,6 +26,13 @@ class AskingTheDatabaseOnceTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # The rail holds the records themselves now, and each row names who made it.
+  test "the sidebar does not ask one question per record on the shelf" do
+    assert_flat -> { get root_path } do
+      9.times { |n| album_by(@artist, "Album #{n}") }
+    end
+  end
+
   test "the sidebar does not ask one question per playlist" do
     @gaston.playlists.create!(name: "Asado")
 

@@ -21,7 +21,7 @@ class KeepingPlaylistsInTheBrowserTest < ApplicationSystemTestCase
     visit album_path(@album)
     add "Desencuentro", to: "Road trip"
 
-    within("nav") { click_on "Road trip" }
+    in_the_library("Playlists") { click_on "Road trip" }
     assert_text "Desencuentro"
 
     click_on "Play Road trip"
@@ -33,7 +33,7 @@ class KeepingPlaylistsInTheBrowserTest < ApplicationSystemTestCase
     add "Desencuentro", to: "Road trip"
     add "El Pibe Tigre", to: "Road trip"
 
-    within("nav") { click_on "Road trip" }
+    in_the_library("Playlists") { click_on "Road trip" }
     click_on "Move El Pibe Tigre up"
 
     # A waiting matcher, because Turbo has to come back before the order is real.
