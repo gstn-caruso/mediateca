@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+
+# Prints the version the change on HEAD has earned. Runs on the deployer, out of
+# the checkout, with no Rails and no bundle behind it — lib/next_version.rb is
+# what decides, and it is plain Ruby for exactly this reason.
+
+require_relative "../lib/next_version"
+
+# A deploy re-run for the same commit must not spend a second version on it: if
+# this commit already carries a tag, that tag is the answer.
+already_cut = `git tag --points-at HEAD`.lines.map(&:strip).reject(&:empty?).first
+
+if already_cut
+  puts already_cut
+else
+  puts NextVersion.new(
+    previous: `git describe --tags --abbrev=0 2>/dev/null`,
+    commit: `git log -1 --pretty=%B`
+  )
+end
