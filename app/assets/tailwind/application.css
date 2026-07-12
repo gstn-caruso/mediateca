@@ -199,16 +199,37 @@ html[data-turbo-preview] .animate-enter {
   animation: none;
 }
 
+/* The queue rail. Shut, it is not there at all.
+
+   Open on a desktop it stands beside the content and the content makes room.
+   Open on a phone it comes over the top: 390px split in two is two columns of
+   nothing, so the queue takes the screen while you are looking at it, and the
+   player pill stays above it so the music is still in reach. */
+#queue-panel {
+  display: none;
+}
+#queue-panel.is-open {
+  display: flex;
+}
+@media (width < 48rem) {
+  #queue-panel.is-open {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    width: auto;
+  }
+}
+
 /* A list that knows whether it is empty, without being told.
 
    Unhearting the last song takes its row away, and the page has to become the
    page it now is: no buttons to play nothing with, and a line saying so. Asking
    the server to re-render the whole list to learn that is a round trip to
    discover something already true in the DOM. `:has` reads it off the list. */
-.hearts:has(.the-songs li) .when-empty {
+.songlist:has(.the-songs li) .when-empty {
   display: none;
 }
-.hearts:not(:has(.the-songs li)) .when-any {
+.songlist:not(:has(.the-songs li)) .when-any {
   display: none;
 }
 

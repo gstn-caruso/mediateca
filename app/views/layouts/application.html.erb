@@ -40,7 +40,8 @@
         <div class="relative z-10 flex h-full flex-col gap-2 p-2">
           <%= render "shared/header" %>
 
-          <div class="flex min-h-0 flex-1 gap-2">
+          <%# relative: on a phone the queue opens over this, not beside it. %>
+          <div class="relative flex min-h-0 flex-1 gap-2">
             <%= render "shared/sidebar" %>
 
             <%# The content has to clear the pill floating over the panel's foot,

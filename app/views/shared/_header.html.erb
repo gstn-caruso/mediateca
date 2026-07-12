@@ -35,10 +35,11 @@
                                   focus:border-accent focus:bg-white/15 focus:outline-none" %>
   <% end %>
 
-  <%# Opens the queue rail on the right — also reachable from the player. %>
+  <%# Opens the queue — beside the content on a desktop, over it on a phone. It
+      used to be desktop-only, which is why a phone had no queue at all. %>
   <button type="button" data-action="player#toggleQueue" data-player-target="queueToggle"
           aria-label="Playing Next" aria-expanded="false"
-          class="hidden shrink-0 rounded-full bg-white/10 p-2.5 text-neutral-300 transition hover:bg-white/15 hover:text-white aria-expanded:text-accent md:block">
+          class="shrink-0 rounded-full bg-white/10 p-2.5 text-neutral-300 transition hover:bg-white/15 hover:text-white active:scale-90 aria-expanded:text-accent">
     <svg class="size-5" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
       <path d="M15 15H1v-1.5h14V15Zm0-4.5H1V9h14v1.5Zm-14-7A2.5 2.5 0 0 1 3.5 1h9a2.5 2.5 0 0 1 0 5h-9A2.5 2.5 0 0 1 1 3.5Z"/>
     </svg>

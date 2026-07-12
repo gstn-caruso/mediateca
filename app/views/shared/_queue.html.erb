@@ -1,8 +1,15 @@
 <%# The queue, a rail on the right that mirrors the library on the left. It is
     data-turbo-permanent so it and the order it holds survive navigation; the
-    player controller fills it. Closed by default: `md:flex` is what opens it. %>
+    player controller fills it.
+
+    Closed by default; `is-open` is what opens it, and the CSS decides what open
+    means. On a desktop it stands beside the content. On a phone there is no
+    beside — a 390px screen split in two shows neither half — so it comes over
+    the top instead. It used to do neither: the button that opens it was hidden
+    below md, and the class it toggled had no effect there anyway, so on a phone
+    the queue simply did not exist. %>
 <aside id="queue-panel" data-turbo-permanent data-player-target="panel"
-       class="hidden w-72 shrink-0 flex-col overflow-hidden rounded-2xl glass">
+       class="w-72 shrink-0 flex-col overflow-hidden rounded-2xl glass">
   <div class="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 py-3 pl-2 pr-4">
     <div class="flex min-w-0 items-center gap-1">
       <button type="button" data-action="player#toggleQueue" aria-label="Collapse queue"

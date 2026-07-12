@@ -12,6 +12,11 @@ const REMEMBERED = "mediateca:player"
 // actually changes is written at once; this is only the clock ticking.
 const REMEMBER_EVERY = 5000
 
+// Whether the queue rail was left open, remembered the way the library rail's
+// state is. The class the CSS reads to know it is.
+const QUEUE = "mediateca:queue"
+const OPEN = "is-open"
+
 // Drives the single <audio> element in the layout.
 //
 // Turbo Drive swaps the body on every navigation, so this controller is torn
@@ -51,15 +56,27 @@ export default class extends Controller {
   }
 
   // And once the rail itself lands, whichever buttons are on the page are told.
+  // The rail is permanent, so it only lands on a full load — which is exactly
+  // when the choice has to be read back off storage.
   panelTargetConnected() {
+    if (this.remembers(QUEUE) === "open") this.panelTarget.classList.add(OPEN)
+
     this.syncQueueToggles()
   }
 
   syncQueueToggles() {
     if (!this.hasPanelTarget) return
 
-    const open = String(this.panelTarget.classList.contains("md:flex"))
+    const open = String(this.panelTarget.classList.contains(OPEN))
     this.queueToggleTargets.forEach((toggle) => toggle.setAttribute("aria-expanded", open))
+  }
+
+  remembers(key) {
+    try {
+      return localStorage.getItem(key)
+    } catch {
+      return null
+    }
   }
 
   // A tracklist arrives whenever you navigate, and the row that is playing may
@@ -169,12 +186,17 @@ export default class extends Controller {
     this.render()
   }
 
-  // The rail shows on desktop through `md:flex`; the standing `hidden` folds it
-  // shut. Both the topbar and the player carry a toggle, so keep them in step.
+  // Open or shut; the CSS decides what open looks like — beside the content on a
+  // desktop, over it on a phone. The choice is written down, the way the library
+  // rail's is, so a refresh doesn't shut a queue you left open.
   toggleQueue() {
-    const open = this.panelTarget.classList.toggle("md:flex")
+    const open = this.panelTarget.classList.toggle(OPEN)
 
-    this.queueToggleTargets.forEach((toggle) => toggle.setAttribute("aria-expanded", String(open)))
+    try {
+      localStorage.setItem(QUEUE, open ? "open" : "shut")
+    } catch { /* a private window just forgets which way it was left */ }
+
+    this.syncQueueToggles()
   }
 
   // Dragging the scrubber fires `input` the whole way across. Seeking on each

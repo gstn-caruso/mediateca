@@ -1,80 +1,100 @@
 <% content_for :title, @playlist.name %>
-<% length = album_length(@playlist.tracks.sum { |track| track.duration.to_f }) %>
+<% length = album_length(@playlist.entries.sum { |entry| entry.track.duration.to_f }) %>
 
-<header class="bg-gradient-to-b from-violet-800/50 via-violet-950/20 to-transparent px-4 pb-6 pt-10 sm:px-8 sm:pt-16">
-  <p class="text-sm font-semibold text-white">Playlist</p>
-  <h1 class="mt-2 text-4xl font-bold tracking-tight text-white sm:text-6xl"><%= @playlist.name %></h1>
-  <p class="mt-4 text-sm text-neutral-300">
-    <%= pluralize(@playlist.entries.size, "song") %><%= ", #{length}" if length %>
-  </p>
-</header>
+<%# Same shape as the hearts: the list, what it says when it holds nothing, and
+    the buttons that play it, with `:has` deciding which of them shows. Dropping
+    the last song has to leave a page that makes sense, and it already does. %>
+<div class="songlist px-4 pb-10 sm:px-8">
+  <header class="-mx-4 bg-gradient-to-b from-violet-800/50 via-violet-950/20 to-transparent px-4 pb-6 pt-10 sm:-mx-8 sm:px-8 sm:pt-16">
+    <p class="text-sm font-semibold text-white">Playlist</p>
+    <h1 class="mt-2 text-4xl font-bold tracking-tight text-white sm:text-6xl"><%= @playlist.name %></h1>
+    <p class="mt-4 text-sm text-neutral-300">
+      <%= pluralize(@playlist.entries.size, "song") %><%= ", #{length}" if length %>
+    </p>
+  </header>
 
-<div class="px-4 pb-10 sm:px-8">
-  <div class="mb-4 flex items-center gap-4">
-    <% if @playlist.entries.any? %>
+  <div class="mb-4 mt-6 flex items-center gap-3">
+    <div class="when-any flex items-center gap-3">
+      <%# The same solid pill as a record's. The playlist's used to be a pale
+          ghost of it — the same act, in two different clothes. %>
       <button type="button" data-action="player#play" data-player-index-param="0"
               aria-label="Play <%= @playlist.name %>"
-              class="inline-flex items-center gap-2 rounded-lg bg-accent/15 px-6 py-2.5 text-sm font-semibold text-accent transition hover:bg-accent/25">
+              class="inline-flex items-center gap-2 rounded-full bg-accent gel px-7 py-3 text-sm font-semibold text-on-accent transition hover:scale-105 hover:bg-accent-bright active:scale-95">
         <svg class="size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
           <path d="M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713Z"/>
         </svg>
         Play
       </button>
 
-    <button type="button" data-action="player#playShuffled" data-player-index-param="0"
-            aria-label="Shuffle <%= @playlist.name %>"
-            class="inline-flex items-center gap-2 rounded-lg bg-accent/15 px-6 py-2.5 text-sm font-semibold text-accent transition hover:bg-accent/25">
-      <svg class="size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <button type="button" data-action="player#playShuffled" data-player-index-param="0"
+              aria-label="Shuffle <%= @playlist.name %>"
+              class="inline-flex items-center gap-2 rounded-full bg-white/10 px-6 py-3 text-sm font-semibold text-white ring-1 ring-inset ring-white/15 transition hover:scale-105 hover:bg-white/15 active:scale-95">
+        <svg class="size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
           <path d="M13.151.922a.75.75 0 1 0-1.06 1.06L13.109 3H11.16a3.75 3.75 0 0 0-2.873 1.34l-6.173 7.356A2.25 2.25 0 0 1 .39 12.5H0V14h.391a3.75 3.75 0 0 0 2.873-1.34l6.173-7.356a2.25 2.25 0 0 1 1.724-.804h1.947l-1.017 1.018a.75.75 0 0 0 1.06 1.06L15.98 3.75 13.15.922ZM.391 3.5H0V2h.391c1.109 0 2.16.49 2.873 1.34L4.89 5.277l-.979 1.167-1.796-2.14A2.25 2.25 0 0 0 .39 3.5Z"/>
           <path d="m7.5 10.723.98-1.167.957 1.14a2.25 2.25 0 0 0 1.724.804h1.947l-1.017-1.018a.75.75 0 1 1 1.06-1.06l2.829 2.828-2.829 2.828a.75.75 0 1 1-1.06-1.06L13.109 13H11.16a3.75 3.75 0 0 1-2.873-1.34l-.787-.938Z"/>
         </svg>
-      Shuffle
-    </button>
-    <% end %>
+        Shuffle
+      </button>
+    </div>
 
-    <%= form_with model: @playlist, class: "flex items-center gap-2" do |form| %>
-      <%= form.text_field :name, "aria-label": "Playlist name",
-                          class: "w-48 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white focus:border-accent focus:outline-none" %>
-      <%= form.submit "Rename", class: "cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold text-neutral-400 transition hover:bg-white/10 hover:text-white" %>
-    <% end %>
+    <%# Renaming and deleting are things you do to a playlist once, not things
+        you look at while you listen to it. They sit behind the ⋯ where the rest
+        of the app's second thoughts live. %>
+    <details class="relative">
+      <summary aria-label="Playlist options"
+               class="flex size-11 cursor-pointer list-none items-center justify-center rounded-full text-xl leading-none
+                      text-neutral-400 transition hover:bg-white/10 hover:text-white active:scale-90">⋯</summary>
 
-    <%= button_to "Delete playlist", @playlist, method: :delete,
-                  form: { data: { turbo_confirm: "Delete “#{@playlist.name}”?" } },
-                  class: "cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold text-neutral-400 transition hover:bg-white/10 hover:text-rose-400" %>
+      <div class="absolute left-0 z-20 mt-1 w-64 rounded-2xl glass p-2">
+        <%= form_with model: @playlist, class: "flex items-center gap-1" do |form| %>
+          <%= form.text_field :name, "aria-label": "Playlist name",
+                              class: "min-w-0 flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-accent focus:outline-none" %>
+          <%= form.submit "Rename", class: "shrink-0 cursor-pointer rounded-lg px-2.5 py-2 text-xs font-semibold text-neutral-300 transition hover:bg-white/10 hover:text-white" %>
+        <% end %>
+
+        <div class="mx-1 my-2 h-px bg-white/10"></div>
+
+        <%= button_to "Delete playlist", @playlist, method: :delete,
+                      form: { data: { turbo_confirm: "Delete “#{@playlist.name}”?" } },
+                      class: "w-full cursor-pointer rounded-lg px-3 py-2 text-left text-sm font-semibold text-neutral-300 transition hover:bg-rose-500/15 hover:text-rose-400" %>
+      </div>
+    </details>
   </div>
 
-  <% if @playlist.entries.empty? %>
-    <p class="py-12 text-center text-sm text-neutral-500">
-      Nothing here yet. Add songs from any album.
-    </p>
-  <% else %>
-    <ol>
-      <% @playlist.entries.each_with_index do |entry, index| %>
-        <li class="flex items-center gap-1">
-          <button type="button" <%= tag.attributes(data: playable(entry.track, index)) %>
-                  aria-current="false"
-                  class="group flex min-w-0 flex-1 items-center gap-4 rounded-lg px-3 py-2 text-left transition hover:bg-white/10 aria-[current=true]:text-accent">
-            <span class="w-6 shrink-0 text-right text-sm tabular-nums text-neutral-400"><%= index + 1 %></span>
-            <span class="min-w-0 flex-1">
-              <span class="block truncate text-sm font-medium text-neutral-100 group-aria-[current=true]:text-accent">
-                <%= entry.track.title %>
-              </span>
-              <span class="block truncate text-xs text-neutral-400"><%= entry.track.artist_name %></span>
-            </span>
-            <span class="shrink-0 text-sm tabular-nums text-neutral-400"><%= track_duration(entry.track.duration) %></span>
-          </button>
+  <p class="when-empty py-12 text-center text-sm text-neutral-500">
+    Nothing here yet. Add songs from any album.
+  </p>
 
-          <%= button_to "▲", playlist_entry_path(@playlist, entry, by: -1), method: :patch,
-                        "aria-label": "Move #{entry.track.title} up",
-                        class: "cursor-pointer rounded px-2 py-1 text-xs text-neutral-500 transition hover:bg-white/10 hover:text-white" %>
-          <%= button_to "▼", playlist_entry_path(@playlist, entry, by: 1), method: :patch,
-                        "aria-label": "Move #{entry.track.title} down",
-                        class: "cursor-pointer rounded px-2 py-1 text-xs text-neutral-500 transition hover:bg-white/10 hover:text-white" %>
-          <%= button_to "✕", playlist_entry_path(@playlist, entry), method: :delete,
-                        "aria-label": "Remove #{entry.track.title}",
-                        class: "cursor-pointer rounded px-2 py-1 text-xs text-neutral-500 transition hover:bg-white/10 hover:text-rose-400" %>
-        </li>
-      <% end %>
-    </ol>
-  <% end %>
+  <ol class="the-songs">
+    <% @playlist.entries.each_with_index do |entry, index| %>
+      <li class="group/row flex items-center gap-1">
+        <button type="button" <%= tag.attributes(data: playable(entry.track, index)) %>
+                aria-current="false"
+                class="group flex min-w-0 flex-1 items-center gap-4 rounded-lg px-3 py-2 text-left transition hover:bg-white/10 aria-[current=true]:text-accent">
+          <span class="w-6 shrink-0 text-right text-sm tabular-nums text-neutral-400"><%= index + 1 %></span>
+          <span class="min-w-0 flex-1">
+            <span class="block truncate text-sm font-medium text-neutral-100 group-aria-[current=true]:text-accent">
+              <%= entry.track.title %>
+            </span>
+            <span class="block truncate text-xs text-neutral-400"><%= entry.track.artist_name %></span>
+          </span>
+          <span class="shrink-0 text-sm tabular-nums text-neutral-400"><%= track_duration(entry.track.duration) %></span>
+        </button>
+
+        <%= render "shared/heart", thing: entry.track %>
+
+        <%# Moving a song one place at a time. The arrows used to be 24px of
+            nothing to aim at; they are a thumb's worth now. %>
+        <%= button_to "▲", playlist_entry_path(@playlist, entry, by: -1), method: :patch,
+                      "aria-label": "Move #{entry.track.title} up",
+                      class: "cursor-pointer rounded-full p-2 text-xs text-neutral-500 transition hover:bg-white/10 hover:text-white active:scale-90" %>
+        <%= button_to "▼", playlist_entry_path(@playlist, entry, by: 1), method: :patch,
+                      "aria-label": "Move #{entry.track.title} down",
+                      class: "cursor-pointer rounded-full p-2 text-xs text-neutral-500 transition hover:bg-white/10 hover:text-white active:scale-90" %>
+        <%= button_to "✕", playlist_entry_path(@playlist, entry), method: :delete,
+                      "aria-label": "Remove #{entry.track.title}",
+                      class: "cursor-pointer rounded-full p-2 text-xs text-neutral-500 transition hover:bg-white/10 hover:text-rose-400 active:scale-90" %>
+      </li>
+    <% end %>
+  </ol>
 </div>

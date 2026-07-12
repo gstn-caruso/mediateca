@@ -62,6 +62,25 @@ class OnAPhoneTest < ApplicationSystemTestCase
     assert_selector "[data-player-target='title']", text: "Desencuentro"
   end
 
+  # The queue used to be desktop-only, twice over: the button that opens it was
+  # hidden below md, and the class it toggled had no effect there anyway. So a
+  # phone had no way to see what was coming, and no way to change it.
+  #
+  # There is no room to stand beside the content at 390px, so it comes over it.
+  test "the queue can be opened, and what's coming can be seen and dropped" do
+    visit album_path(@album)
+    assert_on_a_phone
+    find("button[data-player-track]", text: "Desencuentro").click
+
+    click_button "Playing Next"
+
+    within "[data-player-target='queue']" do
+      assert_text "NOW PLAYING"
+      assert_text "Desencuentro"
+    end
+    assert_no_sideways_scroll "the album, with the queue open"
+  end
+
   private
 
   # A test that believes it is on a phone, and is not, proves nothing.
