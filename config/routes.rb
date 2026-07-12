@@ -36,6 +36,12 @@ Rails.application.routes.draw do
   # Which build is answering, for a tab coming back from a deploy.
   get "build" => "builds#show"
 
+  # Where a tab becomes an app. The worker is served from the root on purpose: a
+  # worker only speaks for the pages beneath the path it came from, and this one
+  # has to speak for all of them.
+  get "manifest.json"     => "pwa#manifest",       as: :pwa_manifest
+  get "service-worker.js" => "pwa#service_worker", as: :pwa_service_worker
+
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   get "up" => "rails/health#show", as: :rails_health_check
 end
