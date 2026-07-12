@@ -247,11 +247,16 @@ class PlayingMusicTest < ApplicationSystemTestCase
   # is coming out of anything, and an equalizer that keeps dancing is a lie.
   test "the equalizer holds still while the music is paused" do
     play "Desencuentro"
+
+    # The pause icon showing is the music actually running. Waiting for it is the
+    # whole point: play() is a promise, so the title is on screen before a note
+    # has sounded, and reading the bars right then reads them before they moved.
+    assert_selector "[data-player-target='pauseIcon']", visible: true
     assert_equal "running", equalizer_state
 
     click_button "Play or pause"
 
-    # The play icon coming back is the music having stopped; the bars have to
+    # And the play icon coming back is the music having stopped; the bars have to
     # have stopped with it.
     assert_selector "[data-player-target='playIcon']", visible: true
     assert_equal "paused", equalizer_state
