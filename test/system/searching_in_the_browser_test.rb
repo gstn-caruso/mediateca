@@ -21,7 +21,11 @@ class SearchingInTheBrowserTest < ApplicationSystemTestCase
     fill_in "Search", with: "Desencuentro"
     find_field("Search").send_keys(:return)
 
-    assert_text "Songs"
+    # Not "Songs": the rail says "Liked Songs" on every page in the app, so that
+    # text is already on screen before the search has gone anywhere, and waiting
+    # for it waits for nothing. The heading over the results is the results.
+    assert_selector "h2", text: "Songs"
+
     # The row and its heart both answer to the song's name; the row comes first,
     # and the row is what you press to hear it.
     click_on "Desencuentro", match: :first

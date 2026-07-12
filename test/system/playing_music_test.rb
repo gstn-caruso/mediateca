@@ -291,7 +291,7 @@ class PlayingMusicTest < ApplicationSystemTestCase
 
     fill_in "Search", with: "Desencuentro"
     find_field("Search").send_keys(:return)
-    assert_text "Songs"
+    assert_selector "h2", text: "Songs"
 
     within("#topbar") { click_on "Home" }
     assert_selector "main h1", text: "Your Library"
