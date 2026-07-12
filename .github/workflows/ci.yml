@@ -81,11 +81,11 @@ jobs:
         with:
           bundler-cache: true
 
-      # Solo los tests de contrato corren ffmpeg; el resto de la suite anda sin
-      # él. Los runners de Ubuntu no lo traen, y acá sí lo queremos: es el único
-      # lugar donde se verifica que ffprobe siga hablando como cuando grabamos
-      # su salida.
-      - name: Install ffmpeg
+      # Solo los tests de contrato corren ffprobe (viene en el paquete ffmpeg);
+      # el resto de la suite anda sin él. Los runners de Ubuntu no lo traen, y
+      # acá sí lo queremos: es el único lugar donde se verifica que ffprobe siga
+      # describiendo los FLACs como el scanner espera.
+      - name: Install ffprobe
         run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends ffmpeg
 
       # Los tests nunca tocan el NAS: Beets::Library corre contra fixtures de
@@ -94,9 +94,9 @@ jobs:
       - name: Run tests
         env:
           RAILS_ENV: test
-          # Sin esto, un runner sin ffmpeg saltearía los tests de contrato en
+          # Sin esto, un runner sin ffprobe saltearía los tests de contrato en
           # silencio y la suite quedaría verde sin haberlos corrido.
-          REQUIRE_FFMPEG: "1"
+          REQUIRE_FFPROBE: "1"
         run: bin/rails db:test:prepare test
 
   system_test:

@@ -3,7 +3,7 @@ require "open3"
 
 # The only object that knows ffprobe is a process. It answers with ffprobe's
 # raw description of a file; making sense of it belongs to whoever asked —
-# Video::Probe reads the streams, Music::Tags reads the format's tags.
+# Music::Tags reads the format's tags and the audio stream behind them.
 class Ffprobe
   # ffmpeg is missing. Not the file's fault; ours.
   NotInstalled = Class.new(StandardError)

@@ -112,7 +112,7 @@ module Music
 
     def read(tags, duration: "1.0", path: "/m/Artist/1995 - Album/01 - Track.flac", streams: [], format: {})
       description = { "duration" => duration, "tags" => tags }.merge(format)
-      probe = VideoBuilders::FakeFfprobe.new(streams:, format: description)
+      probe = FakeFfprobe.new(streams:, format: description)
 
       Tags.new(ffprobe: probe).read(path)
     end

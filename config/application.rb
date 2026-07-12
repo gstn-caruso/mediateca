@@ -47,8 +47,7 @@ module Mediateca
     config.x.spotify_client_secret = ENV["SPOTIFY_CLIENT_SECRET"]
     config.x.portraits_root = ENV.fetch("PORTRAITS_ROOT", Rails.root.join("storage/portraits").to_s)
 
-    # ffmpeg reads what the browser cannot. Both live in the image.
+    # The scanner reads each file's tags with ffprobe, which ships in the image.
     config.x.ffprobe = ENV.fetch("FFPROBE", "ffprobe")
-    config.x.ffmpeg = ENV.fetch("FFMPEG", "ffmpeg")
   end
 end
