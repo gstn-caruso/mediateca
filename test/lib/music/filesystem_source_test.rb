@@ -128,16 +128,44 @@ module Music
       end
     end
 
+    # One file lands truncated over SMB. Without this the scan dies on it, the
+    # nightly job fails in silence, and no music ever appears again — the whole
+    # library held hostage by one bad copy. A file nothing can read is a file
+    # nothing can play, so the scan steps over it and carries on.
+    test "a file that cannot be read is skipped, and the rest of the album still scans" do
+      within_root do |root|
+        create(root, "A/1990 - B/01 - Good.flac", title: "Good")
+        unreadable(create(root, "A/1990 - B/02 - Truncated.flac"))
+
+        assert_equal [ "Good" ], source(root).albums.sole.tracks.map(&:title)
+      end
+    end
+
+    test "an album whose every file is unreadable is no album at all" do
+      within_root do |root|
+        unreadable(create(root, "A/1990 - B/01.flac"))
+
+        assert_empty source(root).albums
+      end
+    end
+
     private
 
     # A fake tag reader: tags come from what the test declared, not from
     # reading the file. This way the scanner is tested without ffmpeg and without real FLACs.
     class DeclaredTags
-      def initialize = @by_path = {}
+      def initialize
+        @by_path = {}
+        @unreadable = []
+      end
 
       def declare(path, **tags) = @by_path[path] = tags
 
+      def cannot_read(path) = @unreadable << path
+
       def read(path)
+        raise Ffprobe::Unreadable, "ffprobe could not read #{path}" if @unreadable.include?(path)
+
         tags = @by_path.fetch(path, {})
 
         Music::FileTags.new(
@@ -168,6 +196,12 @@ module Music
       path = File.join(root, relative)
       touch(path)
       @tags.declare(path, **tags)
+      path
+    end
+
+    # A file that landed truncated: it is there, and nothing can read it.
+    def unreadable(path)
+      @tags.cannot_read(path)
       path
     end
 

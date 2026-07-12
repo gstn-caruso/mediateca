@@ -25,7 +25,7 @@ module Music
     end
 
     def albums
-      tracks_by_album.map { |directory, paths| album(directory, paths) }
+      tracks_by_album.filter_map { |directory, paths| album(directory, paths) }
     end
 
     private
@@ -52,7 +52,9 @@ module Music
     end
 
     def album(directory, paths)
-      read = paths.to_h { |path| [ path, tags.read(path) ] }
+      read = readable(paths)
+      return if read.empty?
+
       sung = read.values
 
       Source::Album.new(
@@ -66,6 +68,23 @@ module Music
         cover_path: cover_in(directory),
         tracks: tracks_from(read)
       )
+    end
+
+    # One file lands truncated over SMB and the whole scan used to die on it: the
+    # nightly job failed in silence, and no music ever appeared again — the
+    # library held hostage by one bad copy. A file nothing can read is a file
+    # nothing can play, so the scan steps over it and says so in the log.
+    #
+    # Only the unreadable file is stepped over. A missing binary is not a bad
+    # file, it is a broken install, and swallowing that would skip everything
+    # and call the library empty.
+    def readable(paths)
+      paths.filter_map do |path|
+        [ path, tags.read(path) ]
+      rescue ::Ffprobe::Unreadable => e
+        Rails.logger.warn("Skipping #{path}: #{e.message}")
+        nil
+      end.to_h
     end
 
     def tracks_from(read)
