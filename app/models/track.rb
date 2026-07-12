@@ -18,4 +18,11 @@ class Track < ApplicationRecord
   def artist_name
     artist.presence || album.artist.name
   end
+
+  # The scan spread the file's encoding over four columns because that is how a
+  # table stores it, but the four are one fact, and it is Music::Audio that
+  # knows how to read it.
+  def audio
+    Music::Audio.new(codec:, bit_depth:, sample_rate:, bit_rate:)
+  end
 end

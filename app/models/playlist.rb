@@ -10,9 +10,16 @@ class Playlist < ApplicationRecord
 
   scope :ordered, -> { order(:name) }
 
-  # A playlist is a list, not a set.
+  # A playlist is a list, not a set: the same song may appear twice.
+  #
+  # But two songs may not appear in the same place, and reading the last position
+  # and then claiming the next one cannot promise that — two adds racing both read
+  # the same last position and both claim the one after it. The index refuses the
+  # second, and the second asks again; by then the answer has changed.
   def add(track)
-    entries.create!(track:, position: (entries.maximum(:position) || 0) + 1)
+    entries.create!(track:, position: after_the_last)
+  rescue ActiveRecord::RecordNotUnique
+    retry
   end
 
   # An entry at either end has nowhere to go, and a list that silently wrapped
@@ -28,14 +35,23 @@ class Playlist < ApplicationRecord
     reorder(ids)
   end
 
-  # The ids arrive from a form, so they are whatever the browser chose to send.
-  # Scoping the update to our own entries stops a stray id from reordering
-  # somebody else's playlist.
+  private
+
+  def after_the_last
+    (entries.maximum(:position) || 0) + 1
+  end
+
+  # Every entry is renumbered from its place in the new order, so the positions
+  # stay 1..n with no gaps and no two the same — which is what the index demands
+  # and what ▲ and ▼ rely on. Nobody outside asks for this: a move is the only
+  # thing that reorders a playlist, and a move is where the new order comes from.
+  #
+  # Written to a scratch range first, because the positions are unique and a
+  # straight shuffle would collide with the very row it is about to move.
   def reorder(entry_ids)
     transaction do
-      entry_ids.each_with_index do |id, index|
-        entries.where(id: id).update_all(position: index + 1)
-      end
+      entry_ids.each_with_index { |id, index| entries.where(id: id).update_all(position: -(index + 1)) }
+      entry_ids.each_with_index { |id, index| entries.where(id: id).update_all(position: index + 1) }
     end
   end
 end

@@ -14,6 +14,27 @@ class PlaylistTest < ActiveSupport::TestCase
     assert_empty playlist.tracks
   end
 
+  # A double click, or the phone and the tablet at once: both adds read the same
+  # last position and both claim the one after it. The list would then hold two
+  # songs in one place, in an order decided by nothing, and pressing ▲ on either
+  # would appear to do nothing at all. Only the database can refuse that.
+  test "two songs cannot hold the same place in the list" do
+    list = playlist
+    list.add(@first)
+
+    assert_raises(ActiveRecord::RecordNotUnique) do
+      list.entries.insert!({ track_id: @second.id, position: 1, created_at: Time.current, updated_at: Time.current })
+    end
+  end
+
+  test "a song added while another was landing still lands, behind it" do
+    list = playlist
+    list.add(@first)
+    list.add(@second)
+
+    assert_equal [ 1, 2 ], list.entries.pluck(:position)
+  end
+
   test "a playlist needs a name" do
     refute @gaston.playlists.build(name: " ").valid?
   end
@@ -50,26 +71,17 @@ class PlaylistTest < ActiveSupport::TestCase
     assert_equal [ @first, @third ], list.reload.tracks.to_a
   end
 
-  test "a playlist can be reordered" do
+  # Moving a song is the only thing that reorders a playlist, so it is the only
+  # thing that has to keep the places 1..n with none repeated — which is what the
+  # index demands and what ▲ and ▼ read.
+  test "moving a song leaves the places whole" do
     list = playlist
     [ @first, @second, @third ].each { |track| list.add(track) }
-    reversed = list.entries.reverse.map(&:id)
 
-    list.reorder(reversed)
+    list.move(list.entries.last, by: -1)
 
-    assert_equal [ @third, @second, @first ], list.reload.tracks.to_a
-  end
-
-  # Reordering by ids from another playlist would silently steal its entries.
-  test "reordering only touches its own entries" do
-    mine = playlist
-    mine.add(@first)
-    theirs = @gaston.playlists.create!(name: "Theirs")
-    stolen = theirs.add(@second)
-
-    mine.reorder([ stolen.id ])
-
-    assert_equal [ @second ], theirs.reload.tracks.to_a
+    assert_equal [ @first, @third, @second ], list.reload.tracks.to_a
+    assert_equal [ 1, 2, 3 ], list.entries.reload.pluck(:position)
   end
 
   test "a profile taking its leave takes its playlists with it" do

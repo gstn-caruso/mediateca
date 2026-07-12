@@ -37,6 +37,17 @@ class TrackTest < ActiveSupport::TestCase
     assert_equal [ numbered, unnumbered ], @album.tracks.to_a
   end
 
+  # The scan writes the file's encoding into four columns, and a track hands
+  # back the one thing they were.
+  test "a track reconstitutes the audio it was scanned with" do
+    track = Track.create!(
+      title: "Rap del exilio", path: "/music/piano/03.flac", album: @album,
+      codec: "flac", bit_depth: 16, sample_rate: 44100, bit_rate: 1006840
+    )
+
+    assert_equal Music::Audio.new(codec: "flac", bit_depth: 16, sample_rate: 44100, bit_rate: 1006840), track.audio
+  end
+
   private
 
   def track_credited_to(artist)

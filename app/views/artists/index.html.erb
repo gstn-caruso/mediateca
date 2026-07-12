@@ -20,6 +20,19 @@
 
   <h1 class="mb-4 mt-4 text-2xl font-bold tracking-tight text-white sm:text-3xl">Your Library</h1>
 
+  <%# A fresh install used to show that heading over nothing at all, which reads
+      like a bug rather than an empty shelf. The music is on the disk; nothing
+      has looked at it yet, and that is a sentence somebody can act on. %>
+  <% if @artists.empty? %>
+    <div class="py-16 text-center">
+      <p class="text-sm text-neutral-400">Nothing here yet.</p>
+      <p class="mt-2 text-sm text-neutral-500">
+        The catalog is filled by scanning the disk — <code class="rounded bg-white/10 px-1.5 py-0.5 text-xs text-neutral-300">bin/kamal import</code>,
+        or every night at four.
+      </p>
+    </div>
+  <% end %>
+
   <%# Artists are round, records are square. You can tell a person from a sleeve
       without reading either. %>
   <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">

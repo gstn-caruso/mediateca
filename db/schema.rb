@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_12_145334) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_12_145847) do
   create_table "albums", force: :cascade do |t|
     t.string "album_type"
     t.integer "artist_id", null: false
@@ -51,7 +51,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_12_145334) do
     t.integer "position", null: false
     t.integer "track_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["playlist_id", "position"], name: "index_playlist_entries_on_playlist_id_and_position"
+    t.index ["playlist_id", "position"], name: "index_playlist_entries_on_playlist_id_and_position", unique: true
     t.index ["playlist_id"], name: "index_playlist_entries_on_playlist_id"
     t.index ["track_id"], name: "index_playlist_entries_on_track_id"
   end

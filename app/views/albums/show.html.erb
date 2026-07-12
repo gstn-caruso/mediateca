@@ -102,9 +102,10 @@
             <span class="flex items-center justify-end gap-3">
               <%# How good the file is, spelled out per track: the hi-res ones
                   read 24/96 where the rest read 16/44.1. Full detail on hover. %>
-              <% if (quality = track_quality(track)).present? %>
-                <span title="<%= track_quality_detail(track) %>"
-                      class="hidden shrink-0 whitespace-nowrap rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-300 ring-1 ring-inset ring-white/10 sm:inline-block"><%= quality %></span>
+              <% audio = track.audio %>
+              <% if audio.known? %>
+                <span title="<%= audio.detail %>"
+                      class="hidden shrink-0 whitespace-nowrap rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-300 ring-1 ring-inset ring-white/10 sm:inline-block"><%= audio.quality %></span>
               <% end %>
               <span class="text-sm tabular-nums text-neutral-300"><%= track_duration(track.duration) %></span>
             </span>
