@@ -17,9 +17,16 @@ class LikingSongsTest < ApplicationSystemTestCase
   test "a hearted song lands in Liked Songs, and an unhearted one leaves" do
     visit album_path(@album)
 
+    # The heart fills in place now rather than reloading the page, so waiting for
+    # it is what says the heart was given. And "Desencuentro" is on the record's
+    # own page too — asserting the song's name proved nothing about having got to
+    # Liked Songs, so a navigation that had not landed yet went unnoticed and the
+    # rest of the test ran against the album.
     click_on "Like Desencuentro"
-    within("nav") { click_on "Liked Songs" }
+    assert_selector "button[aria-label='Unlike Desencuentro']"
 
+    within("nav") { click_on "Liked Songs" }
+    assert_selector "h1", text: "Liked Songs"
     assert_text "Desencuentro"
 
     click_on "Unlike Desencuentro"
