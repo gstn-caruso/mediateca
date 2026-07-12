@@ -82,15 +82,67 @@
 }
 
 /* The reading surface: the same glass family, but more opaque and less blurred
-   so long lists stay legible while the ambient glow still tints its edges. */
+   so long lists stay legible while the ambient glow still tints its edges.
+
+   It said "more opaque" and was 0.55 against the glass's 0.62 — less opaque, the
+   exact opposite of the one thing it exists to do. It was also used nowhere, so
+   nothing ever showed it. It is the material the songs sit on now, and a list of
+   songs is read, not glanced at, so it has to hold still against whatever cover
+   is burning behind it. Apple's own reading surfaces sit around 0.7-0.9 alpha for
+   the same reason: glass is for the controls, not for the page. */
 @utility glass-deep {
-  background-color: rgba(10, 10, 12, 0.55);
+  background-color: rgba(10, 10, 12, 0.78);
   -webkit-backdrop-filter: blur(20px) saturate(170%);
   backdrop-filter: blur(20px) saturate(170%);
   box-shadow:
     inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
     inset 0 0 26px -10px var(--glass-tint-deep),
     inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+/* The menus. Solid, and that is not a compromise.
+
+   A menu drops out of the topbar, or out of a row in the list — both of which are
+   already glass. Glass inside glass does not compose: an ancestor that filters its
+   backdrop becomes the backdrop, so the menu stops seeing the page and filters the
+   pane it is sitting on, which has already been blurred and tinted. It comes out
+   flat and muddy, in Chrome and in Safari alike. Apple says not to stack the
+   material for the same reason, from the other end: "avoid layering Liquid Glass
+   elements on top of each other."
+
+   The right fix on a native platform is the top layer, where the menu escapes its
+   ancestor and meets the real backdrop. The web has that — `popover` — but it
+   cannot yet put the menu under the button that opened it without anchor
+   positioning, which Safari does not have. So: a standard material, opaque, which
+   is what Apple prescribes wherever glass does not belong. It reads as a menu
+   rather than a smudge, and it will keep reading as one when anchor positioning
+   lands and this can become a real popover. */
+@utility menu-panel {
+  background-color: #1b1b1f;
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.10),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.10),
+    0 24px 64px -20px rgba(0, 0, 0, 0.80);
+}
+
+/* The scroll edge effect: the foot of the scroller, dissolving.
+
+   A pane of glass does not make what is behind it unreadable — that is the whole
+   point of it — so songs scrolling under the player pill stayed perfectly legible
+   through it, and you got two lists at once, one printed over the other. Apple's
+   answer to this is not a thicker pane. It is to take the content apart before it
+   ever reaches the glass: the last inch of the scroller blurs out and fades, so a
+   row has already dissolved by the time the pill is over it.
+
+   Apple ships two of these. This is the soft one — a blur under a gradient mask,
+   which is what suits a pill floating free over content. The hard one (a flat cut:
+   6px of blur under an opaque fill) is for bars pinned to the edge, and there is
+   no such bar here. */
+@utility scroll-edge {
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  -webkit-mask-image: linear-gradient(to top, #000 30%, transparent);
+  mask-image: linear-gradient(to top, #000 30%, transparent);
 }
 
 /* A colored control given weight and light: a bright top rim, a shaded belly,
@@ -354,3 +406,61 @@ html[data-playing="true"] .eq > i {
   .heart .is-beating { animation: none; }
   [data-player-target="backdrop"] { transition: none; }
 }
+
+/* ---------------------------------------------------------------------------
+   Someone who asked for less transparency gets none.
+
+   Reduce Transparency and Increase Contrast are the two settings that exist
+   precisely for an interface like this one, and the whole app is glass: the
+   topbar, the rail, the queue, the menus, the scroller, the pill. Turned on,
+   every one of them stayed exactly as translucent as before, and the cover
+   burning through behind the songs is the point at which this app stops being
+   readable for the person who turned that setting on.
+
+   So the glass goes solid. Nothing else moves — the accent still comes off the
+   record, the layout does not shift, the ambient wash stays. It is the same app
+   with the glass swapped for panels.
+
+   The tint is dropped along with the blur on purpose. A glow lit from behind a
+   30px blur is a glow; the same glow with nothing to diffuse it is a coloured
+   smear across a solid panel, which is worse than the flat panel it replaced.
+
+   Kept: --reduced, one place to say what "solid" means, so the four selectors
+   below cannot drift apart. */
+@utility solid-glass {
+  --tw-backdrop-blur: initial;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background-color: #16161a;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+
+/* No backdrop-filter at all (old engines, some Android WebViews): the panes are
+   62% translucent and there is nothing to blur what shows through, so the cover
+   reads straight through the songs. Fall back to solid, not to see-through. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass, .glass-deep { @apply solid-glass; }
+  .scroll-edge { display: none; }
+}
+
+@media (prefers-contrast: more) {
+  .glass, .glass-deep { @apply solid-glass; }
+  .scroll-edge { display: none; }
+}
+
+/* Chrome and Firefox honour this. Safari does not — it parses the query and then
+   never matches it, so `reduce` and `no-preference` are both false and this block
+   simply never fires there, no matter what the person set in iOS or macOS. Which
+   is to say: on the one platform this setting comes from, the media query alone
+   protects nobody. Hence the switch below — it is not a nicety, it is the only
+   thing that works on an iPhone. */
+@media (prefers-reduced-transparency: reduce) {
+  .glass, .glass-deep { @apply solid-glass; }
+  .scroll-edge { display: none; }
+}
+
+/* The switch. Set from the profile menu, kept in localStorage, applied to <html>
+   before first paint so the glass never flashes in. */
+html[data-transparency="off"] .glass,
+html[data-transparency="off"] .glass-deep { @apply solid-glass; }
+html[data-transparency="off"] .scroll-edge { display: none; }
