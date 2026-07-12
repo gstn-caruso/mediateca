@@ -70,6 +70,13 @@ USER 1000:1000
 COPY --chown=rails:rails --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --chown=rails:rails --from=build /rails /rails
 
+# Which tag this build was cut from. The image is a tarball of the source, not a
+# clone, so there is no git in here to ask: the tag is handed in at build time
+# and rides in the environment from here on. Last, and on purpose — the version
+# changes every release, and everything above it is expensive to build again.
+ARG VERSION=""
+ENV MEDIATECA_VERSION=$VERSION
+
 # Entrypoint prepares the database.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 

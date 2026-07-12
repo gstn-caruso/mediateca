@@ -184,8 +184,13 @@ jobs:
     runs-on: [ self-hosted, nas ]
 
     steps:
+      # fetch-depth: 0 trae los tags, y el tag ES la versión: kamal lo lee con
+      # `git describe` y lo hornea en la imagen. Un checkout shallow no tiene
+      # tags, y la app se quedaría sin número que mostrar.
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       # config/master.key y .kamal/secrets están gitignoreados: no vienen en el
       # checkout. La key sale de la copia local del NAS; secrets son solo
