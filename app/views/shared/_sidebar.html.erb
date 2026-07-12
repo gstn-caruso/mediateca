@@ -11,20 +11,13 @@
 <nav data-sidebar-target="panel" class="hidden w-72 shrink-0 flex-col gap-2 md:flex">
   <div class="flex min-h-0 flex-1 flex-col rounded-2xl glass"
        data-controller="tabs" data-tabs-showing-value="artists" data-tabs-remember-value="mediateca:library-rail">
-    <div class="flex shrink-0 items-center justify-between px-3 pb-2 pt-4">
-      <h2 class="px-2 text-sm font-semibold text-neutral-400">Your Library</h2>
-      <button type="button" data-action="sidebar#toggle" aria-label="Collapse library"
-              class="rounded-full p-1.5 text-neutral-400 transition hover:bg-white/10 hover:text-white">
-        <svg class="size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-          <path d="M10.28 3.22a.75.75 0 0 1 0 1.06L6.56 8l3.72 3.72a.75.75 0 1 1-1.06 1.06L4.94 8.53a.75.75 0 0 1 0-1.06l4.28-4.25a.75.75 0 0 1 1.06 0Z"/>
-        </svg>
-      </button>
-    </div>
-
     <%# The turn itself: three icons in a track, and the one you are on rides a
-        pill in the colour of whatever is playing. %>
+        pill in the colour of whatever is playing. It opens the rail on its own:
+        a heading saying "Your Library" over your library, and a second button to
+        fold away what the topbar already folds away, were both saying what the
+        thing underneath already said. %>
     <div role="tablist" aria-label="Your Library" data-action="keydown->tabs#step"
-         class="segmented mx-3 mb-3 flex shrink-0 rounded-full bg-black/30 p-1 ring-1 ring-inset ring-white/10">
+         class="segmented m-3 flex shrink-0 rounded-full bg-black/30 p-1 ring-1 ring-inset ring-white/10">
       <%= render "shared/library_tabs", size: "size-4", pad: "py-1.5" %>
     </div>
 
