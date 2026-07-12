@@ -33,9 +33,9 @@ Rails.application.routes.draw do
     resource :suggestions, only: [ :show ]
   end
 
-  # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Which build is answering, for a tab coming back from a deploy.
   get "build" => "builds#show"
 
+  # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   get "up" => "rails/health#show", as: :rails_health_check
 end
