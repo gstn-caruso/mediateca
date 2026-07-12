@@ -262,6 +262,29 @@ class PlayingMusicTest < ApplicationSystemTestCase
     assert_equal "paused", equalizer_state
   end
 
+  # Turbo puts the new body up before it carries #player into it, and the queue
+  # lives on the <audio> in there. So for a moment a page has rows to press and
+  # no player to press them through: the press asked for the audio, threw, and
+  # the song was simply lost. Whoever presses first should still be heard.
+  test "a song pressed before the player has landed still plays" do
+    visit album_path(@album)
+    assert_selector "button[data-player-track]", text: "Desencuentro"
+
+    # The gap, held still: #player out of the page, the way Turbo has it mid-visit.
+    page.execute_script(<<~JS)
+      window.playerPill = document.querySelector("#player")
+      window.playerHome = window.playerPill.parentElement
+      window.playerPill.remove()
+    JS
+
+    find("button[data-player-track]", text: "Desencuentro").click
+
+    # And now Turbo carries it in, as it always does a moment later.
+    page.execute_script("window.playerHome.appendChild(window.playerPill)")
+
+    assert_selector "[data-player-target='title']", text: "Desencuentro"
+  end
+
   # The search box and Home live in the top bar, reached without looking.
   test "the header searches, and goes home" do
     visit album_path(@album)

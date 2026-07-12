@@ -41,6 +41,24 @@ export default class extends Controller {
     this.refreshIcons()
     this.tick()
     this.render()
+    this.makeGoodTheHeldPress()
+  }
+
+  // The same gap seen from the other side: the rows of the new body can be
+  // pressed before the player is carried into it, and everything a press needs —
+  // the queue, the order, the audio itself — is in there. Asking early throws and
+  // the song is lost, so an early press is held rather than answered.
+  held(press) {
+    if (this.hasAudioTarget) return false
+
+    this.heldPress = press
+    return true
+  }
+
+  makeGoodTheHeldPress() {
+    const press = this.heldPress
+    this.heldPress = null
+    press?.()
   }
 
   // The queue rail is permanent, so it stays open across a visit — but the bar
@@ -88,6 +106,8 @@ export default class extends Controller {
   // A click on a track queues the whole tracklist it belongs to, so the album
   // keeps playing on its own — and keeps playing while you browse elsewhere.
   play({ params: { index } }) {
+    if (this.held(() => this.play({ params: { index } }))) return
+
     this.queue = this.rowTargets.map((row) => ({ ...row.dataset }))
     this.order = this.shuffled ? this.shuffleAround(index) : this.queue.map((_, at) => at)
     this.cursor = this.order.indexOf(index)
@@ -101,6 +121,8 @@ export default class extends Controller {
   // the button carried — always 0 — so every shuffle of a record began with
   // track one, dealt the rest at random, and called that shuffling.
   playShuffled() {
+    if (this.held(() => this.playShuffled())) return
+
     this.shuffled = true
     this.play({ params: { index: Math.floor(Math.random() * this.rowTargets.length) } })
   }
