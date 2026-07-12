@@ -8,6 +8,10 @@ const ONE = "one"
 // origin, so two apps on one host don't read each other's music.
 const REMEMBERED = "mediateca:player"
 
+// How often, at most, the passing of a song is written down. Anything that
+// actually changes is written at once; this is only the clock ticking.
+const REMEMBER_EVERY = 5000
+
 // Drives the single <audio> element in the layout.
 //
 // Turbo Drive swaps the body on every navigation, so this controller is torn
@@ -18,8 +22,8 @@ export default class extends Controller {
   static values = { profile: String }
 
   static targets = [
-    "audio", "title", "titleText", "idle", "subtitle", "subtitleText", "cover", "tail",
-    "playIcon", "pauseIcon", "progress", "elapsed", "duration", "volume",
+    "audio", "title", "titleText", "idle", "subtitle", "subtitleText", "cover", "tail", "broken",
+    "playIcon", "pauseIcon", "progress", "elapsed", "duration",
     "shuffle", "repeat", "repeatOne", "next", "queue", "queueEmpty", "queueToggle", "panel",
     "repeatBadge", "repeatBadgeText", "backdrop", "row"
   ]
@@ -30,9 +34,32 @@ export default class extends Controller {
   audioTargetConnected() {
     this.restore()
     this.refreshIcons()
-    if (this.hasVolumeTarget) this.paint(this.volumeTarget)
     this.tick()
     this.render()
+  }
+
+  // The queue rail is permanent, so it stays open across a visit — but the bar
+  // that holds the button is rebuilt, and came back saying "closed" while the
+  // rail was still standing there. The panel is the one that knows.
+  //
+  // The button is in the new body and the rail is carried into it afterwards, so
+  // on a visit this fires before there is a rail to ask. Asking anyway throws,
+  // and a throw here takes the rest of the connection with it — including the
+  // audio's, which is what marks the row that's playing.
+  queueToggleTargetConnected() {
+    this.syncQueueToggles()
+  }
+
+  // And once the rail itself lands, whichever buttons are on the page are told.
+  panelTargetConnected() {
+    this.syncQueueToggles()
+  }
+
+  syncQueueToggles() {
+    if (!this.hasPanelTarget) return
+
+    const open = String(this.panelTarget.classList.contains("md:flex"))
+    this.queueToggleTargets.forEach((toggle) => toggle.setAttribute("aria-expanded", open))
   }
 
   // A tracklist arrives whenever you navigate, and the row that is playing may
@@ -52,9 +79,13 @@ export default class extends Controller {
 
   // The big shuffle button on a record turns shuffle on and then plays it, the
   // way pressing shuffle in Spotify is a way of pressing play.
-  playShuffled(event) {
+  //
+  // Which song it starts with is part of the shuffle. It used to take the index
+  // the button carried — always 0 — so every shuffle of a record began with
+  // track one, dealt the rest at random, and called that shuffling.
+  playShuffled() {
     this.shuffled = true
-    this.play(event)
+    this.play({ params: { index: Math.floor(Math.random() * this.rowTargets.length) } })
   }
 
   // Jumping from the queue panel: the track is already queued, only the cursor
@@ -67,7 +98,21 @@ export default class extends Controller {
   toggle() {
     if (!this.audioTarget.src) return
 
-    this.audioTarget.paused ? this.audioTarget.play() : this.audioTarget.pause()
+    this.audioTarget.paused ? this.audioTarget.play().catch(() => {}) : this.audioTarget.pause()
+  }
+
+  // Space is play/pause everywhere there is music, and it was the one key that
+  // did nothing here. Not while you are typing in the search box — and not while
+  // a song row has the focus, because every row is a button, and Space on a
+  // focused button is how a keyboard presses it.
+  hotkey(event) {
+    if (event.key !== " " || event.metaKey || event.ctrlKey || event.altKey) return
+
+    const { target } = event
+    if (target.isContentEditable || [ "INPUT", "TEXTAREA", "SELECT", "BUTTON" ].includes(target.tagName)) return
+
+    event.preventDefault()
+    this.toggle()
   }
 
   next() {
@@ -132,41 +177,75 @@ export default class extends Controller {
     this.queueToggleTargets.forEach((toggle) => toggle.setAttribute("aria-expanded", String(open)))
   }
 
-  scrub() {
-    const { duration } = this.audioTarget
-    if (!Number.isFinite(duration)) return
-
-    this.audioTarget.currentTime = (this.progressTarget.value / 1000) * duration
+  // Dragging the scrubber fires `input` the whole way across. Seeking on each
+  // one asks the NAS for a fresh range of a 34MB FLAC dozens of times, and
+  // `timeupdate` keeps writing the thumb back where the song is — so it fights
+  // the pointer. The drag only paints; the seek happens once, on `change`, when
+  // it is let go.
+  scrubbing() {
+    this.dragging = true
+    this.elapsedTarget.textContent = this.clock(this.scrubbedTo())
+    this.paint(this.progressTarget)
   }
 
-  changeVolume() {
-    this.audioTarget.volume = this.volumeTarget.value / 100
-    this.paint(this.volumeTarget)
+  scrub() {
+    this.dragging = false
+
+    const to = this.scrubbedTo()
+    if (Number.isFinite(to)) this.audioTarget.currentTime = to
+  }
+
+  scrubbedTo() {
+    const { duration } = this.audioTarget
+
+    return Number.isFinite(duration) ? (this.progressTarget.value / 1000) * duration : NaN
   }
 
   tick() {
+    if (this.dragging) return
+
     const { currentTime, duration } = this.audioTarget
 
     this.elapsedTarget.textContent = this.clock(currentTime)
     this.durationTarget.textContent = Number.isFinite(duration) ? this.clock(duration) : "–:––"
     this.progressTarget.value = Number.isFinite(duration) && duration > 0 ? (currentTime / duration) * 1000 : 0
     this.paint(this.progressTarget)
-    this.save()
+    this.savePosition()
   }
 
-  // Paints the played portion of a slider bright and the rest dim, so the fill
-  // reads the same in every engine instead of leaning on accent-color.
+  // A file the server no longer has — a re-import that moved it, a NAS that went
+  // away — used to leave the player sitting on a title that would never sound,
+  // saying nothing, forever.
+  //
+  // It says so now, and it stops there. It does not skip on: an error is as
+  // easily a NAS catching its breath as a file that is gone, and a player that
+  // skips on error would tear through the whole record in a second over a blip.
+  // Next is one press away, and the listener knows which it was.
+  failed() {
+    if (!this.audioTarget.src) return
+
+    this.brokenTarget.hidden = false
+    this.refreshIcons()
+  }
+
+  // How much of the song is behind us. The CSS draws the track from this, so the
+  // fill reads the same in every engine instead of leaning on accent-color —
+  // and the input itself can be a tall, invisible drag target over a hairline.
   paint(range) {
-    const filled = (range.value / range.max) * 100
-    range.style.background =
-      `linear-gradient(to right, #fff ${filled}%, rgba(255, 255, 255, 0.2) ${filled}%)`
+    range.style.setProperty("--filled", `${(range.value / range.max) * 100}%`)
   }
 
+  // The bars of an equalizer say sound is coming out of this song. Paused, no
+  // sound is coming out of anything, and bars that keep bouncing are lying — so
+  // the whole document is told whether anything is playing, and the CSS holds
+  // every equalizer on the page still until it is. <html> survives Turbo, so the
+  // answer rides across navigation the way the music does.
   refreshIcons() {
-    const playing = this.audioTarget.src && !this.audioTarget.paused
+    const playing = Boolean(this.audioTarget.src && !this.audioTarget.paused)
 
-    this.playIconTarget.classList.toggle("hidden", Boolean(playing))
+    this.playIconTarget.classList.toggle("hidden", playing)
     this.pauseIconTarget.classList.toggle("hidden", !playing)
+    document.documentElement.dataset.playing = String(playing)
     this.save()
   }
 
@@ -189,6 +268,13 @@ export default class extends Controller {
 
   get current() { return this.queue[this.order[this.cursor]] }
 
+  // Which cover the accent was taken from. On the <audio> with the rest of the
+  // state, because the controller is destroyed on every visit — and a memo that
+  // forgets re-reads the canvas and re-paints the theme to the colour it is
+  // already wearing, on every single navigation.
+  get accentCover() { return this.audioTarget.accentCover }
+  set accentCover(cover) { this.audioTarget.accentCover = cover }
+
   // Whether next has anywhere to go: another track ahead, or repeat-all to wrap
   // back to the top. Mirrors what next() actually does.
   get hasNext() {
@@ -203,15 +289,38 @@ export default class extends Controller {
     const track = this.current
     if (!track) return
 
+    this.brokenTarget.hidden = true
     this.audioTarget.src = track.src
-    this.audioTarget.play()
+    this.audioTarget.play().catch(() => {})
     this.remember(track)
+    this.announce(track)
     this.render()
+  }
+
+  // What the machine itself shows about what is playing: the lock screen, the
+  // Now Playing tile in Control Center, the media keys on the keyboard. Without
+  // this the app is a tab that makes noise; with it, it is what the computer
+  // thinks is playing music.
+  announce(track) {
+    if (!("mediaSession" in navigator)) return
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: track.title,
+      artist: track.subtitle,
+      album: track.albumTitle,
+      artwork: [ { src: new URL(track.cover, location.href).href, sizes: "512x512" } ]
+    })
+
+    navigator.mediaSession.setActionHandler("play", () => this.audioTarget.play())
+    navigator.mediaSession.setActionHandler("pause", () => this.audioTarget.pause())
+    navigator.mediaSession.setActionHandler("nexttrack", this.hasNext ? () => this.next() : null)
+    navigator.mediaSession.setActionHandler("previoustrack", () => this.previous())
   }
 
   // History is written when a track starts, not when its file is fetched:
   // preload asks for the file before anybody presses play, and every seek asks
-  // for it again. Nothing waits on this — a lost play is not worth a stutter.
+  // for it again. Nothing waits on this — a lost play is not worth a stutter,
+  // and a NAS that blinked is not worth an error in the console.
   remember({ trackId }) {
     if (!trackId) return
 
@@ -222,7 +331,7 @@ export default class extends Controller {
         "X-CSRF-Token": document.querySelector("meta[name='csrf-token']")?.content
       },
       body: JSON.stringify({ track_id: trackId })
-    })
+    }).catch(() => {})
   }
 
   // Whatever is playing stays where it is; everything else gets dealt again.
@@ -252,6 +361,8 @@ export default class extends Controller {
   // leaving a profile still takes the music. A source and time set here; the
   // browser may still refuse to resume unasked, and then it waits for a press.
   save() {
+    this.wroteAt = performance.now()
+
     try {
       localStorage.setItem(REMEMBERED, JSON.stringify({
         profile: this.profileValue,
@@ -261,6 +372,17 @@ export default class extends Controller {
         paused: this.audioTarget.paused
       }))
     } catch { /* private windows and full disks just forget; the tab still plays */ }
+  }
+
+  // Where in the song we are changes four times a second, and writing to
+  // localStorage is synchronous and lands on disk. Serialising the whole queue
+  // that often, forever, is the only busy loop in the app — and nobody needs a
+  // refresh to land on the exact second. Every change that matters (a track, a
+  // press, the order) still writes at once, through render() and refreshIcons().
+  savePosition() {
+    if (this.wroteAt && performance.now() - this.wroteAt < REMEMBER_EVERY) return
+
+    this.save()
   }
 
   // Only a brand-new <audio> is rebuilt: after a Turbo visit the element is the

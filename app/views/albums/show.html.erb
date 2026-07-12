@@ -46,7 +46,7 @@
       Shuffle
     </button>
 
-    <%= render "shared/album_like", album: @album %>
+    <%= render "shared/heart", thing: @album, label: @album.title, size: :large %>
   </div>
 
   <%# The index has to be the whole queue's, not the disc's: on a two-disc

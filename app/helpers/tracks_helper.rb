@@ -20,7 +20,8 @@ module TracksHelper
       title: track.title,
       subtitle: track.artist_name,
       cover: cover_url(track.album),
-      album: album_path(track.album)
+      album: album_path(track.album),
+      album_title: track.album.title
     }
   end
 

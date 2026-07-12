@@ -24,7 +24,8 @@
       now-playing strip — lives in the permanent #player below, and survives the
       body swap Turbo Drive does on navigation. %>
   <body class="h-full overflow-hidden bg-ambient text-neutral-200 antialiased"
-        data-controller="player" data-player-profile-value="<%= Current.profile&.id %>">
+        data-controller="player" data-player-profile-value="<%= Current.profile&.id %>"
+        data-action="keydown@window->player#hotkey">
     <%# With nobody listening the picker owns the screen: no sidebar, no player.
         So leaving a profile stops the music, which is what leaving means. %>
     <% if Current.profile %>
@@ -42,8 +43,12 @@
           <div class="flex min-h-0 flex-1 gap-2">
             <%= render "shared/sidebar" %>
 
-            <%# pb-20: the content clears the pill floating over the panel's foot. %>
-            <main class="min-w-0 flex-1 animate-enter overflow-y-auto rounded-2xl glass pb-20">
+            <%# The content has to clear the pill floating over the panel's foot,
+                and the pill is taller than it looks: 24px up from the bottom,
+                two rows and a scrubber tall. At pb-20 the last song on every
+                list sat under the glass — which is exactly the song you are
+                looking at when the pill says "End of playlist". %>
+            <main class="min-w-0 flex-1 animate-enter overflow-y-auto rounded-2xl glass pb-32">
               <%= yield %>
             </main>
 

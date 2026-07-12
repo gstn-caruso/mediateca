@@ -40,12 +40,17 @@
 @property --ambient-tint { syntax: "<color>"; inherits: true; initial-value: rgba(250, 45, 72, 0.14); }
 
 /* So the theme morphs instead of cutting: when a new record repaints the accent
-   (player#setAccent), the colour and all its glows ease across half a second. */
+   (player#setAccent), the colour eases across half a second.
+
+   Only the colour. The glow vars are deliberately left to snap: they feed the
+   inset box-shadows of five stacked backdrop-filter panels and a full-viewport
+   fixed gradient, so easing them re-rasterized the entire document, every frame,
+   for half a second on every track change — the most expensive thing in the app,
+   to animate a tint sitting under a 56px blur at 12% alpha, where no eye can
+   follow it anyway. The part you actually see easing — the Play button, the
+   playing row, the equalizer — is the accent, and the accent still eases. */
 :root {
-  transition:
-    --color-accent 500ms ease, --color-accent-bright 500ms ease,
-    --glass-tint 500ms ease, --glass-tint-deep 500ms ease,
-    --gel-glow 500ms ease, --ambient-tint 500ms ease;
+  transition: --color-accent 500ms ease, --color-accent-bright 500ms ease;
 }
 
 /* The dark, faintly-lit backdrop the glass refracts. Fixed, so it stays put
@@ -111,12 +116,22 @@
   mix-blend-mode: screen;
 }
 
-/* Apple Music's scrubber and volume: a thin capsule track whose bright bead
-   surfaces on hover. The played portion is painted from JS (player#paint) so
-   the fill reads the same in every engine, rather than relying on accent-color. */
+/* Apple Music's scrubber: a thin capsule whose bright bead surfaces on hover.
+
+   The line is 4px because that is what looks right, and a 4px drag target is
+   nothing at all under a thumb. So the *input* is 20px tall and invisible, and
+   the 4px is the track drawn inside it: the hand gets a target it can hit, the
+   eye gets a hairline. The played portion is a variable (player#paint) rather
+   than accent-color, so the fill reads the same in every engine. */
 input[type="range"] {
+  height: 1.25rem;
+  background: transparent;
+}
+input[type="range"]::-webkit-slider-runnable-track {
   height: 0.25rem;
   border-radius: 9999px;
+  background:
+    linear-gradient(to right, #ffffff var(--filled, 0%), rgba(255, 255, 255, 0.2) var(--filled, 0%));
 }
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -128,25 +143,15 @@ input[type="range"]::-webkit-slider-thumb {
   background: #ffffff;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
   opacity: 0;
-  transition: opacity 120ms ease;
+  transition: opacity 120ms ease, transform 120ms ease;
 }
 input[type="range"]:hover::-webkit-slider-thumb,
 input[type="range"]:focus-visible::-webkit-slider-thumb,
 input[type="range"]:active::-webkit-slider-thumb {
   opacity: 1;
 }
-input[type="range"]::-moz-range-thumb {
-  height: 0.75rem;
-  width: 0.75rem;
-  border: 0;
-  border-radius: 9999px;
-  background: #ffffff;
-  opacity: 0;
-  transition: opacity 120ms ease;
-}
-input[type="range"]:hover::-moz-range-thumb,
-input[type="range"]:active::-moz-range-thumb {
-  opacity: 1;
+input[type="range"]:active::-webkit-slider-thumb {
+  transform: scale(1.25);
 }
 
 /* A marquee lane: it clips its text, and the text sits on one line. When the
@@ -179,7 +184,10 @@ input[type="range"]:active::-moz-range-thumb {
 }
 
 /* Each page eases in rather than snapping when Turbo swaps the content under
-   the chrome. */
+   the chrome — but only once. Turbo paints the cached snapshot first and the
+   fresh response a moment later, and both are a brand-new <main>: the page used
+   to fade and slide in twice on every warm visit. The preview sits still and
+   the real thing arrives. */
 @keyframes enter {
   from { opacity: 0; transform: translateY(0.5rem); }
   to { opacity: 1; transform: translateY(0); }
@@ -187,10 +195,48 @@ input[type="range"]:active::-moz-range-thumb {
 @utility animate-enter {
   animation: enter 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+html[data-turbo-preview] .animate-enter {
+  animation: none;
+}
+
+/* The one heart you just gave beats once, and the rest sit still. A control
+   that gives nothing back when pressed is the cheapest juice in a music app,
+   and it was on the floor. */
+@keyframes thump {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.35); }
+  60% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+.heart:active .is-beating,
+.heart .is-beating {
+  animation: thump 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Turbo's loading bar is bright blue out of the box. In an app whose whole
+   identity is that the record playing colours everything, that was the one
+   thing that stayed somebody else's colour. */
+.turbo-progress-bar {
+  height: 2px;
+  background: var(--color-accent);
+}
+
+/* The keyboard has to be able to see where it is. Chrome's default ring is
+   nearly invisible on dark glass, and three inputs killed it outright. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+}
 
 /* A living equalizer for whatever's playing: four bars bouncing out of step,
    drawn in the current text colour so they take the accent like everything
-   else, and morph with it. */
+   else, and morph with it.
+
+   They only bounce while sound is actually coming out. Paused, they hold the
+   shape they were in: bars that keep dancing over a silent track are saying the
+   one thing they exist to say, and saying it falsely. player#refreshIcons puts
+   the answer on <html>, which survives Turbo the way the music does. */
 .eq {
   display: inline-flex;
   align-items: flex-end;
@@ -204,6 +250,10 @@ input[type="range"]:active::-moz-range-thumb {
   background: currentColor;
   transform-origin: bottom;
   animation: eq 900ms ease-in-out infinite;
+  animation-play-state: paused;
+}
+html[data-playing="true"] .eq > i {
+  animation-play-state: running;
 }
 .eq > i:nth-child(1) { animation-delay: -200ms; }
 .eq > i:nth-child(2) { animation-delay: -560ms; }
@@ -215,9 +265,12 @@ input[type="range"]:active::-moz-range-thumb {
 }
 
 /* Someone who asked for less motion gets none: the theme cuts to its colour,
-   pages appear at once, and the equalizer holds a steady shape. */
+   pages appear at once, the hearts don't beat, the wash doesn't cross-fade, and
+   the equalizer holds a steady shape. */
 @media (prefers-reduced-motion: reduce) {
   :root { transition: none; }
   .animate-enter { animation: none; }
   .eq > i { animation: none; transform: scaleY(0.6); }
+  .heart .is-beating { animation: none; }
+  [data-player-target="backdrop"] { transition: none; }
 }

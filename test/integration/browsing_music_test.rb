@@ -78,7 +78,7 @@ class BrowsingMusicTest < ActionDispatch::IntegrationTest
     get track_stream_path(@track), headers: { "Range" => "bytes=0-9" }
 
     assert_response :partial_content
-    assert_equal "bytes 0-9/50", response.headers["content-range"]
+    assert_equal "bytes 0-9/#{File.size(@track.path)}", response.headers["content-range"]
     assert_equal 10, response.body.bytesize
   end
 
