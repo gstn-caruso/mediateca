@@ -19,3 +19,10 @@ if tag.blank? && Rails.env.development?
 end
 
 Rails.application.config.x.version_name = tag
+
+# Which build is answering: the commit Kamal put here, which is a different thing
+# from the version. The version is a tag, and a tag can sit still across a deploy
+# — a re-run, a rollback — where the commit cannot. A tab compares this, not the
+# version, to know whether the app underneath it has been replaced.
+Rails.application.config.x.build =
+  ENV["KAMAL_VERSION"].presence || Rails.application.config.x.version_name.presence || "dev"

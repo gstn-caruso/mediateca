@@ -34,5 +34,8 @@ Rails.application.routes.draw do
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
+  # Which build is answering, for a tab coming back from a deploy.
+  get "build" => "builds#show"
+
   get "up" => "rails/health#show", as: :rails_health_check
 end

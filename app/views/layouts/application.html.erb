@@ -33,7 +33,8 @@
       now-playing strip — lives in the permanent #player below, and survives the
       body swap Turbo Drive does on navigation. %>
   <body class="h-full overflow-hidden bg-ambient text-neutral-200 antialiased"
-        data-controller="player" data-player-profile-value="<%= Current.profile&.id %>"
+        data-controller="player deploy" data-player-profile-value="<%= Current.profile&.id %>"
+        data-deploy-build-value="<%= Rails.configuration.x.build %>"
         data-action="keydown@window->player#hotkey">
     <%# Open tabs outlive deploys — this one is on a kitchen tablet and has been
         for a week. When a new build goes live it says so here, and the page
