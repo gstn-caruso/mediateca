@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and discussion
+    url: https://github.com/gstn-caruso/mediateca/discussions
+    about: Have a question or want to discuss an idea before filing an issue? Use Discussions instead.

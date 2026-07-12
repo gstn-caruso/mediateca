@@ -1,0 +1,65 @@
+# Mediateca against your own music, on this machine.
+#
+#     export MUSIC_DIR=/path/to/your/music
+#     export SECRET_KEY_BASE=$(openssl rand -hex 64)
+#     docker compose up --build
+#     docker compose exec mediateca bin/rails music:import
+#
+# Then open http://localhost:8080 and pick a name.
+#
+# This is the way in, not the way to run it forever: for that there is Kamal,
+# which deploys to the machine the music already lives on. See the README.
+
+name: mediateca
+
+services:
+  mediateca:
+    build: .
+    image: mediateca
+    restart: unless-stopped
+
+    ports:
+      # Thruster listens on 80 inside. It is what serves the FLACs, with Range
+      # support, so a seek does not download the whole file.
+      - "${PORT:-8080}:80"
+
+    environment:
+      # Rails signs the session cookie with this. There are no credentials to
+      # decrypt — every setting the app has arrives from the environment — so a
+      # key of your own is all it wants:  openssl rand -hex 64
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:?generate one with `openssl rand -hex 64` and export it}
+
+      # The trust boundary: no request may name a file outside this directory.
+      # Your music is mounted here, read-only.
+      MEDIA_ROOT: /music
+      MUSIC_ROOT: /music
+
+      # beets is an optional guest, and it is not invited here. The disk decides
+      # what music exists; beets only says what it is called.
+      BEETS_DATABASE: ""
+
+      # One process. The nightly scan (4am) runs inside Puma rather than beside it.
+      SOLID_QUEUE_IN_PUMA: "true"
+
+    volumes:
+      # Your music, read-only. Mediateca never writes to it, never moves it and
+      # never transcodes it — it reads the tags and serves the bytes.
+      #
+      # The layout the scan expects is  Artist/YYYY - Album/01 - Title.flac,
+      # with a cover.jpg beside the tracks.
+      - ${MUSIC_DIR:?set MUSIC_DIR to the directory your music is in}:/music:ro
+
+      # The catalog, the playlists, the hearts, the history and the artist
+      # portraits. The only thing here that cannot be rebuilt from the disk.
+      - mediateca_storage:/rails/storage
+
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost/up" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      # The first boot prepares the database before it answers anything.
+      start_period: 40s
+
+volumes:
+  mediateca_storage:

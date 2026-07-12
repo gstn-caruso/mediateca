@@ -1,0 +1,40 @@
+name: Feature request
+description: Propose something Mediateca doesn't do yet.
+title: "[feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Mediateca favors the simplest thing that works over building for
+        hypothetical futures — see `CONTRIBUTING.md`. Describing the
+        **problem** first, before the solution, makes it much easier to
+        find the smallest change that actually solves it.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: >
+        What are you trying to do that Mediateca currently makes hard or
+        impossible? Describe the situation, not the feature.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: >
+        What you think would solve it. It's fine if this is rough — the
+        problem above matters more than getting this part exactly right.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other ways to solve the same problem, including doing nothing.
+    validations:
+      required: false

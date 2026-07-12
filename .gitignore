@@ -35,6 +35,7 @@
 # Kamal reads secrets from here. Never commit it: the deploy token lives in the
 # macOS Keychain, and this file only says how to fetch it.
 /.kamal/secrets
+/.kamal/deploy.env
 
 /app/assets/builds/*
 !/app/assets/builds/.keep

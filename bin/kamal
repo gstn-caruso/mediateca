@@ -10,6 +10,21 @@
 
 ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../Gemfile", __dir__)
 
+# Where this deploy goes — the host, the user, the music — is not in the repo.
+# It lives in .kamal/deploy.env, which is gitignored, and config/deploy.yml
+# reads it out of the environment. A value already in the environment wins, so
+# CI can hand in its own without a file.
+deploy_env = File.expand_path("../.kamal/deploy.env", __dir__)
+
+if File.exist?(deploy_env)
+  File.foreach(deploy_env) do |line|
+    name, value = line.strip.split("=", 2)
+    next if name.nil? || name.empty? || name.start_with?("#") || value.nil?
+
+    ENV[name] ||= value.strip.delete_prefix('"').delete_suffix('"')
+  end
+end
+
 # Kamal decides whether its build clone already exists by matching git's error
 # message against the English "already exists and is not an empty directory".
 # A git that speaks any other language never matches, so instead of resetting
