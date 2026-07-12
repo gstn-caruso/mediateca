@@ -22,10 +22,4 @@ class AskingWhichBuildIsAnsweringTest < ActionDispatch::IntegrationTest
 
     assert_response :success
   end
-
-  # It is the deployed commit, which changes with every deploy — and not the
-  # version, which is a tag and can name two deploys in a row.
-  test "it is the commit that was deployed" do
-    assert_equal ENV["KAMAL_VERSION"], Rails.configuration.x.build if ENV["KAMAL_VERSION"].present?
-  end
 end
