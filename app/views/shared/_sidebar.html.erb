@@ -49,13 +49,6 @@
         <% end %>
       <% end %>
     </div>
-
-    <%# Which build this is, at the foot of the rail. The question "did the thing
-        I just merged actually land?" should be answered by looking at the app,
-        not by going to the machine and asking Docker. %>
-    <% if app_version.known? %>
-      <p class="shrink-0 select-none px-5 pb-3 pt-1 text-[11px] text-neutral-600">Mediateca <%= app_version %></p>
-    <% end %>
   </div>
 
 </nav>

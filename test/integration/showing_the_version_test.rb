@@ -10,15 +10,15 @@ class ShowingTheVersionTest < ActionDispatch::IntegrationTest
     Rails.configuration.x.version_name = @was
   end
 
-  # Which build you are looking at, at the foot of the rail that is on every
-  # page — so the question "did my deploy land?" is answered by looking.
-  test "the rail says which build this is" do
+  # Which build you are looking at, at the foot of the queue — so the question
+  # "did my deploy land?" is answered by looking.
+  test "the queue says which build this is" do
     Rails.configuration.x.version_name = "v1.2.3"
 
     get root_path
 
     assert_response :success
-    assert_select "nav", text: /Mediateca v1\.2\.3/
+    assert_select "#queue-panel", text: /Mediateca v1\.2\.3/
   end
 
   # An untagged checkout has nothing true to say, so it says nothing: an empty
@@ -29,6 +29,6 @@ class ShowingTheVersionTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_response :success
-    assert_select "nav", text: /Mediateca/, count: 0
+    assert_select "#queue-panel", text: /Mediateca/, count: 0
   end
 end
