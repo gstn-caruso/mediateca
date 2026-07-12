@@ -21,8 +21,9 @@ class Build
   end
 
   private
-    # A variable set to nothing has named nothing.
+    # A variable set to nothing has named nothing, and `git describe` leaves a
+    # newline on the end of what it hands back.
     def name(said)
-      said.presence
+      said.to_s.strip.presence
     end
 end

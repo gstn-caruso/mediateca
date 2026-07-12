@@ -28,6 +28,16 @@ class BuildTest < ActiveSupport::TestCase
     assert_equal "dev", answering(deployed: "", cut_from: "   ")
   end
 
+  # `git describe` hands back a newline on the end of the tag, and on a development
+  # machine that tag is the name of the build. The name gets written into the page,
+  # and then compared — character for character — against the same name fetched
+  # back from /build later. A newline on one side of that comparison and nowhere
+  # else is a page that refreshes itself every time its socket reconnects, forever,
+  # over a deploy that never happened.
+  test "the newline git leaves on the end is not part of the name" do
+    assert_equal "v1.4.0", answering(deployed: nil, cut_from: "v1.4.0\n")
+  end
+
   private
     def answering(deployed:, cut_from:)
       Build.new(deployed:, cut_from:).to_s
