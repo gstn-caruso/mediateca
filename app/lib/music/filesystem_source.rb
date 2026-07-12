@@ -88,7 +88,7 @@ module Music
     end
 
     def tracks_from(read)
-      read.map { |path, tags| Source::Track.new(path:, title: tags.title, track_no: tags.track_no, disc_no: tags.disc_no, duration: tags.duration, audio: tags.audio) }
+      read.map { |path, tags| Source::Track.new(path:, title: tags.title, artist: tags.artist, track_no: tags.track_no, disc_no: tags.disc_no, duration: tags.duration, audio: tags.audio) }
           .sort_by { |track| [ track.disc_no, track.track_no || 0, track.path ] }
     end
 

@@ -102,6 +102,7 @@ module Music
       record = Track.find_or_initialize_by(path: track.path)
       record.update!(
         title: track.title,
+        artist: credit_of(track, album),
         track_no: track.track_no,
         disc_no: track.disc_no,
         duration: track.duration,
@@ -111,6 +112,13 @@ module Music
         sample_rate: track.audio&.sample_rate,
         bit_rate: track.audio&.bit_rate
       )
+    end
+
+    # The record already says who it is by, and 933 of the 934 songs say nothing
+    # else. A song carries a credit of its own only when the file disagrees with
+    # the sleeve — a guest, a duet, a compilation.
+    def credit_of(track, album)
+      track.artist if track.artist.present? && track.artist != album.artist.name
     end
 
     # Whatever did not merely move is really gone. Left alone, the album would

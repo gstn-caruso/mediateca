@@ -45,29 +45,24 @@
       <%# Clicking one queues the results, the way clicking a track queues its album. %>
       <ol>
         <% @search.tracks.each_with_index do |track, index| %>
-          <li>
-            <button type="button"
-                    data-player-track
-                    data-player-target="row"
-                    data-track-id="<%= track.id %>"
-                    data-src="<%= stream_url(track) %>"
-                    data-title="<%= track.title %>"
-                    data-subtitle="<%= track.album.artist.name %>"
-                    data-cover="<%= cover_url(track.album) %>"
-                    data-album="<%= album_path(track.album) %>"
-                    data-action="player#play"
-                    data-player-index-param="<%= index %>"
+          <li class="flex items-center gap-1">
+            <button type="button" <%= tag.attributes(data: playable(track, index)) %>
                     aria-current="false"
-                    class="group flex w-full items-center gap-4 rounded-lg px-3 py-2 text-left transition
+                    class="group flex min-w-0 flex-1 items-center gap-4 rounded-lg px-3 py-2 text-left transition
                            hover:bg-white/10 aria-[current=true]:text-accent">
               <span class="min-w-0 flex-1">
                 <span class="block truncate text-sm font-medium text-neutral-100 group-aria-[current=true]:text-accent">
                   <%= track.title %>
                 </span>
-                <span class="block truncate text-xs text-neutral-400"><%= track.album.artist.name %></span>
+                <span class="block truncate text-xs text-neutral-400"><%= track.artist_name %></span>
               </span>
               <span class="shrink-0 text-sm tabular-nums text-neutral-400"><%= track_duration(track.duration) %></span>
             </button>
+
+            <%# A song found is a song you may want to keep: the same heart and
+                the same + as every other list of songs in the app. %>
+            <%= render "shared/heart", thing: track, label: track.title %>
+            <%= render "shared/add_to_playlist", track: track %>
           </li>
         <% end %>
       </ol>

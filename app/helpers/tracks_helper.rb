@@ -1,6 +1,29 @@
 module TracksHelper
   UNKNOWN_DURATION = "–:––".freeze
 
+  # Everything the player needs to start a song and keep the record playing
+  # after it. Four different lists of songs — a record, a playlist, the hearts, a
+  # search — each handed it the same eight things, written out eight times over.
+  # The player reads them straight off the row, so they are spelled here, once.
+  #
+  # `index` is the song's place in the list it belongs to, which is the queue the
+  # player deals when you press it: clicking track 5 of a record queues the
+  # record, from track 5.
+  def playable(track, index)
+    {
+      player_track: "",
+      player_target: "row",
+      action: "player#play",
+      player_index_param: index,
+      track_id: track.id,
+      src: stream_url(track),
+      title: track.title,
+      subtitle: track.artist_name,
+      cover: cover_url(track.album),
+      album: album_path(track.album)
+    }
+  end
+
   # Codecs that keep every sample: their fidelity is the depth and rate they were
   # captured at, not a bitrate a compressor settled on. The whole library is
   # FLAC, but the badge reads the same way for anything lossless.

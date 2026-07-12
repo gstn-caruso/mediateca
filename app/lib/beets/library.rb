@@ -9,7 +9,7 @@ module Beets
     SQL
 
     TRACKS = <<~SQL
-      SELECT album_id, title, track, disc, length, path
+      SELECT album_id, title, artist, track, disc, length, path
       FROM items
       ORDER BY album_id, disc, track
     SQL
@@ -59,11 +59,11 @@ module Beets
     end
 
     def track_from(row)
-      _album_id, title, track_no, disc_no, duration, path = row
+      _album_id, title, artist, track_no, disc_no, duration, path = row
 
       # beets only ever enriches the metadata; the encoding is read off the disk,
       # so beets has no audio to offer.
-      Music::Source::Track.new(title:, track_no:, duration:, disc_no: disc_no || 1, path: text(path), audio: nil)
+      Music::Source::Track.new(title:, artist:, track_no:, duration:, disc_no: disc_no || 1, path: text(path), audio: nil)
     end
 
     # Most albums are one folder. Green Day's deluxe Warning splits its tracks

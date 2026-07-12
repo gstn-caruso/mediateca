@@ -22,7 +22,9 @@ class SearchingInTheBrowserTest < ApplicationSystemTestCase
     find_field("Search").send_keys(:return)
 
     assert_text "Songs"
-    click_on "Desencuentro"
+    # The row and its heart both answer to the song's name; the row comes first,
+    # and the row is what you press to hear it.
+    click_on "Desencuentro", match: :first
 
     assert_selector "[data-player-target='title']", text: "Desencuentro"
   end

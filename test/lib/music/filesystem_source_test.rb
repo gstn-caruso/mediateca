@@ -30,6 +30,17 @@ module Music
       end
     end
 
+    # Whom the file credits the song to. Almost always the album's artist, and
+    # once in 934 somebody else — the scanner is not the one to decide that.
+    test "a track carries the artist its file credits" do
+      within_root do |root|
+        create(root, "Charly García/1984 - Piano Bar/05.flac",
+          album_artist: "Charly García", artist: "Luis Alberto Spinetta, Pedro Aznar y Charly García")
+
+        assert_equal "Luis Alberto Spinetta, Pedro Aznar y Charly García", source(root).albums.sole.tracks.sole.artist
+      end
+    end
+
     # The scanner carries a file's encoding through untouched, so the catalog can
     # record how good the file is, not just what it's called.
     test "a track carries the audio its file was encoded with" do

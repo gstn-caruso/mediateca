@@ -48,6 +48,28 @@ module Music
       assert_equal album, track.album
     end
 
+    # The record says who it is by, and almost every song on it agrees. Saying it
+    # again on all 934 rows would be the same truth written twice.
+    test "a song by the artist whose record it is carries no credit of its own" do
+      Importer.new.import(source(albums: [ source_album(
+        artist: "Almafuerte", tracks: [ source_track(artist: "Almafuerte") ]
+      ) ]))
+
+      assert_nil Track.sole.artist
+      assert_equal "Almafuerte", Track.sole.artist_name
+    end
+
+    # And the one that doesn't agree. Thrown away before, so a guest came back
+    # wearing the name on the sleeve — and a playlist is where that shows.
+    test "a song the file credits to somebody else keeps that credit" do
+      Importer.new.import(source(albums: [ source_album(
+        artist: "Charly García",
+        tracks: [ source_track(title: "Peluca telefónica", artist: "Luis Alberto Spinetta, Pedro Aznar y Charly García") ]
+      ) ]))
+
+      assert_equal "Luis Alberto Spinetta, Pedro Aznar y Charly García", Track.sole.artist_name
+    end
+
     # The encoding a source measured is written onto the track, so the player can
     # show how good the file is without opening it again.
     test "a track's audio encoding is stored on it" do

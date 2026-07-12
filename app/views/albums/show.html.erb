@@ -1,6 +1,5 @@
 <% content_for :title, "#{@album.title} — #{@album.artist.name}" %>
 <% cover = cover_url(@album) %>
-<% subtitle = @album.artist.name %>
 <% length = album_length(@album.tracks.sum { |track| track.duration.to_f }) %>
 
 <%# No sleeve-blur here anymore: the playing cover already washes the whole floor
@@ -70,17 +69,7 @@
     <ol class="mt-1 divide-y divide-white/5">
       <% numbered_tracks.each do |track, position| %>
         <li class="flex items-center gap-1">
-          <button type="button"
-                  data-player-track
-                  data-player-target="row"
-                  data-track-id="<%= track.id %>"
-                  data-src="<%= stream_url(track) %>"
-                  data-title="<%= track.title %>"
-                  data-subtitle="<%= subtitle %>"
-                  data-cover="<%= cover %>"
-                  data-album="<%= album_path(@album) %>"
-                  data-action="player#play"
-                  data-player-index-param="<%= position %>"
+          <button type="button" <%= tag.attributes(data: playable(track, position)) %>
                   aria-current="false"
                   class="group grid min-w-0 flex-1 grid-cols-[2rem_1fr_auto] items-center gap-4 rounded-lg px-4 py-1.5 text-left transition hover:bg-white/10 aria-[current=true]:text-accent">
             <span class="relative flex justify-end">
@@ -102,6 +91,12 @@
               <span class="block truncate text-sm font-medium text-neutral-100 group-aria-[current=true]:text-accent">
                 <%= track.title %>
               </span>
+              <%# The record already says whose it is, so a song only names its
+                  artist when the file credits it to somebody else: a guest, a
+                  duet, a compilation. %>
+              <% if track.artist.present? %>
+                <span class="block truncate text-xs text-neutral-400"><%= track.artist_name %></span>
+              <% end %>
             </span>
 
             <span class="flex items-center justify-end gap-3">
