@@ -183,6 +183,10 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: [ self-hosted, nas ]
 
+    # Para pushear el tag de la versión que este cambio se ganó.
+    permissions:
+      contents: write
+
     steps:
       # fetch-depth: 0 trae los tags, y el tag ES la versión: kamal lo lee con
       # `git describe` y lo hornea en la imagen. Un checkout shallow no tiene
@@ -191,6 +195,23 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
+      # El tag se corta ANTES del deploy porque el deploy lo hornea: kamal lee
+      # `git describe` para pasarle la versión a la imagen. Se crea local nomás;
+      # se publica recién si el deploy salió bien (último paso), así que un build
+      # que falla no deja un tag prometiendo algo que nunca estuvo vivo.
+      #
+      # Quién decide el salto: lib/next_version.rb, leyendo el conventional commit.
+      - name: Cut the version this change earns
+        id: version
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          TAG=$(ruby script/next-version)
+          git rev-parse -q --verify "refs/tags/$TAG" >/dev/null \
+            || git tag -a "$TAG" -m "$(git log -1 --pretty=%s)"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "$(git log -1 --pretty=%s)  ->  $TAG"
 
       # config/master.key y .kamal/secrets están gitignoreados: no vienen en el
       # checkout. La key sale de la copia local del NAS; secrets son solo
@@ -221,3 +242,9 @@ jobs:
         env:
           LC_ALL: C.UTF-8
         run: kamal deploy
+
+      # Recién ahora: el tag nombra un build que está vivo y sirviendo. Publicarlo
+      # antes habría dejado una versión anunciada que un deploy fallido nunca puso
+      # en el aire.
+      - name: Publish the tag, now that the build it names is live
+        run: git push origin "${{ steps.version.outputs.tag }}"
