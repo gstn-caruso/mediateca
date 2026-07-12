@@ -37,8 +37,8 @@ class TrackTest < ActiveSupport::TestCase
     assert_equal [ numbered, unnumbered ], @album.tracks.to_a
   end
 
-  # The scan writes the file's encoding into four columns, and a track hands
-  # back the one thing they were.
+  # The scan writes the file's encoding into columns, and a track hands back the
+  # one thing they were.
   test "a track reconstitutes the audio it was scanned with" do
     track = Track.create!(
       title: "Rap del exilio", path: "/music/piano/03.flac", album: @album,
@@ -46,6 +46,15 @@ class TrackTest < ActiveSupport::TestCase
     )
 
     assert_equal Music::Audio.new(codec: "flac", bit_depth: 16, sample_rate: 44100, bit_rate: 1006840), track.audio
+  end
+
+  test "a lossy track reconstitutes how it spent its bits" do
+    track = Track.create!(
+      title: "Ji ji ji", path: "/music/oktubre/09.mp3", album: @album,
+      codec: "mp3", bit_rate: 320000, bit_rate_mode: "constant"
+    )
+
+    assert_equal "constant", track.audio.bit_rate_mode
   end
 
   private

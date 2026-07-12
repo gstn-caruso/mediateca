@@ -106,11 +106,50 @@ module Music
       assert_nil read({}).audio
     end
 
+    # ffprobe cannot say whether a bitrate was held or followed the music, so the
+    # file is asked the only way it can answer: by the size of its frames.
+    test "a lossy file is asked how it spends its bits" do
+      audio = read({}, streams: [ lossy ], frame_sizes: [ 208, 417, 365 ]).audio
+
+      assert_equal "variable", audio.bit_rate_mode
+    end
+
+    # Counting frames means walking the whole file. A lossless one has no bitrate
+    # to hold or vary — its frames swell and shrink with the music and mean
+    # nothing by it — so it is never asked, and never walked.
+    test "a lossless file is never asked, and never counted" do
+      probe = FakeFfprobe.new(streams: [ lossless ], format: {})
+
+      audio = Tags.new(ffprobe: probe).read("/m/a.flac").audio
+
+      assert_nil audio.bit_rate_mode
+      assert_not probe.frames_counted
+    end
+
+    # A stream we cannot name a codec for is not "lossy": there is nothing to
+    # count frames for, and nothing the count would mean.
+    test "a stream with no codec is not walked either" do
+      probe = FakeFfprobe.new(streams: [ { "codec_type" => "audio" } ], format: {})
+
+      Tags.new(ffprobe: probe).read("/m/a.bin")
+
+      assert_not probe.frames_counted
+    end
+
     private
 
-    def read(tags, duration: "1.0", path: "/m/Artist/1995 - Album/01 - Track.flac", streams: [], format: {})
+    def lossy
+      { "codec_type" => "audio", "codec_name" => "mp3", "bit_rate" => "320000" }
+    end
+
+    def lossless
+      { "codec_type" => "audio", "codec_name" => "flac", "bits_per_raw_sample" => "16" }
+    end
+
+    def read(tags, duration: "1.0", path: "/m/Artist/1995 - Album/01 - Track.flac",
+             streams: [], format: {}, frame_sizes: [])
       description = { "duration" => duration, "tags" => tags }.merge(format)
-      probe = FakeFfprobe.new(streams:, format: description)
+      probe = FakeFfprobe.new(streams:, format: description, frame_sizes:)
 
       Tags.new(ffprobe: probe).read(path)
     end

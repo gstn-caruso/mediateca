@@ -97,12 +97,14 @@
             </span>
 
             <span class="flex items-center justify-end gap-3">
-              <%# How good the file is, spelled out per track: the hi-res ones
-                  read 24/96 where the rest read 16/44.1. Full detail on hover. %>
+              <%# How the file is encoded, said as briefly as it can be said: a
+                  lossless track wears its format and nothing else, a compressed
+                  one adds the bits it was given and an icon for how it spent
+                  them. Every measure we have is on hover. %>
               <% audio = track.audio %>
               <% if audio.known? %>
                 <span title="<%= audio.detail %>"
-                      class="hidden shrink-0 whitespace-nowrap rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-300 ring-1 ring-inset ring-white/10 sm:inline-block"><%= audio.quality %></span>
+                      class="hidden shrink-0 items-center gap-1 whitespace-nowrap rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-300 ring-1 ring-inset ring-white/10 sm:inline-flex"><%= audio.quality %><%= render "shared/bit_rate_mode", mode: audio.bit_rate_mode %></span>
               <% end %>
               <span class="text-sm tabular-nums text-neutral-300"><%= track_duration(track.duration) %></span>
             </span>

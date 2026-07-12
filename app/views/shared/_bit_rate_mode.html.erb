@@ -1,0 +1,12 @@
+<%# Whether a compressed file held the bitrate it was given, or let it follow the
+    music. A lossless file has no mode and draws nothing: its format is the whole
+    claim. The word itself is in the badge's tooltip, where there is room for it.
+
+    A held bitrate is a flat line. One that followed the music is a wave. %>
+<% if mode.present? %>
+  <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"
+       stroke-linecap="round" aria-hidden="true" data-bit-rate-mode="<%= mode %>"
+       class="h-3 w-3 shrink-0 text-neutral-400">
+    <path d="<%= mode == Music::BitRateMode::VARIABLE ? "M1 6q2.5-5.5 5 0t5 0" : "M1 6h10" %>" />
+  </svg>
+<% end %>
