@@ -44,6 +44,15 @@ module Music
       assert_equal 1, @scans.requested
     end
 
+    # An unmounted NAS is a bad afternoon, not a dead app: the library it can
+    # still show is worth more than the watching it cannot do. Listen resolves the
+    # directory the moment it is told to watch, and a boot is no place to raise.
+    test "music that is not mounted does not stop the app from coming up" do
+      assert_nothing_raised do
+        Watcher.start(root: "/nowhere/is/there/any/music", scans: @scans)
+      end
+    end
+
     # The scan already under way began before this file existed, and may have
     # walked past its directory already. Whatever it misses, the next one catches.
     test "music that appears while a scan runs asks for another scan" do
