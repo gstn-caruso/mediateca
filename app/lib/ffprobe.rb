@@ -11,10 +11,19 @@ class Ffprobe
   # The file is not something we can read — or not something at all.
   Unreadable = Class.new(StandardError)
 
-  ARGUMENTS = %w[-v error -print_format json -show_streams -show_format].freeze
+  DESCRIPTION = %w[-v error -print_format json -show_streams -show_format].freeze
 
   def describe(path)
-    output, complaints, status = Open3.capture3(binary, *ARGUMENTS, path.to_s)
+    ask(DESCRIPTION, path)
+  end
+
+  private
+
+  # Every question is the same call, and only the arguments differ: run ffprobe
+  # over the file, refuse what it could not read, and hand back the JSON it
+  # answered with.
+  def ask(arguments, path)
+    output, complaints, status = Open3.capture3(binary, *arguments, path.to_s)
     raise Unreadable, "ffprobe could not read #{path}: #{complaints.strip}" unless status.success?
 
     JSON.parse(output)
@@ -23,8 +32,6 @@ class Ffprobe
   rescue JSON::ParserError => e
     raise Unreadable, "ffprobe returned something that isn't JSON for #{path}: #{e.message}"
   end
-
-  private
 
   def binary
     Rails.configuration.x.ffprobe
