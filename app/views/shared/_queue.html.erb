@@ -41,4 +41,11 @@
     <ol data-player-target="suggestions" hidden class="space-y-0.5"></ol>
   </div>
   <p data-player-target="queueEmpty" class="shrink-0 px-4 pb-4 pt-1 text-sm text-neutral-500">Nothing up next.</p>
+
+  <%# Which build this is, in the last corner of the app. The question "did the
+      thing I just merged actually land?" should be answered by looking, not by
+      going to the machine and asking Docker. %>
+  <% if app_version.known? %>
+    <p class="shrink-0 select-none px-4 pb-3 text-right text-[11px] text-neutral-600">Mediateca <%= app_version %></p>
+  <% end %>
 </aside>
