@@ -122,6 +122,82 @@ module Music
       assert_equal [ "#{GUANACO}/02 - stays.flac" ], Track.pluck(:path)
     end
 
+    # --- A song that moved is still the song ----------------------------------
+    #
+    # The path identifies a track, so a file renamed on disk arrives as a
+    # stranger — and the row it replaces is destroyed, taking with it every
+    # playlist that held the song, every heart, and everything ever played.
+    # Nobody renames a file expecting their playlists to be emptied. So a
+    # vanished track and an arriving one that are recognisably the same song are
+    # the same row, moved.
+
+    test "a track renamed on disk keeps the playlists, hearts and history it had" do
+      Importer.new.import(source(albums: [ source_album(tracks: [
+        source_track(path: "#{GUANACO}/01 - Desencuetro.flac", title: "Desencuentro", track_no: 1)
+      ]) ]))
+
+      track = Track.sole
+      profile = Profile.create!(name: "Gastón")
+      playlist = profile.playlists.create!(name: "Asado")
+      playlist.add(track)
+      profile.like(track)
+      profile.played(track)
+
+      Importer.new.import(source(albums: [ source_album(tracks: [
+        source_track(path: "#{GUANACO}/01 - Desencuentro.flac", title: "Desencuentro", track_no: 1)
+      ]) ]))
+
+      assert_equal track.id, Track.sole.id
+      assert_equal "#{GUANACO}/01 - Desencuentro.flac", Track.sole.path
+      assert_equal [ track ], playlist.reload.tracks
+      assert profile.likes?(track)
+      assert_equal 1, profile.plays.count
+    end
+
+    # A folder renamed moves every song inside it, and the album is identified by
+    # its directory — so without this the whole record, and every heart on it,
+    # would be destroyed and rebuilt as a stranger.
+    test "an album whose folder was renamed keeps its tracks, and the record keeps its hearts" do
+      moved = "#{MUSIC_ROOT}/Almafuerte/1995 - Mundo Guanaco"
+
+      Importer.new.import(source(albums: [ source_album(directory: GUANACO, tracks: [
+        source_track(path: "#{GUANACO}/01 - Desencuentro.flac")
+      ]) ]))
+
+      album = Album.sole
+      track = Track.sole
+      profile = Profile.create!(name: "Gastón")
+      profile.playlists.create!(name: "Asado").add(track)
+      profile.like(album)
+
+      Importer.new.import(source(albums: [ source_album(directory: moved, tracks: [
+        source_track(path: "#{moved}/01 - Desencuentro.flac")
+      ]) ]))
+
+      assert_equal album.id, Album.sole.id
+      assert_equal moved, Album.sole.directory
+      assert_equal track.id, Track.sole.id
+      assert profile.likes?(album)
+      assert_equal [ track ], profile.playlists.sole.tracks
+    end
+
+    # Two songs that look alike are not evidence that either one moved. Guessing
+    # wrong would hand a playlist a song nobody put there, which is worse than
+    # losing the entry — so an ambiguous match is no match.
+    test "two identical-looking songs are not re-keyed onto each other" do
+      Importer.new.import(source(albums: [ source_album(tracks: [
+        source_track(path: "#{GUANACO}/01 - a.flac", title: "Intro", track_no: nil),
+        source_track(path: "#{GUANACO}/02 - b.flac", title: "Intro", track_no: nil)
+      ]) ]))
+
+      Importer.new.import(source(albums: [ source_album(tracks: [
+        source_track(path: "#{GUANACO}/01 - c.flac", title: "Intro", track_no: nil),
+        source_track(path: "#{GUANACO}/02 - d.flac", title: "Intro", track_no: nil)
+      ]) ]))
+
+      assert_equal [ "#{GUANACO}/01 - c.flac", "#{GUANACO}/02 - d.flac" ], Track.order(:path).pluck(:path)
+    end
+
     # An album deleted from the NAS can't keep appearing in the library.
     test "an album the source no longer reports disappears" do
       Importer.new.import(source(albums: [
