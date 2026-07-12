@@ -60,6 +60,11 @@ anybody. See [SECURITY.md](SECURITY.md).
   Turbo replaces.
 - **Your media keys work.** The OS is told what's playing, so the lock screen and
   Control Center drive it.
+- **It installs.** Safari puts it in the Dock and Chrome installs it: a window of
+  its own, its own icon, no address bar. Hand the deploy a certificate and it gets
+  a service worker too — so a NAS that is rebooting says so in Mediateca's voice,
+  instead of leaving you on the browser's error page. See
+  [Installing it as an app](#installing-it-as-an-app).
 - **It scans itself.** Every night at 4am, and on demand.
 - **Artist portraits** it goes and finds — a photo you left beside the records
   first, then Deezer, then Wikimedia, then Spotify if you hand it credentials.
@@ -119,6 +124,7 @@ Everything arrives from the environment.
 | `PORTRAITS_ROOT` | Where the portraits it fetches are kept. | `storage/portraits` |
 | `FFPROBE` | The ffprobe binary the scan reads tags with. | `ffprobe` |
 | `SOLID_QUEUE_IN_PUMA` | Run the nightly scan inside the web process. | — |
+| `TLS_HOST` | Set by the deploy when there is a certificate in front. It tells Rails the page is HTTPS, so it stops writing `http://` URLs into it. | `mediateca.lan` |
 
 ## Deploying it
 
@@ -146,6 +152,49 @@ bin/kamal console
 ```
 
 The scan also runs on its own, every night at 4am.
+
+### Installing it as an app
+
+Mediateca ships a manifest and an icon, so Safari's **File ▸ Add to Dock** works
+over plain HTTP, as deployed: a window of its own, no address bar, its own icon
+in the Dock, and the media keys still driving it.
+
+Two things need more than that, because a browser hands them only to a page it
+considers *secure* — and on a LAN that means HTTPS, `localhost` being the one
+exception:
+
+- **Chrome's Install.**
+- **The service worker.** It is what answers when the server doesn't: a NAS coming
+  back up, a cable out. Without it, an installed window with no address bar and no
+  reload button just shows the browser's error page — which reads as though
+  Mediateca is what broke.
+
+There is no public name here for Let's Encrypt to prove, so the certificate is one
+you issue yourself, from a small authority your own machines trust.
+[mkcert](https://github.com/FiloSottile/mkcert) is three commands:
+
+```bash
+brew install mkcert       # or your package manager
+mkcert -install           # trust your own CA — once per machine that listens
+mkcert mediateca.lan      # the name you will reach it by
+```
+
+Put the two files it writes where Kamal can read them — `.kamal/secrets.example`
+shows how, and prefers your keychain to a file — and name the host:
+
+```bash
+# .kamal/deploy.env
+MEDIATECA_TLS_HOST=mediateca.lan
+```
+
+Then `bin/kamal deploy`. From there on the app answers to that name over HTTPS and
+**stops answering to a bare IP**: the name is the whole point of the certificate,
+so it has to resolve on your LAN — a record on the router, or a line in
+`/etc/hosts` on the machines you listen from.
+
+Every machine that listens has to trust the CA (`mkcert -install` there too, or
+copy the root out of `mkcert -CAROOT`). One that doesn't will call the page
+insecure, and you are back where you started: no install, no worker.
 
 ### Preparing the server
 

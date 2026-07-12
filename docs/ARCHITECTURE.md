@@ -115,6 +115,30 @@ now is: no buttons to play nothing with, and a line saying so. That is already
 true in the DOM, so `:has` reads it off the list instead of asking the server to
 re-render everything to discover it.
 
+## An app, not a tab
+
+Add it to the Dock and Mediateca is a window with its own icon and no address
+bar. That much is a manifest and an icon, and it needs nothing else: it works
+over the plain HTTP the app is deployed with by default.
+
+The service worker is the half that needs a certificate — a browser hands one out
+only to a page it considers secure — and what it does is deliberately small. It
+answers **navigations**, and only the ones the network didn't, with a page that
+says the server is gone. It does not cache the app, and it should not: the music
+is on the far side of the network that just went away, and a library with no songs
+in it is not worth pretending to. What it is really for is that a window with no
+address bar and no reload button has no way to explain itself; left to the
+browser's error page, a NAS that is rebooting looks like an app that broke.
+
+Everything else it touches by leaving alone — the covers, the searches, and above
+all the stream, which is asked for one byte range at a time. A worker that
+answered a range request with a whole file, or with a cached one, would break
+seeking in a way that is very hard to see and very easy to ship.
+
+Where there is no certificate there is simply no worker: `navigator.serviceWorker`
+is not there to ask, and the app is a tab that works. So the registration asks,
+and doesn't insist.
+
 ## Who is listening
 
 Whoever is listening picks themselves off a grid, the way Netflix asks. **There
@@ -225,6 +249,21 @@ directory`. A localized git says something else, the regex doesn't match, and
 instead of resetting the clone Kamal deletes it and clones it again on **every**
 deploy, after printing an `Error preparing clone` that looks scary and means
 nothing. That's why `bin/kamal` sets `LC_ALL=C`: the deploy drops from 79s to 9s.
+
+**Rails answers 422 to a JavaScript GET.** A service worker is fetched by a
+plain, non-XHR `GET`, and forgery protection reads a JavaScript response to one of
+those as somebody else's `<script>` tag helping itself to your page:
+`ActionController::InvalidCrossOriginRequest`, `422`, and the worker never
+installs. Worse, the error page *quotes the template it died rendering* — so a
+test that only looked for a string in the body passed against the 422. Hence
+`skip_forgery_protection` in `PwaController`, and an `assert_response :success`
+before every assertion about a body.
+
+**TLS that ends at the proxy is TLS Rails cannot see.** kamal-proxy holds the
+certificate and forwards plain HTTP inwards, so Rails goes on writing `http://`
+URLs into an `https://` page — `stream_url` among them, which the browser then
+refuses as mixed content. The music stops and nothing says why. `TLS_HOST` is what
+tells Rails to assume the scheme it cannot see (`config.assume_ssl`).
 
 **Rails 8.1 leaves the production SQLite paths commented out** in
 `config/database.yml`. Without filling them in, the container dies on startup

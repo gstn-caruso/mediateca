@@ -21,10 +21,23 @@ Rails.application.configure do
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
 
-  # Mediateca lives on the LAN, reached by hostname over plain HTTP. There is no
-  # certificate to terminate, and forcing SSL would just redirect every request
-  # into a scheme nothing answers on.
-  config.assume_ssl = false
+  # Mediateca lives on the LAN, and by default it is reached over plain HTTP:
+  # there is no certificate to terminate, and forcing SSL would just redirect
+  # every request into a scheme nothing answers on.
+  #
+  # Give the deploy a certificate (MEDIATECA_TLS_HOST — see config/deploy.yml) and
+  # that flips. TLS then ends at kamal-proxy, which forwards plain HTTP inwards,
+  # so Rails would go on believing the request was http:// and would write http://
+  # into an https:// page — the <audio> src among them, which the browser refuses
+  # as mixed content. The music would stop, and nothing would say why. So when
+  # there is a certificate in front, Rails is told to assume it.
+  #
+  # force_ssl stays off even then: the proxy already sends http to https, and what
+  # force_ssl would add on top is HSTS — a browser-side promise, remembered for a
+  # year, that this name is https forever. On a house LAN, where the certificate
+  # is homemade and may well be turned off again next month, that promise is a
+  # trap and not a protection.
+  config.assume_ssl = ENV["TLS_HOST"].present?
   config.force_ssl = false
 
   # Thruster sits in front and streams any file we name in this header, so the
