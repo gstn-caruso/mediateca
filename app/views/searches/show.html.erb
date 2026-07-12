@@ -61,7 +61,7 @@
 
             <%# A song found is a song you may want to keep: the same heart and
                 the same + as every other list of songs in the app. %>
-            <%= render "shared/heart", thing: track, label: track.title %>
+            <%= render "shared/heart", thing: track %>
             <%= render "shared/add_to_playlist", track: track %>
           </li>
         <% end %>

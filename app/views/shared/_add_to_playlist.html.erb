@@ -1,18 +1,37 @@
 <%# A native <details> menu: no JavaScript, and Escape closes it because the
-    browser says so. %>
-<details class="relative shrink-0">
-  <summary aria-label="Add <%= track.title %> to a playlist"
-           class="flex size-8 cursor-pointer list-none items-center justify-center rounded-full
-                  text-lg text-neutral-500 transition hover:bg-white/10 hover:text-white">+</summary>
+    browser says so.
 
-  <div class="absolute right-0 z-20 mt-1 w-56 rounded-xl glass p-1">
-    <% if playlists.any? %>
-      <% playlists.each do |playlist| %>
-        <%= button_to playlist.name, playlist_entries_path(playlist), params: { track_id: track.id },
-                      class: "w-full cursor-pointer truncate rounded px-3 py-2 text-left text-sm text-neutral-300 transition hover:bg-white/10 hover:text-white" %>
+    Adding a song used to be a full page visit that gave no sign anything had
+    happened: the menu closed because the whole page had been swapped out under
+    it, and the song went somewhere with nobody told. Now the + says where it
+    landed — and the badge takes its own leave, handing the + back. %>
+<% landed_in = local_assigns[:landed_in] %>
+<span id="<%= dom_id(track, :add) %>" class="adder shrink-0">
+  <details class="relative">
+    <summary aria-label="Add <%= track.title %> to a playlist"
+             class="flex size-9 cursor-pointer list-none items-center justify-center rounded-full
+                    text-lg text-neutral-500 transition hover:bg-white/10 hover:text-white active:scale-90">+</summary>
+
+    <div class="absolute right-0 z-20 mt-1 w-56 rounded-xl glass p-1">
+      <% if playlists.any? %>
+        <% playlists.each do |playlist| %>
+          <%= button_to playlist.name, playlist_entries_path(playlist), params: { track_id: track.id },
+                        class: "w-full cursor-pointer truncate rounded px-3 py-2 text-left text-sm text-neutral-300 transition hover:bg-white/10 hover:text-white" %>
+        <% end %>
+      <% else %>
+        <p class="px-3 py-2 text-sm text-neutral-500">No playlists yet.</p>
       <% end %>
-    <% else %>
-      <p class="px-3 py-2 text-sm text-neutral-500">No playlists yet.</p>
-    <% end %>
-  </div>
-</details>
+    </div>
+  </details>
+
+  <% if landed_in %>
+    <span class="landed animate-landed flex items-center gap-1 whitespace-nowrap rounded-full bg-accent/15 px-2.5 py-1.5
+                 text-[11px] font-semibold text-accent ring-1 ring-inset ring-accent/25"
+          role="status" data-controller="fades">
+      <svg class="size-3 shrink-0" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-6.5 6.5a.75.75 0 0 1-1.06 0l-3-3a.75.75 0 1 1 1.06-1.06L6.75 10.19l5.97-5.97a.75.75 0 0 1 1.06 0Z"/>
+      </svg>
+      <span class="max-w-28 truncate">In <%= landed_in %></span>
+    </span>
+  <% end %>
+</span>

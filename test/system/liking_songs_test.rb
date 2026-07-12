@@ -4,7 +4,7 @@ class LikingSongsTest < ApplicationSystemTestCase
   ALBUM_DIR = "Almafuerte/1995 - Mundo guanaco".freeze
 
   setup do
-    listening_as
+    @gaston = listening_as
     artist = Artist.create!(name: "Almafuerte")
     @album = Album.create!(
       directory: File.join(Rails.configuration.x.media_root, ALBUM_DIR), title: "Mundo Guanaco",
@@ -33,6 +33,33 @@ class LikingSongsTest < ApplicationSystemTestCase
     click_on "Like Mundo Guanaco"
 
     assert_selector "button[aria-label='Unlike Mundo Guanaco']"
+  end
+
+  # Somebody pressing a heart is telling you about a song, not asking to be taken
+  # somewhere. It used to be a whole page fetched and redrawn: the scroll jumped
+  # back to the top of the record, and the history filled with the same URL, once
+  # per heart — so Back walked you through your own hearting.
+  test "hearting a song goes nowhere: the heart changes and the page stays put" do
+    visit album_path(@album)
+    was = page.evaluate_script("history.length")
+
+    click_on "Like Desencuentro"
+
+    assert_selector "button[aria-label='Unlike Desencuentro']"
+    assert_equal was, page.evaluate_script("history.length"),
+      "the heart pushed an entry onto the history: it navigated"
+  end
+
+  # And a song added to a playlist says where it went. It used to say nothing at
+  # all — the menu closed because the page underneath it had been replaced.
+  test "a song added to a playlist says which one it landed in" do
+    @gaston.playlists.create!(name: "Asado")
+    visit album_path(@album)
+
+    find("summary[aria-label='Add Desencuentro to a playlist']").click
+    click_on "Asado"
+
+    assert_text "In Asado"
   end
 
   # The play is recorded by a fetch nothing waits on, so the test has to.

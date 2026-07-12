@@ -199,6 +199,33 @@ html[data-turbo-preview] .animate-enter {
   animation: none;
 }
 
+/* A list that knows whether it is empty, without being told.
+
+   Unhearting the last song takes its row away, and the page has to become the
+   page it now is: no buttons to play nothing with, and a line saying so. Asking
+   the server to re-render the whole list to learn that is a round trip to
+   discover something already true in the DOM. `:has` reads it off the list. */
+.hearts:has(.the-songs li) .when-empty {
+  display: none;
+}
+.hearts:not(:has(.the-songs li)) .when-any {
+  display: none;
+}
+
+/* Where a song just landed, said in place of the + that sent it there. While the
+   badge is up the + steps aside; when the badge takes its leave (fades#connect),
+   :has stops matching and the + is simply there again — no state to put back. */
+.adder:has(.landed) details {
+  display: none;
+}
+@keyframes landed {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+@utility animate-landed {
+  animation: landed 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 /* The one heart you just gave beats once, and the rest sit still. A control
    that gives nothing back when pressed is the cheapest juice in a music app,
    and it was on the floor. */

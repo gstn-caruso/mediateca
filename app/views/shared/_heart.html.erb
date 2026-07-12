@@ -1,21 +1,30 @@
 <%# One button, two states. Whichever is showing, the other is one click away.
 
+    Pressing it swaps the heart where it stands, and moves nothing else. It used
+    to be a full page visit: the scroll jumped back to the top of the record, the
+    page faded in all over again, and the history filled with the same URL, once
+    per heart. Somebody pressing a heart is telling you about a song, not asking
+    to be taken somewhere.
+
     A record is hearted with the same heart as a song, because it is the same
-    gesture. It only sits bigger, up in the header where a record's own buttons
-    are, instead of at the end of a row. %>
+    gesture. It only sits bigger, in the header where a record's own buttons are —
+    and the size travels with the press, so what comes back is the same heart. %>
 <% liked = Current.profile.likes?(thing) %>
-<% big = local_assigns.fetch(:size, :small) == :large %>
-<%= button_to [ thing, :like ],
-              method: liked ? :delete : :post,
-              "aria-label": "#{liked ? "Unlike" : "Like"} #{label}",
-              class: "heart group/heart shrink-0 cursor-pointer rounded-full transition active:scale-90
-                      #{big ? "p-3" : "p-2"}
-                      #{liked ? "text-accent hover:text-accent-bright" : "text-neutral-500 hover:text-white"}" do %>
-  <%# The heart it just became beats once. A heart that gives nothing back when
-      you press it is the cheapest juice in a music app, left on the floor. %>
-  <svg class="<%= big ? "size-5" : "size-4" %> transition-transform group-hover/heart:scale-110 <%= "is-beating" if liked %>"
-       viewBox="0 0 16 16" fill="<%= liked ? "currentColor" : "none" %>"
-       stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-    <path d="M8 14S1.5 9.7 1.5 5.6A3.6 3.6 0 0 1 8 3.5a3.6 3.6 0 0 1 6.5 2.1C14.5 9.7 8 14 8 14Z"/>
-  </svg>
-<% end %>
+<% big = local_assigns.fetch(:size, "small").to_s == "large" %>
+<span id="<%= dom_id(thing, :heart) %>" class="shrink-0">
+  <%= button_to [ thing, :like ],
+                method: liked ? :delete : :post,
+                params: { size: big ? "large" : "small" },
+                "aria-label": "#{liked ? "Unlike" : "Like"} #{thing.title}",
+                class: "heart group/heart cursor-pointer rounded-full transition active:scale-90
+                        #{big ? "p-3" : "p-2"}
+                        #{liked ? "text-accent hover:text-accent-bright" : "text-neutral-500 hover:text-white"}" do %>
+    <%# The heart it just became beats once. A control that gives nothing back
+        when you press it is the cheapest juice in a music app, left on the floor. %>
+    <svg class="<%= big ? "size-5" : "size-4" %> transition-transform group-hover/heart:scale-110 <%= "is-beating" if liked %>"
+         viewBox="0 0 16 16" fill="<%= liked ? "currentColor" : "none" %>"
+         stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+      <path d="M8 14S1.5 9.7 1.5 5.6A3.6 3.6 0 0 1 8 3.5a3.6 3.6 0 0 1 6.5 2.1C14.5 9.7 8 14 8 14Z"/>
+    </svg>
+  <% end %>
+</span>
