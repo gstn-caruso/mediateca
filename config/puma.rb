@@ -43,6 +43,11 @@ plugin :solid_queue if ENV["SOLID_QUEUE_IN_PUMA"]
 # costs one query. Gated with the in-Puma queue that is here to run it.
 on_booted { FetchPortraitsJob.perform_later } if ENV["SOLID_QUEUE_IN_PUMA"]
 
+# Music lands on the NAS at any hour, and until now it waited for the 4am scan to
+# be noticed. Watch the disk instead: an album copied at midnight is playable at
+# midnight. Gated with the in-Puma queue, which is what runs the scan it asks for.
+on_booted { Music::Watcher.start } if ENV["SOLID_QUEUE_IN_PUMA"]
+
 # Specify the PID file. Defaults to tmp/pids/server.pid in development.
 # In other environments, only set the PID file if requested.
 pidfile ENV["PIDFILE"] if ENV["PIDFILE"]
