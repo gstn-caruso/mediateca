@@ -20,7 +20,6 @@ module Music
         title: "Del entorno",
         artist: "Almafuerte",
         year: 1996,
-        genre: "heavy metal",
         album_type: "album",
         disc_total: 1,
         cover_path: "#{ENTORNO}/cover.jpg",
@@ -33,7 +32,6 @@ module Music
       assert_equal ENTORNO, album.directory
       assert_equal "Del entorno", album.title
       assert_equal 1996, album.year
-      assert_equal "heavy metal", album.genre
       assert_equal "album", album.album_type
       assert_equal 1, album.disc_total
       assert_equal "#{ENTORNO}/cover.jpg", album.cover_path
@@ -117,16 +115,15 @@ module Music
       assert_equal [ "Almafuerte" ], Album.all.map { |album| album.artist.name }.uniq
     end
 
-    # The directory is the identity: the album is the same even if its title,
-    # year, or genre changed.
+    # The directory is the identity: the album is the same even if its title or
+    # year changed.
     test "reimporting a changed album updates it in place" do
-      Importer.new.import(source(albums: [ source_album(directory: ENTORNO, title: "Del Entorno", year: 1996, genre: "") ]))
-      Importer.new.import(source(albums: [ source_album(directory: ENTORNO, title: "Del entorno", year: 1997, genre: "heavy metal") ]))
+      Importer.new.import(source(albums: [ source_album(directory: ENTORNO, title: "Del Entorno", year: 1996) ]))
+      Importer.new.import(source(albums: [ source_album(directory: ENTORNO, title: "Del entorno", year: 1997) ]))
 
       album = Album.sole
       assert_equal "Del entorno", album.title
       assert_equal 1997, album.year
-      assert_equal "heavy metal", album.genre
     end
 
     # A track that got renamed on disk is a new track, and the old one is no
@@ -257,13 +254,6 @@ module Music
       ]) ]))
 
       assert_equal [ [ 1, 1 ], [ 1, 2 ], [ 2, 1 ] ], Album.sole.tracks.map { |track| [ track.disc_no, track.track_no ] }
-    end
-
-    # 23 of the NAS's 75 albums have genre = '' and not NULL.
-    test "an empty genre is stored as an empty string" do
-      Importer.new.import(source(albums: [ source_album(genre: "") ]))
-
-      assert_equal "", Album.sole.genre
     end
 
     test "an album with no cover is imported all the same" do

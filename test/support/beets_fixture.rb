@@ -16,7 +16,6 @@ module BeetsFixture
       artpath BLOB,
       albumartist TEXT,
       album TEXT,
-      genre TEXT,
       year INTEGER,
       disctotal INTEGER,
       albumtype TEXT
@@ -37,7 +36,7 @@ module BeetsFixture
 
   ALBUM_DEFAULTS = {
     artpath: nil, albumartist: "Almafuerte", album: "Mundo Guanaco",
-    genre: "", year: 1995, disctotal: 1, albumtype: "album"
+    year: 1995, disctotal: 1, albumtype: "album"
   }.freeze
 
   ITEM_DEFAULTS = {

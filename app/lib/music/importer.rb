@@ -71,7 +71,6 @@ module Music
       record.update!(
         title: album.title,
         year: album.year,
-        genre: album.genre,
         album_type: album.album_type,
         disc_total: album.disc_total,
         cover_path: album.cover_path,

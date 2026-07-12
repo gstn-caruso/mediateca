@@ -17,7 +17,6 @@ module Beets
           album: "Del entorno",
           albumartist: "Almafuerte",
           year: 1996,
-          genre: "",
           disctotal: 1,
           albumtype: "album",
           artpath: "/mnt/data/multimedia/Música/Almafuerte/1996 - Del entorno/cover.jpg"
@@ -125,16 +124,6 @@ module Beets
       assert_equal leningrad, album.directory
       assert_equal "#{leningrad}/01 - Бездельник.flac", album.tracks.sole.path
       assert_equal Encoding::UTF_8, album.tracks.sole.path.encoding
-    end
-
-    # 23 of the NAS's 75 albums have genre = '' (empty string), not NULL.
-    test "an empty genre is preserved as an empty string" do
-      library = Library.new(BeetsFixture.build(
-        albums: [ { id: 1, genre: "" } ],
-        items: [ { album_id: 1 } ]
-      ))
-
-      assert_equal "", library.albums.sole.genre
     end
 
     test "an album with no cover exposes it as nil" do

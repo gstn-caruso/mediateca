@@ -8,7 +8,7 @@ class PlayingMusicTest < ApplicationSystemTestCase
     artist = Artist.create!(name: "Almafuerte")
     @album = Album.create!(
       directory: File.join(Rails.configuration.x.media_root, ALBUM_DIR), title: "Mundo Guanaco", year: 1995,
-      genre: "heavy metal", album_type: "album", disc_total: 1, artist:, cover_path: media("cover.jpg")
+      album_type: "album", disc_total: 1, artist:, cover_path: media("cover.jpg")
     )
     {
       "Dijo El Droguero Al Drogador" => "02 - Dijo el droguero al drogador.flac",

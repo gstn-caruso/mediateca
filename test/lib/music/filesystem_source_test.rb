@@ -12,7 +12,7 @@ module Music
       within_root do |root|
         create(root, "Indio Solari/2010 - El perfume de la tempestad/05 - Satelital.flac",
           album: "El perfume de la tempestad", album_artist: "Indio Solari", year: 2010,
-          genre: "Rock nacional", title: "Satelital", track_no: 5, duration: 266.4)
+          title: "Satelital", track_no: 5, duration: 266.4)
 
         album = source(root).albums.sole
 
@@ -20,7 +20,6 @@ module Music
         assert_equal "El perfume de la tempestad", album.title
         assert_equal "Indio Solari", album.artist
         assert_equal 2010, album.year
-        assert_equal "Rock nacional", album.genre
         assert_equal 1, album.disc_total
 
         track = album.tracks.sole
@@ -185,7 +184,6 @@ module Music
           album_artist: tags[:album_artist],
           album: tags[:album],
           year: tags[:year],
-          genre: tags[:genre],
           track_no: tags.fetch(:track_no, 1),
           disc_no: tags.fetch(:disc_no, 1),
           duration: tags.fetch(:duration, 1.0),

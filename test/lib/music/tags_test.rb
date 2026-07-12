@@ -8,7 +8,6 @@ module Music
         "ALBUM" => "El perfume de la tempestad",
         "ARTIST" => "Indio Solari",
         "DATE" => "2010",
-        "GENRE" => "Rock nacional",
         "TITLE" => "Una rata muerta entre los Geranios",
         "album_artist" => "Indio Solari",
         "track" => "12"
@@ -19,7 +18,6 @@ module Music
       assert_equal "Indio Solari", tags.album_artist
       assert_equal "El perfume de la tempestad", tags.album
       assert_equal 2010, tags.year
-      assert_equal "Rock nacional", tags.genre
       assert_equal 12, tags.track_no
       assert_equal 1, tags.disc_no
       assert_in_delta 266.4, tags.duration
@@ -64,8 +62,8 @@ module Music
     end
 
     test "an empty tag is the same as not having it" do
-      assert_nil read({ "GENRE" => "", "ALBUM" => "  " }).genre
-      assert_nil read({ "GENRE" => "", "ALBUM" => "  " }).album
+      assert_nil read({ "ARTIST" => "", "ALBUM" => "  " }).artist
+      assert_nil read({ "ARTIST" => "", "ALBUM" => "  " }).album
     end
 
     # A lossless file reports its codec, its bit depth and its sample rate: the

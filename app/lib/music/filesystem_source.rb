@@ -62,7 +62,6 @@ module Music
         title: common(sung, :album) || titled(directory),
         artist: common(sung, :album_artist) || common(sung, :artist) || ::File.basename(::File.dirname(directory)),
         year: common(sung, :year) || year_of(directory),
-        genre: common(sung, :genre),
         album_type: nil,
         disc_total: sung.map(&:disc_no).max || 1,
         cover_path: cover_in(directory),

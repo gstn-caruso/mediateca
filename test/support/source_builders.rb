@@ -13,9 +13,9 @@ module SourceBuilders
 
   def source_album(
     directory: GUANACO, title: "Mundo Guanaco", artist: "Almafuerte", year: 1995,
-    genre: "", album_type: "album", disc_total: 1, cover_path: nil, tracks: []
+    album_type: "album", disc_total: 1, cover_path: nil, tracks: []
   )
-    Music::Source::Album.new(directory:, title:, artist:, year:, genre:, album_type:, disc_total:, cover_path:, tracks:)
+    Music::Source::Album.new(directory:, title:, artist:, year:, album_type:, disc_total:, cover_path:, tracks:)
   end
 
   def source_track(

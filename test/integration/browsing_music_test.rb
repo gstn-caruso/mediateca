@@ -7,7 +7,7 @@ class BrowsingMusicTest < ActionDispatch::IntegrationTest
     listening_as
     @artist = Artist.create!(name: "Almafuerte")
     @album = Album.create!(
-      directory: File.join(Rails.configuration.x.media_root, ALBUM_DIR), title: "Mundo Guanaco", year: 1995, genre: "", album_type: "album",
+      directory: File.join(Rails.configuration.x.media_root, ALBUM_DIR), title: "Mundo Guanaco", year: 1995, album_type: "album",
       disc_total: 1, artist: @artist, cover_path: media("cover.jpg")
     )
     @track = Track.create!(

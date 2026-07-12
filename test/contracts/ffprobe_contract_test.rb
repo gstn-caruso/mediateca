@@ -36,7 +36,6 @@ class FfprobeContractTest < ActiveSupport::TestCase
     assert_equal "Almafuerte", tags.artist
     assert_equal "Almafuerte", tags.album_artist
     assert_equal "Mundo Guanaco", tags.album
-    assert_equal "Heavy Metal", tags.genre
   end
 
   test "a whole date still arrives where the year is read from" do

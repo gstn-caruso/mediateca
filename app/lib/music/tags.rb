@@ -10,7 +10,6 @@ module Music
     ALBUM_ARTIST = %w[album_artist albumartist].freeze
     ALBUM = %w[album].freeze
     YEAR = %w[date year originalyear originaldate].freeze
-    GENRE = %w[genre].freeze
     TRACK = %w[track tracknumber].freeze
     DISC = %w[disc discnumber].freeze
 
@@ -30,7 +29,6 @@ module Music
         album_artist: value(tags, ALBUM_ARTIST) || artist,
         album: value(tags, ALBUM),
         year: year(tags),
-        genre: value(tags, GENRE),
         track_no: number(tags, TRACK),
         disc_no: number(tags, DISC) || 1,
         duration: format["duration"]&.to_f,

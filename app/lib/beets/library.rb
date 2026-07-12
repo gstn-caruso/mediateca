@@ -4,7 +4,7 @@ module Beets
   # Read-only gateway to a beets SQLite library.
   class Library
     ALBUMS = <<~SQL
-      SELECT id, album, albumartist, year, genre, albumtype, disctotal, artpath
+      SELECT id, album, albumartist, year, albumtype, disctotal, artpath
       FROM albums
     SQL
 
@@ -45,13 +45,13 @@ module Beets
     # An album beets knows but whose files it lost has nothing to identify it by
     # and nothing to play. beets keeps such rows; we do not.
     def album_from(row, tracks_by_album)
-      beets_id, title, artist, year, genre, album_type, disc_total, cover_path = row
+      beets_id, title, artist, year, album_type, disc_total, cover_path = row
       tracks = tracks_by_album.fetch(beets_id, [])
       return if tracks.empty?
 
       Music::Source::Album.new(
         directory: directory_of(tracks),
-        title:, artist:, year:, genre:, album_type:,
+        title:, artist:, year:, album_type:,
         disc_total: disc_total || 1,
         cover_path: text(cover_path),
         tracks: tracks

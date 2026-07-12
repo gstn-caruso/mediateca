@@ -29,7 +29,6 @@ module Music
         title: better(known.title, album.title),
         artist: better(known.artist, album.artist),
         year: better(known.year, album.year),
-        genre: better(known.genre, album.genre),
         album_type: better(known.album_type, album.album_type),
         disc_total: [ known.disc_total.to_i, album.disc_total.to_i ].max,
         tracks: retitle(album.tracks, known.tracks)

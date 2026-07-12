@@ -33,15 +33,14 @@ module Music
 
     test "beets enriches the metadata of the album that shares its directory" do
       library = Library.new(
-        disk: source(albums: [ source_album(directory: GUANACO, title: "mundo guanaco", artist: "almafuerte", year: nil, genre: nil) ]),
-        beets: source(albums: [ source_album(directory: GUANACO, title: "Mundo Guanaco", artist: "Almafuerte", year: 1995, genre: "heavy metal", album_type: "album") ])
+        disk: source(albums: [ source_album(directory: GUANACO, title: "mundo guanaco", artist: "almafuerte", year: nil) ]),
+        beets: source(albums: [ source_album(directory: GUANACO, title: "Mundo Guanaco", artist: "Almafuerte", year: 1995, album_type: "album") ])
       )
 
       album = library.albums.sole
       assert_equal "Mundo Guanaco", album.title
       assert_equal "Almafuerte", album.artist
       assert_equal 1995, album.year
-      assert_equal "heavy metal", album.genre
       assert_equal "album", album.album_type
     end
 
@@ -58,13 +57,13 @@ module Music
 
     test "data beets doesn't have doesn't overwrite the disc's" do
       library = Library.new(
-        disk: source(albums: [ source_album(directory: GUANACO, title: "Mundo guanaco", genre: "metal") ]),
-        beets: source(albums: [ source_album(directory: GUANACO, title: nil, genre: "") ])
+        disk: source(albums: [ source_album(directory: GUANACO, title: "Mundo guanaco", artist: "Almafuerte") ]),
+        beets: source(albums: [ source_album(directory: GUANACO, title: nil, artist: "") ])
       )
 
       album = library.albums.sole
       assert_equal "Mundo guanaco", album.title
-      assert_equal "metal", album.genre
+      assert_equal "Almafuerte", album.artist
     end
 
     test "tracks are the disc's, with beets' titles wherever available" do
