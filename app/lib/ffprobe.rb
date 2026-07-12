@@ -13,8 +13,21 @@ class Ffprobe
 
   DESCRIPTION = %w[-v error -print_format json -show_streams -show_format].freeze
 
+  # Every compressed frame, and nothing about it but how many bytes it took.
+  FRAME_SIZES = %w[-v error -print_format json -select_streams a:0 -show_entries packet=size].freeze
+
   def describe(path)
     ask(DESCRIPTION, path)
+  end
+
+  # The size of each of the file's frames, in bytes, in the order it plays them.
+  #
+  # This walks the whole file where `describe` only reads its head, so ask it of
+  # a file that has an answer worth the walk — see Music::BitRateMode. It is
+  # cheaper than it sounds: ffprobe reads frame headers here, and decodes
+  # nothing.
+  def frame_sizes(path)
+    ask(FRAME_SIZES, path).fetch("packets", []).filter_map { |frame| frame["size"]&.to_i }
   end
 
   private

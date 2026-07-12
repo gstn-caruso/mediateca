@@ -109,7 +109,8 @@ module Music
         codec: track.audio&.codec,
         bit_depth: track.audio&.bit_depth,
         sample_rate: track.audio&.sample_rate,
-        bit_rate: track.audio&.bit_rate
+        bit_rate: track.audio&.bit_rate,
+        bit_rate_mode: track.audio&.bit_rate_mode
       )
     end
 

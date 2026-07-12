@@ -2,29 +2,24 @@ require "test_helper"
 
 module Music
   class AudioTest < ActiveSupport::TestCase
-    # A lossless file is measured by its depth and sample rate: the badge every
-    # FLAC in the library wears.
-    test "a lossless file's badge is its codec, depth and sample rate" do
-      assert_equal "FLAC · 16/44.1", audio(codec: "flac", bit_depth: 16, sample_rate: 44100).quality
-      assert_equal "FLAC · 24/96", audio(codec: "flac", bit_depth: 24, sample_rate: 96000).quality
-      assert_equal "FLAC · 24/88.2", audio(codec: "flac", bit_depth: 24, sample_rate: 88200).quality
+    # A lossless file kept every sample it was given, so its name is the whole
+    # claim: a FLAC is a FLAC whether it was captured at 16/44.1 or 24/192. The
+    # numbers are still in the tooltip for whoever wants them.
+    test "a lossless file's badge is its format, and nothing else" do
+      assert_equal "FLAC", audio(codec: "flac", bit_depth: 16, sample_rate: 44100).quality
+      assert_equal "FLAC", audio(codec: "flac", bit_depth: 24, sample_rate: 192000).quality
+      assert_equal "ALAC", audio(codec: "alac", bit_depth: 24, sample_rate: 96000).quality
     end
 
-    # A compressed file has no fixed depth, so its badge is the bitrate it
-    # settled on, in kilobits.
-    test "a lossy file's badge is its codec and bitrate" do
+    # A compressed file threw samples away, and how many is the only thing worth
+    # asking: it is only as good as the bits it was given.
+    test "a lossy file's badge is its format and the bits it was given" do
       assert_equal "MP3 · 320", audio(codec: "mp3", bit_rate: 320000).quality
       assert_equal "AAC · 256", audio(codec: "aac", bit_rate: 256000).quality
+      assert_equal "OPUS · 128", audio(codec: "opus", bit_rate: 128000).quality
     end
 
-    # Half a measure is no measure: without both numbers there is no "16/44.1"
-    # to show, and the codec alone is all the badge can honestly say.
-    test "a lossless file missing a number is named by its codec alone" do
-      assert_equal "FLAC", audio(codec: "flac", sample_rate: 44100).quality
-      assert_equal "FLAC", audio(codec: "flac", bit_depth: 16).quality
-    end
-
-    test "a lossy file with no bitrate is named by its codec alone" do
+    test "a lossy file with no bitrate is named by its format alone" do
       assert_equal "MP3", audio(codec: "mp3").quality
     end
 
@@ -37,14 +32,23 @@ module Music
 
     test "a codec that keeps every sample is lossless" do
       assert audio(codec: "flac").lossless?
+      assert_not audio(codec: "flac").lossy?
+      assert audio(codec: "mp3").lossy?
       assert_not audio(codec: "mp3").lossless?
-      assert_not audio(codec: nil).lossless?
     end
 
-    # The tooltip spells out everything measured, bitrate and all.
+    # Neither, until we know which: nothing is lossy just for being unreadable.
+    test "a file with no known codec is neither lossless nor lossy" do
+      assert_not audio(codec: nil).lossless?
+      assert_not audio(codec: nil).lossy?
+    end
+
+    # The badge shows the mode as an icon, so the words belong in the tooltip.
     test "the detailed quality names every measure it has" do
-      assert_equal "FLAC · 16-bit · 44.1 kHz · 1007 kbps",
-        audio(codec: "flac", bit_depth: 16, sample_rate: 44100, bit_rate: 1006840).detail
+      assert_equal "FLAC · 24-bit · 192 kHz · 4608 kbps",
+        audio(codec: "flac", bit_depth: 24, sample_rate: 192000, bit_rate: 4608000).detail
+      assert_equal "MP3 · 320 kbps · variable bitrate",
+        audio(codec: "mp3", bit_rate: 320000, bit_rate_mode: "variable").detail
     end
 
     test "the detailed quality leaves out what was never measured" do
@@ -53,8 +57,8 @@ module Music
 
     private
 
-    def audio(codec: nil, bit_depth: nil, sample_rate: nil, bit_rate: nil)
-      Audio.new(codec:, bit_depth:, sample_rate:, bit_rate:)
+    def audio(codec: nil, bit_depth: nil, sample_rate: nil, bit_rate: nil, bit_rate_mode: nil)
+      Audio.new(codec:, bit_depth:, sample_rate:, bit_rate:, bit_rate_mode:)
     end
   end
 end
