@@ -23,7 +23,7 @@
   <%# A fresh install used to show that heading over nothing at all, which reads
       like a bug rather than an empty shelf. The music is on the disk; nothing
       has looked at it yet, and that is a sentence somebody can act on. %>
-  <% if @artists.empty? %>
+  <% if library_artists.empty? %>
     <div class="py-16 text-center">
       <p class="text-sm text-neutral-400">Nothing here yet.</p>
       <p class="mt-2 text-sm text-neutral-500">
@@ -36,7 +36,7 @@
   <%# Artists are round, records are square. You can tell a person from a sleeve
       without reading either. %>
   <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-    <% @artists.each do |artist| %>
+    <% library_artists.each do |artist| %>
       <%= link_to artist_path(artist), class: "group rounded-lg p-4 transition hover:bg-white/5" do %>
         <div class="aspect-square overflow-hidden rounded-full bg-neutral-800 shadow-lg">
           <%= render "shared/artist_face", artist: artist, text: "text-5xl" %>
