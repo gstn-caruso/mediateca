@@ -40,6 +40,11 @@ registry:
 builder:
   arch: amd64
   remote: ssh://gaston@192.168.1.7
+  # The version the app shows is the tag this deploy was cut from, read here —
+  # where there is still a git clone to read it from — and baked into the image.
+  # An untagged checkout hands in nothing, and the app shows no version.
+  args:
+    VERSION: <%= `git describe --tags --abbrev=0 2>/dev/null`.strip %>
 
 # root over SSH is denied on the NAS; gaston is in the docker group.
 ssh:
