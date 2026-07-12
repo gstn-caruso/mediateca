@@ -262,6 +262,41 @@ class PlayingMusicTest < ApplicationSystemTestCase
     assert_equal "paused", equalizer_state
   end
 
+  # A queue that ran out is not the end of the music: the rest of the artist is
+  # still on the disk. So where the rail said "Nothing up next." it now offers
+  # them — dimmed, because an offer is not a queue.
+  test "when the queue runs out, the rail offers more of the artist" do
+    other_record_by_almafuerte
+
+    play "El Pibe Tigre" # the last of the record: nothing behind it
+    click_button "Playing Next"
+
+    within "[data-player-target='suggestions']" do
+      assert_text "MORE FROM ALMAFUERTE"
+      assert_text "Se Nos Va"
+    end
+    assert_no_text "Nothing up next."
+  end
+
+  # Taking a suggestion is not playing it: it joins the end of the queue, what is
+  # playing keeps playing, and it stops being an offer once it is a plan.
+  test "a suggestion taken becomes the queue" do
+    other_record_by_almafuerte
+
+    play "El Pibe Tigre"
+    click_button "Playing Next"
+    within("[data-player-target='suggestions']") { click_button "Se Nos Va" }
+
+    within "[data-player-target='queue']" do
+      assert_text "NEXT UP"
+      assert_text "Se Nos Va"
+    end
+    # The last offer taken leaves nothing on offer: the rail withdraws them
+    # rather than leaving a heading standing over nothing.
+    assert_no_selector "[data-player-target='suggestions'] button"
+    assert_selector "[data-player-target='title']", text: "El Pibe Tigre"
+  end
+
   # Turbo puts the new body up before it carries #player into it, and the queue
   # lives on the <audio> in there. So for a moment a page has rows to press and
   # no player to press them through: the press asked for the audio, threw, and
@@ -298,6 +333,18 @@ class PlayingMusicTest < ApplicationSystemTestCase
   end
 
   private
+
+  # The record the rail can offer once Mundo Guanaco has played itself out: the
+  # whole of Mundo Guanaco is already in the queue, so the artist's *other*
+  # record is the only thing left of them to suggest.
+  def other_record_by_almafuerte
+    album = Album.create!(
+      directory: File.join(Rails.configuration.x.media_root, "Almafuerte/1998 - Del entorno"),
+      title: "Del Entorno", year: 1998, disc_total: 1, artist: @album.artist, cover_path: media("cover.jpg")
+    )
+    Track.create!(title: "Se Nos Va", track_no: 1, disc_no: 1, duration: 200.0,
+                  path: File.join(album.directory, "01 - Se nos va.flac"), album:)
+  end
 
   def play(title)
     visit album_path(@album)

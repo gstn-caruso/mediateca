@@ -29,6 +29,8 @@ Rails.application.routes.draw do
   resources :tracks, only: [] do
     resource :stream, only: [ :show ]
     resource :like,   only: [ :create, :destroy ]
+    # What to play when this one is the last thing in the queue.
+    resource :suggestions, only: [ :show ]
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
