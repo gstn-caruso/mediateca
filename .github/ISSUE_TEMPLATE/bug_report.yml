@@ -1,0 +1,81 @@
+name: Bug report
+description: Something isn't working the way it should.
+title: "[bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Fill in as much as you can — it's the
+        difference between a fix today and a guessing game later.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you see?
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-expected
+    attributes:
+      label: What you expected instead
+      description: What should have happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: The exact steps that trigger it, in order.
+      placeholder: |
+        1. Go to ...
+        2. Click on ...
+        3. See error
+    validations:
+      required: true
+
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: How is it deployed?
+      options:
+        - Kamal (production-style deploy)
+        - Docker Compose
+        - Local dev (bin/dev)
+        - Other (describe below)
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: >
+        The version shown at the bottom of the library rail in the app
+        (e.g. v1.4.2).
+      placeholder: v1.4.2
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      description: Browser and version (e.g. Chrome 126, Safari 17.5).
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: >
+        Server logs, browser console output, or a stack trace, if you have
+        one. This will be rendered as a code block, so no need to fence it
+        yourself.
+      render: shell
+    validations:
+      required: false
