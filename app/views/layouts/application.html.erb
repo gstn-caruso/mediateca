@@ -17,6 +17,15 @@
 
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
+
+    <%# A deploy refreshes every open tab, and a refresh here means a morph: the
+        page is morphed onto the new build in place. Morphing steps around
+        anything permanent, and the <audio> lives in a permanent element — so the
+        new build lands underneath the music without stopping it. Reloading, which
+        is what Turbo does instead when the stylesheet or the JavaScript changed,
+        cannot be helped: a page cannot run code it has not loaded. %>
+    <%= turbo_refresh_method_tag :morph %>
+    <%= turbo_refresh_scroll_tag :preserve %>
   </head>
 
   <%# The player controller sits on <body> so that play buttons anywhere on the
@@ -26,6 +35,11 @@
   <body class="h-full overflow-hidden bg-ambient text-neutral-200 antialiased"
         data-controller="player" data-player-profile-value="<%= Current.profile&.id %>"
         data-action="keydown@window->player#hotkey">
+    <%# Open tabs outlive deploys — this one is on a kitchen tablet and has been
+        for a week. When a new build goes live it says so here, and the page
+        morphs itself onto it. %>
+    <%= turbo_stream_from Deploy::STREAM %>
+
     <%# With nobody listening the picker owns the screen: no sidebar, no player.
         So leaving a profile stops the music, which is what leaving means. %>
     <% if Current.profile %>
