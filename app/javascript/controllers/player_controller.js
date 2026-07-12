@@ -30,7 +30,7 @@ export default class extends Controller {
     "audio", "title", "titleText", "idle", "subtitle", "subtitleText", "cover", "tail", "broken",
     "playIcon", "pauseIcon", "progress", "elapsed", "duration",
     "shuffle", "repeat", "repeatOne", "next", "queue", "queueEmpty", "queueToggle", "panel",
-    "repeatBadge", "repeatBadgeText", "backdrop", "row"
+    "repeatBadge", "repeatBadgeText", "backdrop", "row", "suggestions"
   ]
 
   // Turbo builds the new body before it moves #player, the permanent element,
@@ -395,6 +395,7 @@ export default class extends Controller {
     this.renderControls()
     this.renderTail()
     this.renderQueue()
+    this.renderSuggestions()
     this.renderRows()
     this.save()
   }
@@ -701,6 +702,94 @@ export default class extends Controller {
 
     this.repeatBadgeTarget.hidden = this.repeating === OFF
     this.repeatBadgeTextTarget.textContent = this.repeating === ONE ? "Repeat One" : "Repeat"
+  }
+
+  // "Nothing up next" was the end of it, and it needn't be: the rest of the
+  // artist is still on the disk. So the rail asks the library what is left of
+  // them and stands the answer where the queue ran out.
+  renderSuggestions() {
+    if (!this.hasSuggestionsTarget) return
+
+    const track = this.current
+
+    // Already offered for this song: leave them standing, minus whatever was
+    // taken. Asking again on every render would flicker the rail and pester the
+    // library for an answer that has not changed.
+    if (track && this.offeredFor === track.trackId) return
+
+    this.withdrawSuggestions()
+
+    // Something is up next, so nothing needs suggesting — and on repeat-all the
+    // queue never runs out at all.
+    if (!track || this.hasNext) return
+
+    this.offeredFor = track.trackId
+    this.askWhatIsLeft(track)
+  }
+
+  async askWhatIsLeft(track) {
+    const queued = this.queue.map((queued) => queued.trackId).join(",")
+
+    try {
+      const answer = await fetch(`/tracks/${track.trackId}/suggestions?queued=${queued}`,
+        { headers: { Accept: "application/json" } })
+      const { heading, tracks } = await answer.json()
+
+      // The song moved on while we were asking, and these are last song's offers.
+      if (this.offeredFor !== track.trackId) return
+
+      this.offerSuggestions(heading, tracks)
+    } catch {
+      // A rail that cannot reach the library says what it always said: nothing
+      // up next. Silence beats an error where the music should be.
+    }
+  }
+
+  offerSuggestions(heading, tracks) {
+    if (!tracks.length) return this.withdrawSuggestions()
+
+    this.suggestionsTarget.replaceChildren(this.queueSection(heading), ...tracks.map((track) => this.suggestionRow(track)))
+    this.suggestionsTarget.hidden = false
+    this.queueEmptyTarget.hidden = true
+  }
+
+  withdrawSuggestions() {
+    this.offeredFor = null
+    this.suggestionsTarget.replaceChildren()
+    this.suggestionsTarget.hidden = true
+  }
+
+  // An offer wears the same clothes as a queue row, only dimmer — it is not a
+  // plan yet, and the rail should not read as though it were.
+  suggestionRow(track) {
+    const item = document.createElement("li")
+    item.className = "opacity-50 transition hover:opacity-100"
+
+    const take = document.createElement("button")
+    take.type = "button"
+    take.setAttribute("aria-label", `Queue ${track.title}`)
+    take.className = "flex w-full min-w-0 items-center gap-2.5 rounded-lg p-1.5 text-left transition hover:bg-white/10"
+    take.dataset.action = "player#enqueue"
+    Object.assign(take.dataset, track)
+    take.append(this.queueArt(track), this.queueText(track))
+
+    item.append(take)
+    return item
+  }
+
+  // Taking an offer is not playing it: it goes to the end of the queue and what
+  // is playing keeps playing. And it stops being an offer, because it is a plan.
+  enqueue(event) {
+    const offer = event.currentTarget
+
+    this.queue = [ ...this.queue, { ...offer.dataset } ]
+    this.order = [ ...this.order, this.queue.length - 1 ]
+
+    offer.closest("li").remove()
+    // The last one taken leaves a heading over nothing.
+    if (!this.suggestionsTarget.querySelector("button")) this.withdrawSuggestions()
+
+    this.render()
   }
 
   // A quiet header inside the list to tell "Now Playing" from "Next Up".

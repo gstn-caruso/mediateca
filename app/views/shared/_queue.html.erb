@@ -29,7 +29,16 @@
       <span data-player-target="repeatBadgeText">Repeat</span>
     </span>
   </div>
-  <%# Drag a row to reorder what's coming; the × that surfaces on hover drops it. %>
-  <ol data-player-target="queue" class="min-h-0 flex-1 space-y-0.5 overflow-y-auto p-2"></ol>
+  <%# The queue and what the rail would offer after it scroll as one column: the
+      offers stand where the queue ran out, which is the whole point of them. %>
+  <div class="min-h-0 flex-1 overflow-y-auto p-2">
+    <%# Drag a row to reorder what's coming; the × that surfaces on hover drops it. %>
+    <ol data-player-target="queue" class="space-y-0.5"></ol>
+
+    <%# What is left of the artist once the record ends. Dimmed on purpose: these
+        are not queued, they are only on offer, and the rail should not read as
+        though the music has ten more songs lined up when it has none. %>
+    <ol data-player-target="suggestions" hidden class="space-y-0.5"></ol>
+  </div>
   <p data-player-target="queueEmpty" class="shrink-0 px-4 pb-4 pt-1 text-sm text-neutral-500">Nothing up next.</p>
 </aside>
