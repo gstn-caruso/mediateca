@@ -7,6 +7,10 @@ require "test_helper"
 # the way we recorded, and that the band we refuse is still a band they would
 # have offered us.
 #
+# It runs at night, and not on the way to a deploy — see lib/tasks/contracts.rake.
+# Whether MusicBrainz is having a good day says nothing about the change being
+# shipped, and it should not be able to hold it back.
+#
 # Skipped when they cannot be reached. REQUIRE_NETWORK turns the skip into a
 # failure, so a green suite never means "we quietly checked nothing".
 class WikimediaContractTest < ActiveSupport::TestCase

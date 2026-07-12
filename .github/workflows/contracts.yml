@@ -1,0 +1,41 @@
+name: Contratos
+
+# Las preguntas que le hacemos al mundo: ¿MusicBrainz sigue conociendo a Almafuerte,
+# sigue sin conocer a Los Socios del Desierto, sigue Wikidata sin una foto de
+# Hermética? Y, del lado de casa, ¿ffprobe sigue describiendo los FLACs como el
+# scanner espera?
+#
+# Ninguna de esas respuestas depende del cambio que estés deployando, así que
+# ninguna está en el camino de un deploy: corren acá, de noche, solas. Un rojo en
+# este workflow es una noticia —el mundo se movió, las grabaciones envejecieron—
+# y no una puerta cerrada en la cara de un cambio que no tiene nada que ver.
+on:
+  schedule:
+    - cron: "0 6 * * *" # las 3 de la mañana en Buenos Aires
+  workflow_dispatch:
+
+jobs:
+  contracts:
+    name: Contratos
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Install ffprobe
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends ffmpeg
+
+      # Un skip sería exactamente lo que este job existe para no dejar pasar: si el
+      # mundo no contesta, queremos enterarnos, no que el silencio se vea verde.
+      - name: Ask the world whether it still answers the way we recorded it
+        env:
+          RAILS_ENV: test
+          REQUIRE_NETWORK: "1"
+          REQUIRE_FFPROBE: "1"
+        run: bin/rails db:test:prepare test:contracts
