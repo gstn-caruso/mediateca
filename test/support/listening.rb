@@ -26,6 +26,15 @@ module ListeningInABrowser
     end
   end
 
+  # The rail shows one of its three turns at a time — the artists, the records,
+  # the lists — so anything in the rail is first a turn of the rail.
+  def in_the_library(turn)
+    within("nav") do
+      click_on turn
+      yield
+    end
+  end
+
   # The name and the way out now live behind the avatar in the header.
   def open_profile_menu
     within("#topbar") { find("summary[aria-label='Profile']").click }

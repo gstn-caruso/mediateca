@@ -36,6 +36,13 @@ class Profile < ApplicationRecord
     Track.joins(:likes).where(likes: { profile_id: id }).includes(album: :artist).order("likes.id DESC")
   end
 
+  # For the row that leads to them, which says how many there are rather than
+  # what kind of thing it is. Counted off the hearts already in hand, so a page
+  # that renders hearts pays nothing for the number.
+  def liked_songs_count
+    hearts.count { |type, _id| type == "Track" }
+  end
+
   def played(track)
     plays.create!(track:)
   end

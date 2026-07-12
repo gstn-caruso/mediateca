@@ -1,0 +1,31 @@
+<%# The three turns of the library, in the rail and on the page both — the same
+    control, twice, so the two never drift apart.
+
+    Icons, not words: a face, a record, a list. The one you are on rides a pill
+    painted in the record playing, and its icon takes `text-on-accent` — the
+    colour that stays legible on that pill whatever colour the sleeve turns it,
+    white over a dark accent and near-black over a light one. %>
+<% chip = "relative z-10 flex flex-1 items-center justify-center rounded-full #{pad} " \
+          "text-neutral-300 transition hover:text-white aria-selected:text-on-accent" %>
+
+<button type="button" role="tab" data-tabs-target="tab" data-action="tabs#show" data-tabs-name-param="artists"
+        aria-label="Artists" title="Artists" aria-selected="true" class="<%= chip %>">
+  <svg class="<%= size %>" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
+    <path d="M2.5 13.4C2.5 10.9 5 9.4 8 9.4s5.5 1.5 5.5 4a.6.6 0 0 1-.6.6H3.1a.6.6 0 0 1-.6-.6Z"/>
+  </svg>
+</button>
+
+<button type="button" role="tab" data-tabs-target="tab" data-action="tabs#show" data-tabs-name-param="albums"
+        aria-label="Albums" title="Albums" aria-selected="false" class="<%= chip %>">
+  <svg class="<%= size %>" viewBox="0 0 16 16" fill="currentColor" fill-rule="evenodd" aria-hidden="true">
+    <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1Zm0 5.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z"/>
+  </svg>
+</button>
+
+<button type="button" role="tab" data-tabs-target="tab" data-action="tabs#show" data-tabs-name-param="playlists"
+        aria-label="Playlists" title="Playlists" aria-selected="false" class="<%= chip %>">
+  <svg class="<%= size %>" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+    <path d="M6 3h9v1.5H6V3ZM6 7h9v1.5H6V7ZM1 11h14v1.5H1V11ZM1 3h3v1.5H1V3ZM1 7h3v1.5H1V7Z"/>
+  </svg>
+</button>

@@ -1,5 +1,16 @@
+<%# One library, three ways to look at it. The tab overhead names which of the
+    three you are turned to, so the rows underneath never name themselves: a row
+    spent its one line of small print saying "Artist", and that line is worth
+    more — it can say the thing only that row knows.
+
+    And the shapes were already saying it anyway. A face is round, a sleeve is
+    square, a list is a stack of lines; you can tell them apart across the room,
+    with the words covered. %>
+<% row = "flex items-center gap-3 rounded-md p-2 transition hover:bg-white/10" %>
+
 <nav data-sidebar-target="panel" class="hidden w-72 shrink-0 flex-col gap-2 md:flex">
-  <div class="flex min-h-0 flex-1 flex-col rounded-2xl glass">
+  <div class="flex min-h-0 flex-1 flex-col rounded-2xl glass"
+       data-controller="tabs" data-tabs-showing-value="artists" data-tabs-remember-value="mediateca:library-rail">
     <div class="flex shrink-0 items-center justify-between px-3 pb-2 pt-4">
       <h2 class="px-2 text-sm font-semibold text-neutral-400">Your Library</h2>
       <button type="button" data-action="sidebar#toggle" aria-label="Collapse library"
@@ -10,45 +21,76 @@
       </button>
     </div>
 
-    <div class="min-h-0 flex-1 space-y-1 overflow-y-auto px-2 pb-3">
-      <%= link_to likes_path, class: "flex items-center gap-3 rounded-md p-2 transition hover:bg-white/10 #{"bg-white/10" if current_page?(likes_path)}" do %>
-        <span aria-hidden="true" class="flex size-11 shrink-0 items-center justify-center rounded bg-gradient-to-br from-indigo-500 to-violet-700">
-          <svg class="size-5 text-white" viewBox="0 0 16 16" fill="currentColor"><path d="M8 14S1.5 9.7 1.5 5.6A3.6 3.6 0 0 1 8 3.5a3.6 3.6 0 0 1 6.5 2.1C14.5 9.7 8 14 8 14Z"/></svg>
-        </span>
-        <span class="min-w-0">
-          <span class="block truncate text-sm font-medium text-neutral-100">Liked Songs</span>
-          <span class="block truncate text-xs text-neutral-400">Playlist</span>
-        </span>
-      <% end %>
+    <%# The turn itself: three icons in a track, and the one you are on rides a
+        pill in the colour of whatever is playing. %>
+    <div role="tablist" aria-label="Your Library" data-action="keydown->tabs#step"
+         class="segmented mx-3 mb-3 flex shrink-0 rounded-full bg-black/30 p-1 ring-1 ring-inset ring-white/10">
+      <%= render "shared/library_tabs", size: "size-4", pad: "py-1.5" %>
+    </div>
 
-      <% playlists.each do |playlist| %>
-        <%= link_to playlist, class: "flex items-center gap-3 rounded-md p-2 transition hover:bg-white/10 #{"bg-white/10" if current_page?(playlist)}" do %>
-          <span aria-hidden="true" class="flex size-11 shrink-0 items-center justify-center rounded bg-neutral-800 text-neutral-500">
-            <svg class="size-5" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3h9v1.5H6V3ZM6 7h9v1.5H6V7ZM1 11h14v1.5H1V11ZM1 3h3v1.5H1V3ZM1 7h3v1.5H1V7Z"/></svg>
+    <div class="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
+      <div role="tabpanel" aria-label="Artists" data-tabs-target="panel" data-tabs-name="artists" class="space-y-1">
+        <% library_artists.each do |artist| %>
+          <%= link_to artist_path(artist), class: "#{row} #{"bg-white/10" if current_page?(artist_path(artist))}" do %>
+            <span class="size-11 shrink-0 overflow-hidden rounded-full bg-neutral-800 ring-1 ring-inset ring-white/10">
+              <%= render "shared/artist_face", artist: artist, text: "text-base" %>
+            </span>
+            <span class="min-w-0">
+              <span class="block truncate text-sm font-medium text-neutral-100"><%= artist.name %></span>
+              <span class="block truncate text-xs text-neutral-400"><%= pluralize(artist.albums.size, "album") %></span>
+            </span>
+          <% end %>
+        <% end %>
+
+        <%= render "shared/library_nothing", said: "Nobody yet." if library_artists.empty? %>
+      </div>
+
+      <%# Served shut, so the three lists are never briefly stacked on top of one
+          another in the moment before Stimulus has had a say. %>
+      <div role="tabpanel" aria-label="Albums" data-tabs-target="panel" data-tabs-name="albums" class="space-y-1" hidden>
+        <% library_albums.each do |album| %>
+          <%= link_to album_path(album), class: "#{row} #{"bg-white/10" if current_page?(album_path(album))}" do %>
+            <span class="size-11 shrink-0 overflow-hidden rounded bg-neutral-800 shadow-lg ring-1 ring-inset ring-white/10">
+              <%= image_tag cover_url(album), alt: "", loading: "lazy", class: "size-full object-cover" %>
+            </span>
+            <span class="min-w-0">
+              <span class="block truncate text-sm font-medium text-neutral-100"><%= album.title %></span>
+              <span class="block truncate text-xs text-neutral-400">
+                <%= album.artist.name %><%= " · #{album.year}" if album.year %>
+              </span>
+            </span>
+          <% end %>
+        <% end %>
+
+        <%= render "shared/library_nothing", said: "No records yet." if library_albums.empty? %>
+      </div>
+
+      <div role="tabpanel" aria-label="Playlists" data-tabs-target="panel" data-tabs-name="playlists" class="space-y-1" hidden>
+        <%# The hearts lead the lists: they are the one list nobody had to make. %>
+        <%= link_to likes_path, class: "#{row} #{"bg-white/10" if current_page?(likes_path)}" do %>
+          <span aria-hidden="true" class="flex size-11 shrink-0 items-center justify-center rounded bg-gradient-to-br from-indigo-500 to-violet-700 shadow-lg">
+            <svg class="size-5 text-white" viewBox="0 0 16 16" fill="currentColor"><path d="M8 14S1.5 9.7 1.5 5.6A3.6 3.6 0 0 1 8 3.5a3.6 3.6 0 0 1 6.5 2.1C14.5 9.7 8 14 8 14Z"/></svg>
           </span>
           <span class="min-w-0">
-            <span class="block truncate text-sm font-medium text-neutral-100"><%= playlist.name %></span>
+            <span class="block truncate text-sm font-medium text-neutral-100">Liked Songs</span>
             <span class="block truncate text-xs text-neutral-400">
-              Playlist · <%= pluralize(playlist.entries.size, "song") %>
+              <%= pluralize(Current.profile.liked_songs_count, "song") %>
             </span>
           </span>
         <% end %>
-      <% end %>
 
-      <% library_artists.each do |artist| %>
-        <%= link_to artist_path(artist), class: "flex items-center gap-3 rounded-md p-2 transition hover:bg-white/10 #{"bg-white/10" if current_page?(artist_path(artist))}" do %>
-          <span class="size-11 shrink-0 overflow-hidden rounded-full bg-neutral-800">
-            <%= render "shared/artist_face", artist: artist, text: "text-base" %>
-          </span>
-          <span class="min-w-0">
-            <span class="block truncate text-sm font-medium text-neutral-100"><%= artist.name %></span>
-            <span class="block truncate text-xs text-neutral-400">
-              Artist · <%= pluralize(artist.albums.size, "album") %>
+        <% playlists.each do |playlist| %>
+          <%= link_to playlist, class: "#{row} #{"bg-white/10" if current_page?(playlist)}" do %>
+            <span aria-hidden="true" class="flex size-11 shrink-0 items-center justify-center rounded bg-neutral-800 text-neutral-300 ring-1 ring-inset ring-white/10">
+              <svg class="size-5" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3h9v1.5H6V3ZM6 7h9v1.5H6V7ZM1 11h14v1.5H1V11ZM1 3h3v1.5H1V3ZM1 7h3v1.5H1V7Z"/></svg>
             </span>
-          </span>
+            <span class="min-w-0">
+              <span class="block truncate text-sm font-medium text-neutral-100"><%= playlist.name %></span>
+              <span class="block truncate text-xs text-neutral-400"><%= pluralize(playlist.entries.size, "song") %></span>
+            </span>
+          <% end %>
         <% end %>
-      <% end %>
+      </div>
     </div>
   </div>
-
 </nav>

@@ -7,7 +7,7 @@ class ApplicationController < ActionController::Base
 
   before_action :require_profile
 
-  helper_method :library_artists, :playlists
+  helper_method :library_artists, :library_albums, :playlists
 
   private
 
@@ -32,6 +32,13 @@ class ApplicationController < ActionController::Base
   # and counting them in Ruby costs nothing anybody can feel.
   def library_artists
     @library_artists ||= Artist.ordered.includes(:albums).to_a
+  end
+
+  # The same library, seen as the records rather than as the people who made
+  # them. Each row names its artist, so they come along rather than being asked
+  # for one row at a time.
+  def library_albums
+    @library_albums ||= Album.shelved.includes(:artist).to_a
   end
 
   # The listener's own playlists, in the sidebar of every page they see — and in
