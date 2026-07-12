@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+
+# Tell every tab in the house that a new build is live, so it morphs itself onto
+# it — see app/models/deploy.rb for what that costs the music (nothing).
+#
+# Here and not at boot: this hook runs once kamal-proxy has swung the traffic
+# over, so the build being announced is the one that will answer the refresh.
+# Announced from the container's own boot, the tabs would come back while the
+# proxy still pointed at the old one and refresh onto exactly what they had.
+#
+# --reuse runs it inside the container already serving rather than starting a
+# second one just to say a sentence.
+#
+# The deploy is out either way: a message that does not get through is worth a
+# line on the console, not a red build and a rollback of something that works.
+if ! kamal app exec --reuse --quiet 'bin/rails runner "Deploy.went_live"'; then
+  echo "post-deploy: $KAMAL_VERSION is live, but the open tabs were not told — they will catch up on their next navigation"
+fi

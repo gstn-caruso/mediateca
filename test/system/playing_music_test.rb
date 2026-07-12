@@ -262,6 +262,34 @@ class PlayingMusicTest < ApplicationSystemTestCase
     assert_equal "paused", equalizer_state
   end
 
+  # The whole point of refreshing on a deploy: it lands while you are listening,
+  # and you do not hear it land. Turbo morphs the page onto the new build, and a
+  # morph steps around permanent elements — so the very same <audio> goes on
+  # playing the very same song. It is not rebuilt and asked to pick up where it
+  # left off; it is never interrupted at all.
+  test "a deploy landing does not stop the music" do
+    play "Desencuentro"
+
+    page.execute_script(<<~JS)
+      // Stamped on the document so the test can wait for the morph to land; a
+      // full reload would wash it off, which is exactly what we want to catch.
+      addEventListener("turbo:morph", () => document.documentElement.dataset.morphed = "true")
+      // A mark that only survives if this very element survives.
+      document.querySelector("audio").survived = true
+
+      // Exactly what arrives over the wire when a deploy goes live.
+      document.body.insertAdjacentHTML("beforeend", '<turbo-stream action="refresh"></turbo-stream>')
+    JS
+
+    assert_selector "html[data-morphed='true']", visible: :all,
+      count: 1 # it morphed onto the new build rather than reloading
+
+    assert_selector "[data-player-target='title']", text: "Desencuentro"
+    assert page.evaluate_script("document.querySelector('audio').survived === true"),
+      "the <audio> was rebuilt: the music stopped to take delivery of the deploy"
+    assert page.evaluate_script("!document.querySelector('audio').paused"), "the music stopped"
+  end
+
   # A queue that ran out is not the end of the music: the rest of the artist is
   # still on the disk. So where the rail said "Nothing up next." it now offers
   # them — dimmed, because an offer is not a queue.
