@@ -30,7 +30,7 @@ module Music
     end
 
     # Whom the file credits the song to. Almost always the album's artist, and
-    # once in 934 somebody else — the scanner is not the one to decide that.
+    # 36 times in 1171 somebody else — the scanner is not the one to decide that.
     test "a track carries the artist its file credits" do
       within_root do |root|
         create(root, "Charly García/1984 - Piano Bar/05.flac",

@@ -47,7 +47,7 @@ module Music
     end
 
     # The record says who it is by, and almost every song on it agrees. Saying it
-    # again on all 934 rows would be the same truth written twice.
+    # again on all 1171 rows would be the same truth written twice.
     test "a song by the artist whose record it is carries no credit of its own" do
       Importer.new.import(source(albums: [ source_album(
         artist: "Almafuerte", tracks: [ source_track(artist: "Almafuerte") ]

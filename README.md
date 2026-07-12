@@ -44,11 +44,12 @@ raises, because swallowing it would skip every track and call the library empty.
 **A song says who sings it.** Usually that is simply whoever made the record, and
 `tracks.artist` is null — but a guest, a duet or a compilation says otherwise on
 the file itself, and the file is the one to believe. It is a credit, not an
-`artist_id`: of the 934 tracks beets knows, exactly one is credited to somebody
-other than its album's artist, and it reads *"Luis Alberto Spinetta, Pedro Aznar
-y Charly García"*. That is a credit line, not somebody you own records by, and
-rows for names like it would fill the library rail with artists who have no
-albums.
+`artist_id`. beets, asked first, said this happens to exactly one track in the
+934 it knows — but the disk, which knows all 1171 and is the one that decides,
+says **36**: *"Luis Alberto Spinetta, Pedro Aznar y Charly García"* on a Charly
+García record, *"Indio Solari y Los Fundamentalistas del Aire Acondicionado"*
+across most of Indio's. Those are credit lines, not people you own records by,
+and rows for them would fill the library rail with artists who have no albums.
 
 The bytes never pass through Ruby. In production Rails only names the file with
 the `X-Sendfile` header and **Thruster** serves it, with `Range` support — that

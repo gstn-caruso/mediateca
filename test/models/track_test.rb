@@ -6,7 +6,7 @@ class TrackTest < ActiveSupport::TestCase
     @album = Album.create!(directory: "/music/piano", title: "Piano Bar", artist: @charly)
   end
 
-  # Which is 933 of the 934 songs on the NAS: the record says who it is by, and
+  # Which is 1135 of the NAS's 1171 songs: the record says who it is by, and
   # every song on it agrees.
   test "a song with no credit of its own is by whoever made the record" do
     track = track_credited_to(nil)
@@ -14,8 +14,8 @@ class TrackTest < ActiveSupport::TestCase
     assert_equal "Charly García", track.artist_name
   end
 
-  # And the 934th. The file credits it to three people, and none of them is the
-  # name on the sleeve.
+  # And the other 36. This one the file credits to three people, and none of
+  # them is the name on the sleeve.
   test "a song the file credits to somebody else is by them" do
     track = track_credited_to("Luis Alberto Spinetta, Pedro Aznar y Charly García")
 

@@ -113,9 +113,9 @@ module Music
       )
     end
 
-    # The record already says who it is by, and 933 of the 934 songs say nothing
-    # else. A song carries a credit of its own only when the file disagrees with
-    # the sleeve — a guest, a duet, a compilation.
+    # The record already says who it is by, and 1135 of the NAS's 1171 songs say
+    # nothing else. A song carries a credit of its own only when the file
+    # disagrees with the sleeve — a guest, a duet, a compilation.
     def credit_of(track, album)
       track.artist if track.artist.present? && track.artist != album.artist.name
     end
