@@ -20,6 +20,10 @@ class TakingTheColourOfTheRecordTest < ApplicationSystemTestCase
     )
     Track.create!(title: "Son of Sam", track_no: 1, disc_no: 1, duration: 186.0,
                   path: media("01 - Son of Sam.flac"), album: @album)
+
+    # The colour is read off the sleeve on the server, the way it is after every
+    # scan of the library. Nothing in the browser opens the cover.
+    Music::Colours.new.collect
   end
 
   # It used to come back at 14° — orange — because the hue was warmed toward
@@ -29,6 +33,21 @@ class TakingTheColourOfTheRecordTest < ApplicationSystemTestCase
 
     assert_operator hue_gap(accent_hue, SLEEVE_RED), :<=, 12,
       "the accent came back #{accent} (hue #{accent_hue.round}°): that is not the red on the sleeve"
+    take_screenshot
+  end
+
+  # The whole point of deciding the colour on the server: the app knows what it
+  # will wear before the cover has arrived, so nothing has to be re-painted once
+  # the image lands, and a cover that never loads is not a record without a
+  # colour.
+  test "the app is already wearing the record's colour before its cover loads" do
+    visit album_path(@album)
+    page.execute_script("document.querySelectorAll('img').forEach((img) => img.src = '/nowhere.png')")
+
+    find("button[data-player-track]", text: "Son of Sam").click
+
+    assert_operator hue_gap(accent_hue, SLEEVE_RED), :<=, 12,
+      "with no cover to look at, the app fell back to a colour that is not the record's"
   end
 
   private

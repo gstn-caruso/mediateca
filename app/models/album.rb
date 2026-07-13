@@ -8,6 +8,13 @@ class Album < ApplicationRecord
 
   scope :ordered, -> { order(:year, :title) }
 
+  # The look a record hands the app while it plays, all of it derived from the
+  # one striking colour read off its sleeve. A record with no colour of its own —
+  # a black and white sleeve — hands over the app's standing red instead.
+  def palette
+    Palette.for(accent&.then { |hex| Colour.hex(hex) })
+  end
+
   # How records stand on a shelf: under whoever made them, oldest first. Ordered
   # by year alone — which is what one artist's records want — the whole library
   # comes out interleaved, every artist shuffled in among the others.

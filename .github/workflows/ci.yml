@@ -112,6 +112,11 @@ jobs:
         with:
           bundler-cache: true
 
+      # Los system tests recorren la cadena entera del color: la tapa se decodifica
+      # con ffmpeg en el server y el browser solo aplica lo que recibe.
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends ffmpeg
+
       - name: Run system tests
         env:
           RAILS_ENV: test

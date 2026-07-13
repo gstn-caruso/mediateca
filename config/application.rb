@@ -49,5 +49,9 @@ module Mediateca
 
     # The scanner reads each file's tags with ffprobe, which ships in the image.
     config.x.ffprobe = ENV.fetch("FFPROBE", "ffprobe")
+
+    # And the sleeves are decoded with ffmpeg, which ships in the same package:
+    # the colour the app wears is read off the cover.
+    config.x.ffmpeg = ENV.fetch("FFMPEG", "ffmpeg")
   end
 end
