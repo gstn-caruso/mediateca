@@ -35,6 +35,22 @@
                                   focus:border-accent focus:bg-white/15 focus:outline-none" %>
   <% end %>
 
+  <%# Folds the content away, and the panels left standing take the room it was in.
+
+      The odd one out of the four: the other three summon something that was not
+      there, and this one sends away the thing that always was. So it is drawn as
+      what it is about rather than as what it opens — the room, with the middle of
+      it filled — and it does not light up, because a content that is simply there
+      is not a state worth flagging. It is where the toggles for the panels on this
+      side of the room begin, and they stand in the order the panels do. %>
+  <button type="button" data-action="content#toggle" data-content-target="toggle"
+          aria-label="Content" aria-expanded="true"
+          class="hidden shrink-0 rounded-full bg-white/10 p-2.5 text-neutral-200 transition hover:bg-white/15 hover:text-white md:block">
+    <svg class="size-5" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <path d="M3.5 2A1.5 1.5 0 0 0 2 3.5v9A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 12.5 2h-9Zm0 1.5H6v9H3.5v-9Zm6.5 0H12.5v9H10v-9Z"/>
+    </svg>
+  </button>
+
   <%# Opens the picture. Milkdrop, drawn from the sound itself — so the icon is
       the sound itself, the bars the old players danced while a song ran.
 

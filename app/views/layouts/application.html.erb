@@ -73,7 +73,10 @@
           panels have the whole room again — which is the resting state, and why
           the panels are told to fill what is left rather than to be as tall as
           the room. %>
-      <div class="relative flex h-full flex-col" data-controller="sidebar">
+      <%# The content folds away from the topbar too, and its button and the panel
+          it folds are as far apart as two things in here get — so that controller
+          reaches over both of them from up here, the same way the sidebar's does. %>
+      <div class="relative flex h-full flex-col" data-controller="sidebar content">
         <%= render "shared/backdrop" %>
         <%= render "shared/flash" %>
 
@@ -83,7 +86,10 @@
           <%= render "shared/header" %>
 
           <%# relative: on a phone the queue opens over this, not beside it. %>
-          <div class="relative flex min-h-0 flex-1 gap-2">
+          <%# Named, because it is the one that hands out the room: with the content
+              folded away it has panels standing in a row and nothing between them
+              to give the leftovers to, and it is the only thing that can see that. %>
+          <div id="panels" class="relative flex min-h-0 flex-1 gap-2">
             <%= render "shared/sidebar" %>
 
             <%# The content has to clear the pill floating over the panel's foot,
@@ -100,7 +106,9 @@
             <%# Named, because the panels beside it have to know how much room it
                 has left: a rail is widened until the content is down to the least
                 room a page can be read in, and not one pixel further. %>
-            <div id="content" class="relative min-w-0 flex-1">
+            <%# And it folds away like the four around it, which it could not do
+                while it was only ever the leftovers. %>
+            <div id="content" data-content-target="panel" class="relative min-w-0 flex-1">
               <%# A page is dressed in whatever it is about: a record's page wears
                   that record's colour, an artist's wears theirs, and the pages
                   that are about nothing in particular wear the app's own. It is
