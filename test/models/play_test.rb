@@ -68,6 +68,25 @@ class PlayTest < ActiveSupport::TestCase
     assert_in_delta Time.current, @gaston.played(track_of(@mundo)).played_at, 1.second
   end
 
+  test "a song nobody played has been played no times" do
+    assert_equal 0, @gaston.times_played(track_of(@mundo))
+  end
+
+  test "a song counts every time it was heard" do
+    song = track_of(@mundo)
+
+    3.times { @gaston.played(song) }
+
+    assert_equal 3, @gaston.times_played(song)
+  end
+
+  test "what one profile played, another has not heard once" do
+    song = track_of(@mundo)
+    @gaston.played(song)
+
+    assert_equal 0, Profile.create!(name: "Ana").times_played(song)
+  end
+
   private
 
   def album(title, directory)

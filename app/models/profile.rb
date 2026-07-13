@@ -4,6 +4,7 @@ class Profile < ApplicationRecord
   has_many :playlists, dependent: :destroy
   has_many :likes, dependent: :destroy
   has_many :plays, dependent: :destroy
+  has_many :spins, dependent: :destroy
   has_many :standings, dependent: :destroy
 
   normalizes :name, with: ->(name) { name.strip }
@@ -90,8 +91,24 @@ class Profile < ApplicationRecord
   # Written down once the listener has heard enough of the song to have listened
   # to it — which is a while after the music started. The player is the only one
   # who was there when it did, so it is the player who says when.
+  #
+  # A song is also the last song of some record, and hearing it may be the moment
+  # that record came full circle.
   def played(track, at: Time.current)
-    plays.create!(track:, played_at: at)
+    plays.create!(track:, played_at: at).tap do |play|
+      came_full_circle(play)
+      forget_tally
+    end
+  end
+
+  # How many times this listener has heard the whole record.
+  def spins_of(album)
+    spins.where(album:).count
+  end
+
+  # How many times this listener has heard this song.
+  def times_played(track)
+    tally.fetch(track.id, 0)
   end
 
   # Reloading is going back to the database to ask again, so what was remembered
@@ -102,6 +119,7 @@ class Profile < ApplicationRecord
   def reload(...)
     forget_hearts
     forget_standings
+    forget_tally
     super
   end
 
@@ -124,12 +142,49 @@ class Profile < ApplicationRecord
 
   private
 
+  # A song heard may be the one that was still missing off some record. Every
+  # song on it, heard since the run began, means the record came full circle.
+  def came_full_circle(play)
+    album = play.track.album
+
+    spins.create!(album:, play:) if heard_since_the_run_began(album) == album.tracks.ids.to_set
+  end
+
+  # A turn of the record is uninterrupted, so the run begins after the last thing
+  # that broke it: something else put on, or the turn this record already made —
+  # whose songs are finished business, and whose successor starts from there.
+  def heard_since_the_run_began(album)
+    began = [ last_put_on_something_else(album), last_turn_of(album) ].compact.max || 0
+
+    plays.joins(:track)
+         .where(tracks: { album_id: album.id }, plays: { id: began.succ.. })
+         .distinct.pluck(:track_id).to_set
+  end
+
+  def last_put_on_something_else(album)
+    plays.joins(:track).where.not(tracks: { album_id: album.id }).maximum(:id)
+  end
+
+  def last_turn_of(album)
+    spins.where(album:).maximum(:play_id)
+  end
+
   # A page full of songs asks about every one of them, and asking the database
   # each time is a query per row. A listener's hearts are a handful of rows, so
   # they come back once and the page reads them off memory. Current.profile is
   # this request's, so the memo cannot outlive the answer it holds.
   def hearts
     @hearts ||= likes.pluck(:likeable_type, :likeable_id).to_set
+  end
+
+  # The same bargain, for how many times each song was heard: a record's page
+  # asks about every song on it, and one query answers for all of them.
+  def tally
+    @tally ||= plays.group(:track_id).count
+  end
+
+  def forget_tally
+    @tally = nil
   end
 
   def forget_hearts
