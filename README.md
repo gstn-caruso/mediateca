@@ -174,27 +174,40 @@ you issue yourself, from a small authority your own machines trust.
 [mkcert](https://github.com/FiloSottile/mkcert) is three commands:
 
 ```bash
-brew install mkcert       # or your package manager
-mkcert -install           # trust your own CA — once per machine that listens
-mkcert mediateca.lan      # the name you will reach it by
+brew install mkcert                                                   # or your package manager
+mkcert -install                                                       # trust your own CA
+mkcert -cert-file .kamal/tls/cert.pem -key-file .kamal/tls/key.pem nas.local
 ```
 
-Put the two files it writes where Kamal can read them — `.kamal/secrets.example`
-shows how, and prefers your keychain to a file — and name the host:
+The name has to be one your LAN already resolves — a NAS usually answers to
+`something.local` over Bonjour, which is free, or you can add a record on the
+router. Then name it in the deploy:
 
 ```bash
 # .kamal/deploy.env
-MEDIATECA_TLS_HOST=mediateca.lan
+MEDIATECA_TLS_HOST=nas.local
 ```
 
-Then `bin/kamal deploy`. From there on the app answers to that name over HTTPS and
-**stops answering to a bare IP**: the name is the whole point of the certificate,
-so it has to resolve on your LAN — a record on the router, or a line in
-`/etc/hosts` on the machines you listen from.
+`.kamal/tls/` is gitignored, and `.kamal/secrets` reads the two files from there.
+It is a file and not a keychain for one reason: on this project the thing that
+deploys is a CI runner living on the NAS, and it has to read the key with nobody
+there to unlock anything. If yours deploys from the NAS too, the certificate goes
+next to its other coordinates (`~/mediateca-ci/tls/`), and the workflow copies it
+into the checkout.
 
-Every machine that listens has to trust the CA (`mkcert -install` there too, or
-copy the root out of `mkcert -CAROOT`). One that doesn't will call the page
-insecure, and you are back where you started: no install, no worker.
+Then deploy. From there on the app answers to that name over HTTPS and **stops
+answering to a bare IP** — the name is the whole point of the certificate.
+
+Two things follow from that, and they are the price:
+
+- **Every machine that listens has to trust the CA**, not just the one that made
+  it: `mkcert -install` there too, or copy the root out of `mkcert -CAROOT`. A
+  machine that doesn't will call the page insecure, and you are back where you
+  started — no install, no worker. On a phone or a tablet that means installing
+  the root by hand.
+- **The old `http://192.168.x.x` bookmarks stop working**, and an installed app
+  is bound to its origin, so the one you install from the IP is a different app
+  from the one you install from the name. Pick the name and stay on it.
 
 ### Preparing the server
 

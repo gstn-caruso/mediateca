@@ -37,6 +37,10 @@
 /.kamal/secrets
 /.kamal/deploy.env
 
+# The certificate Mediateca is served under, and — the reason this line exists —
+# its private key.
+/.kamal/tls/
+
 /app/assets/builds/*
 !/app/assets/builds/.keep
 

@@ -223,6 +223,14 @@ jobs:
           cp "$HOME/mediateca-ci/master.key" config/master.key
           cp "$HOME/mediateca-ci/deploy.env" .kamal/deploy.env
           cp .kamal/secrets.example .kamal/secrets
+          # El certificado, si esta máquina tiene uno. .kamal/secrets lo lee de
+          # acá y Kamal se lo pasa al proxy. Si no hay, las dos variables quedan
+          # vacías y el deploy es el HTTP de siempre — salvo que deploy.env sí
+          # declare MEDIATECA_TLS_HOST, y entonces Kamal para el deploy diciendo
+          # que falta el certificado, que es exactamente lo que uno querría oír.
+          mkdir -p .kamal/tls
+          cp "$HOME"/mediateca-ci/tls/*.pem .kamal/tls/ 2>/dev/null || true
+          chmod 600 .kamal/tls/*.pem 2>/dev/null || true
 
       # buildkit (driver docker-container) NO hereda el insecure-registries del
       # daemon, así que el builder que kamal reutiliza necesita su propio config
