@@ -136,11 +136,11 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
 
     assert_operator frames_drawn, :>, 0, "the picture never moved while the song played"
 
-    click_button "Play or pause"
+    pause
 
     assert_equal 0, frames_drawn, "the picture kept moving after the song stopped"
 
-    click_button "Play or pause"
+    unpause
 
     assert_operator frames_drawn, :>, 0, "the picture did not pick the song back up"
   end
@@ -156,8 +156,12 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
     assert_selector PRESET, text: /\S/
     was = find(PRESET).text
 
+    # A visit while the picture is up is the slowest thing this app ever does here.
+    # The runner has no GPU: Milkdrop is drawn on the CPU, a frame at a time, and
+    # it is drawing them the whole way across. On the machine this is looked at on
+    # the card does it and nobody waits. So the test does.
     click_link "Home"
-    assert_text "Your Library"
+    using_wait_time(15) { assert_text "Your Library" }
 
     assert_selector "#visualizer-panel canvas"
     assert_selector PRESET, exact_text: was
@@ -269,6 +273,21 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
     before = page.evaluate_script("window.drawn")
     sleep 0.75
     page.evaluate_script("window.drawn") - before
+  end
+
+  # Pressing the button is not the same as the song hearing it, and the frames of
+  # the gap between the two belong to the song that was still playing. The player
+  # turns the button over when the <audio> tells it the music has stopped, and the
+  # picture is told in the same breath — so the icon is the news, and counting
+  # starts after it.
+  def pause
+    click_button "Play or pause"
+    assert_selector "[data-player-target='playIcon']", visible: true
+  end
+
+  def unpause
+    click_button "Play or pause"
+    assert_selector "[data-player-target='pauseIcon']", visible: true
   end
 
   # The finders wait; evaluate_script does not, and the picture is raised on a
