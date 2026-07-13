@@ -1,13 +1,12 @@
 module Music
-  # The music as the disk has it. Every FLAC counts, whether or not beets ever
+  # The music as the disk has it. Every track counts, whether or not beets ever
   # heard of it — and on the NAS, 270 of them it never did.
   #
-  # The library is laid out as Artist/Album/track.flac, and 97 of the 1171
-  # tracks hang one level deeper, inside a CD01 or CD02. So an album is the
-  # directory two levels below the root, and its tracks are every FLAC under it.
+  # The library is laid out as Artist/Album/track, and 97 of the 1171 tracks
+  # hang one level deeper, inside a CD01 or CD02. So an album is the directory
+  # two levels below the root, and its tracks are every audio file under it —
+  # whichever of the formats it comes in (see Format).
   class FilesystemSource
-    EXTENSION = ".flac".freeze
-
     # A cover, never a back cover. beets picked `cover.1.jpg` for the six
     # Almafuerte albums, and it is byte for byte the same file as their
     # "Cover back.jpg".
@@ -34,13 +33,9 @@ module Music
 
     def tracks_by_album
       ::Dir.glob("**/*", base: root)
-           .select { |relative| flac?(relative) }
+           .select { |relative| Format.audio?(relative) }
            .group_by { |relative| album_directory(relative) }
            .transform_values { |relatives| relatives.map { |relative| ::File.join(root, relative) }.sort }
-    end
-
-    def flac?(relative)
-      ::File.extname(relative).downcase == EXTENSION
     end
 
     # Artist/Album, however deep the track itself sits. A file shallower than
