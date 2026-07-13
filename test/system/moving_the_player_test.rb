@@ -37,6 +37,31 @@ class MovingThePlayerTest < ApplicationSystemTestCase
     assert_in_delta player["floor"], player["bottom"], 1, "the docked player is not standing on the floor"
   end
 
+  # A bar across the foot of the room is the foot of the room: what is above it
+  # ends where it begins. A bar that merely hovers there covers the bottom of
+  # every panel it crosses — the last song on the list, the last row of the rail —
+  # and those are rows somebody meant to be able to read and press.
+  test "docked, it takes a row rather than standing over one" do
+    was = the_content
+
+    dock_the_player
+
+    now = the_content
+    assert_operator now["bottom"], :<=, the_player["top"] + 1, "the bar is standing over the content"
+    assert_operator now["height"], :<, was["height"], "the content did not give the bar a row of its own"
+  end
+
+  # The empty inch under the songs, and the fade that dissolves them into it,
+  # are both there because a pill floats over the foot of the list. A bar
+  # standing in its own row floats over nothing, so the list runs to its own foot.
+  test "docked, nothing is left hanging over the songs" do
+    dock_the_player
+
+    assert_no_selector ".scroll-edge"
+    assert_operator the_content["clearance"], :<, 32,
+                    "the list still keeps a pill's worth of empty room under it"
+  end
+
   test "pulled back up off the floor, it is a pill again" do
     dock_the_player
 
@@ -110,6 +135,21 @@ class MovingThePlayerTest < ApplicationSystemTestCase
           left: box.left, top: box.top, right: box.right, bottom: box.bottom,
           width: box.width, height: box.height,
           room: window.innerWidth, floor: window.innerHeight
+        }
+      })()
+    JS
+  end
+
+  # The panel the songs are on: the room a docked bar has to be taking out of it,
+  # and the empty inch it keeps under them for a pill to float over.
+  def the_content
+    page.evaluate_script(<<~JS)
+      (() => {
+        const main = document.querySelector("main")
+        const box = main.getBoundingClientRect()
+        return {
+          top: box.top, bottom: box.bottom, height: box.height,
+          clearance: parseFloat(getComputedStyle(main).paddingBottom)
         }
       })()
     JS

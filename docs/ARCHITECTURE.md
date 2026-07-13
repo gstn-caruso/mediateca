@@ -116,6 +116,13 @@ docked when its own foot reached the floor would dock on a nudge. The room holds
 it back at the floor, the hand goes on pushing past where it can follow, and that
 push is the ask — a window thrown at the edge of a screen.
 
+And docked, it stops floating altogether: the room is a column, and the bar comes
+down into the flow as its last row. The panels above are handed what is left, so
+they end where the bar begins rather than running on underneath it. That is also
+what takes the clearance back off the songs — the empty inch under the list and
+the fade that dissolves them into it are both there for a pill floating over the
+foot of it, and a bar in a row of its own floats over nothing.
+
 Where it was left is written to `localStorage`, for the same reason the queue is:
 the element rides through a Turbo visit on its own, but a cold load builds it
 again out of HTML the server wrote knowing nothing about anybody's hand. And, as

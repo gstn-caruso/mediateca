@@ -267,17 +267,35 @@
    over the room and becomes the foot of the room — the whole width of the row,
    standing on the bottom edge, its contents spread out along it.
 
+   Which is to say it stops floating, and that is the whole of it: `position`
+   goes back to the flow, and the player — the last thing in the room — comes
+   down into it as the room's last row. The panels above are handed what is left,
+   so they now end where the bar begins instead of running on underneath it;
+   hovering, it was covering the last inch of every panel it crossed. Everything
+   the pill was placed with comes off (the inset, the width, the centring pull):
+   a row is not placed anywhere, it is simply as wide as what it is in.
+
    It keeps the corners on its head and loses the ones on its feet, because they
    are no longer corners: they are where the app ends. A bar that kept all four
    reads as a pane somebody dropped there rather than as the edge itself. */
 #player.is-docked {
-  left: 0;
-  right: 0;
-  bottom: 0;
-  top: auto;
+  position: relative;
+  inset: auto;
   width: auto;
   translate: none;
   border-radius: 1rem 1rem 0 0;
+}
+
+/* The empty inch under the songs, and the fade that dissolves them into it, are
+   both there because a pill floats over the foot of the list. A bar standing in
+   a row of its own floats over nothing — so nothing has to be got out of its
+   way, and the list runs all the way down to its own foot. */
+:has(> #player.is-docked) main {
+  padding-bottom: 1rem;
+}
+
+:has(> #player.is-docked) .scroll-edge {
+  display: none;
 }
 
 /* The mini-player is the one pane that floats free of the layout, so it earns
