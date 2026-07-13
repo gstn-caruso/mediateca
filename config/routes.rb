@@ -26,6 +26,10 @@ Rails.application.routes.draw do
   # life.
   resource :statistics, only: [ :show ], path: "stats"
 
+  # The whole of it, added up and said out loud — and the three lists a hundred
+  # thousand scrobbles are owed, which nobody could have made by hand.
+  resource :report, only: [ :show, :create ]
+
   # What is on right now. A play is written down once the song has been listened
   # to; this is told the moment it starts, because it is what puts the song on a
   # listener's Last.fm page while it is still playing.

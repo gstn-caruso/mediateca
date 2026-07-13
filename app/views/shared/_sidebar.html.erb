@@ -89,6 +89,19 @@
           </span>
         <% end %>
 
+        <%# What the history adds up to, and the three lists it is owed. %>
+        <%= link_to report_path, class: "#{row} #{"bg-white/10" if current_page?(report_path)}" do %>
+          <span aria-hidden="true" class="flex size-11 shrink-0 items-center justify-center rounded bg-gradient-to-br from-fuchsia-600 to-rose-500 text-white">
+            <svg class="size-5" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M2 13.5h12V15H2v-1.5ZM3 8h2v4H3V8Zm4-5h2v9H7V3Zm4 3h2v6h-2V6Z"/>
+            </svg>
+          </span>
+          <span class="min-w-0">
+            <span class="block truncate text-sm font-medium text-neutral-100">Your listening</span>
+            <span class="block truncate text-xs text-neutral-400">The report</span>
+          </span>
+        <% end %>
+
         <% playlists.each do |playlist| %>
           <%= link_to playlist, class: "#{row} #{"bg-white/10" if current_page?(playlist)}" do %>
             <span aria-hidden="true" class="flex size-11 shrink-0 items-center justify-center rounded bg-neutral-800 text-neutral-300 ring-1 ring-inset ring-white/10">
