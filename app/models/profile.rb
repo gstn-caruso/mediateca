@@ -87,8 +87,11 @@ class Profile < ApplicationRecord
     @highlighted_artist_ids ||= artist_ids_standing("highlighted")
   end
 
-  def played(track)
-    plays.create!(track:)
+  # Written down once the listener has heard enough of the song to have listened
+  # to it — which is a while after the music started. The player is the only one
+  # who was there when it did, so it is the player who says when.
+  def played(track, at: Time.current)
+    plays.create!(track:, played_at: at)
   end
 
   # Reloading is going back to the database to ask again, so what was remembered

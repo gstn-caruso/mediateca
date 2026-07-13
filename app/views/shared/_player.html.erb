@@ -114,10 +114,15 @@
     duration without downloading the 34MB.
 
     `error` matters as much as `ended`: a file the server no longer has used to
-    leave the player sitting forever on a title that would never sound. %>
+    leave the player sitting forever on a title that would never sound.
+
+    `seeking` is how the player is told the song jumped. It has to hear about it
+    before the tick that would see the leap and count it as time listened — a
+    thumb dragged to the end covers the whole song and plays none of it. %>
 <audio data-player-target="audio"
        data-action="timeupdate->player#tick loadedmetadata->player#tick
                     play->player#refreshIcons pause->player#refreshIcons
+                    seeking->player#jumped
                     ended->player#advance error->player#failed"
        preload="metadata"
        class="hidden"></audio>

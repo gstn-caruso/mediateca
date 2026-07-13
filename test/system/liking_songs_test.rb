@@ -70,9 +70,16 @@ class LikingSongsTest < ApplicationSystemTestCase
   end
 
   # The play is recorded by a fetch nothing waits on, so the test has to.
+  #
+  # And it has to be sat through: a song only counts once half of it has been
+  # heard. So this is the short one — two seconds, of which one has to pass — and
+  # not "Desencuentro", whose halfway mark is a minute away.
   test "a song that played shows up under Recently played" do
+    Track.create!(title: "Un Tema Corto", track_no: 2, disc_no: 1, duration: 2.0,
+                  path: media("05 - Un tema corto.flac"), album: @album)
+
     visit album_path(@album)
-    find("button[data-player-track]", text: "Desencuentro").click
+    find("button[data-player-track]", text: "Un Tema Corto").click
     wait_for_a_play
 
     visit root_path
