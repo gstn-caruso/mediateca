@@ -30,6 +30,11 @@ const OPEN = "is-open"
 const LYRICS = "mediateca:lyrics"
 const FOLLOW = "mediateca:lyrics-follow"
 
+// And the same again for the picture. What is drawn on it is no business of this
+// controller — the visualizer draws itself. This owns the rail, as it owns the
+// other two, and all it says is when the rail opens.
+const VISUALIZER = "mediateca:visualizer"
+
 // Drives the single <audio> element in the layout.
 //
 // Turbo Drive swaps the body on every navigation, so this controller is torn
@@ -47,7 +52,8 @@ export default class extends Controller {
     "playIcon", "pauseIcon", "progress", "elapsed", "duration",
     "shuffle", "repeat", "repeatOne", "next", "queue", "queueEmpty", "queueToggle", "panel",
     "repeatBadge", "repeatBadgeText", "backdrop", "row", "suggestions",
-    "lyrics", "lyricsPanel", "lyricsToggle", "syncToggle"
+    "lyrics", "lyricsPanel", "lyricsToggle", "syncToggle",
+    "visualizerPanel", "visualizerToggle"
   ]
 
   // Whether the words are to follow the song. A plain controller field, not
@@ -138,6 +144,25 @@ export default class extends Controller {
     const open = String(this.lyricsPanelTarget.classList.contains(OPEN))
     this.lyricsToggleTargets.forEach((toggle) => toggle.setAttribute("aria-expanded", open))
     this.syncToggleTarget.setAttribute("aria-pressed", String(this.following))
+  }
+
+  // The picture's rail, arranged the same way and for the same reasons.
+  visualizerToggleTargetConnected() {
+    this.syncVisualizerToggles()
+  }
+
+  visualizerPanelTargetConnected() {
+    if (this.remembers(VISUALIZER) === "open") this.visualizerPanelTarget.classList.add(OPEN)
+
+    this.syncVisualizerToggles()
+    this.tellTheVisualizer()
+  }
+
+  syncVisualizerToggles() {
+    if (!this.hasVisualizerPanelTarget) return
+
+    const open = String(this.visualizerPanelTarget.classList.contains(OPEN))
+    this.visualizerToggleTargets.forEach((toggle) => toggle.setAttribute("aria-expanded", open))
   }
 
   remembers(key) {
@@ -308,6 +333,27 @@ export default class extends Controller {
   // Open or shut, remembered, exactly as the queue is.
   toggleLyrics() {
     this.leaveLyrics(!this.lyricsOpen)
+  }
+
+  // And the picture, the same again — except that a rail with a WebGL context
+  // behind it costs something to draw, so the one thing this has to do that the
+  // others don't is say so. Drawing sixty frames a second at a rail nobody has
+  // open is the whole cost of the feature for none of the point of it.
+  toggleVisualizer() {
+    const open = this.visualizerPanelTarget.classList.toggle(OPEN)
+
+    try {
+      localStorage.setItem(VISUALIZER, open ? "open" : "shut")
+    } catch { /* a private window just forgets which way it was left */ }
+
+    this.syncVisualizerToggles()
+    this.tellTheVisualizer()
+  }
+
+  // The rail is opened from the bar, which is out here, and drawn from inside
+  // itself. This is the only word that passes between them.
+  tellTheVisualizer() {
+    this.dispatch("visualizer")
   }
 
   // The rail left the way it is being left, and remembered that way.

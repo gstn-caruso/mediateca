@@ -414,6 +414,35 @@ html[data-turbo-preview] .animate-enter {
   }
 }
 
+/* The picture, which opens and shuts exactly as the other two rails do — and on
+   a phone takes the screen the same way, for the same reason. */
+#visualizer-panel {
+  display: none;
+}
+#visualizer-panel.is-open {
+  display: flex;
+}
+@media (width < 48rem) {
+  #visualizer-panel.is-open {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    width: auto;
+  }
+}
+
+/* Full screen, and the rail stops being a rail. The glass header goes: it is a
+   window frame, and this is the one thing in the app that is meant to have none.
+   Escape brings it back, which is the way out of every full screen there is. */
+#visualizer-panel:fullscreen {
+  width: 100%;
+  border-radius: 0;
+  background: #000;
+}
+#visualizer-panel:fullscreen .visualizer-chrome {
+  display: none;
+}
+
 /* A line of the song. Dim until it is sung: the one being sung now is lit, a
    little larger, and the rail carries it to the middle of itself — which is
    what makes the panel a karaoke rather than a page of text.

@@ -1,0 +1,60 @@
+<%# The picture: a rail that stands where the words and the queue stand, and opens
+    the same way. What it draws is Milkdrop — the thing that was in Winamp, the
+    reason people left Winamp open with the screen off — rewritten for WebGL, and
+    fed the twenty years of presets people wrote for it.
+
+    data-turbo-permanent, like its two neighbours, and for one reason more than
+    they have: behind this canvas is a live WebGL context and a graph tapped off
+    the <audio>. Neither is a thing to build again because somebody clicked on a
+    record. So the rail is carried through a visit whole, and the controller on it
+    picks up where it left off.
+
+    The player is not asked to draw anything. It owns the rail — it owns all three
+    — and says only when it opens; everything on this side of that is the
+    visualizer's own. %>
+<aside id="visualizer-panel" data-turbo-permanent data-player-target="visualizerPanel"
+       data-controller="visualizer"
+       data-action="player:visualizer@window->visualizer#settle
+                    keydown@window->visualizer#hotkey
+                    fullscreenchange@document->visualizer#refit"
+       class="w-72 shrink-0 flex-col overflow-hidden rounded-2xl glass-deep">
+  <%# Gone in full screen: a frame around a thing that is meant to have none. %>
+  <div class="visualizer-chrome flex shrink-0 items-center justify-between gap-2 border-b border-white/10 py-3 pl-2 pr-3">
+    <div class="flex min-w-0 items-center gap-1">
+      <button type="button" data-action="player#toggleVisualizer" aria-label="Collapse visualizer"
+              class="shrink-0 rounded-full p-1.5 text-neutral-400 transition hover:bg-white/10 hover:text-white">
+        <svg class="size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M10.28 3.22a.75.75 0 0 0-1.06 0L4.94 7.47a.75.75 0 0 0 0 1.06l4.28 4.25a.75.75 0 1 0 1.06-1.06L6.56 8l3.72-3.72a.75.75 0 0 0 0-1.06Z"/>
+        </svg>
+      </button>
+      <h2 class="truncate text-sm font-semibold text-white">Visualizer</h2>
+    </div>
+
+    <%# Where this was always going. A rail is a postage stamp; Milkdrop is a
+        thing you put on and turn the lights off to. %>
+    <button type="button" data-action="visualizer#fullscreen" data-visualizer-target="fullscreen"
+            aria-label="Full screen" aria-pressed="false"
+            class="shrink-0 rounded-full p-1.5 text-neutral-500 transition hover:bg-white/10 hover:text-white
+                   aria-pressed:text-accent">
+      <svg class="size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M2.75 2H6a.75.75 0 0 1 0 1.5H3.5V6a.75.75 0 0 1-1.5 0V2.75A.75.75 0 0 1 2.75 2Z"/>
+        <path d="M13.25 2H10a.75.75 0 0 0 0 1.5h2.5V6a.75.75 0 0 0 1.5 0V2.75A.75.75 0 0 0 13.25 2Z"/>
+        <path d="M2.75 14H6a.75.75 0 0 0 0-1.5H3.5V10a.75.75 0 0 0-1.5 0v3.25A.75.75 0 0 0 2.75 14Z"/>
+        <path d="M13.25 14H10a.75.75 0 0 1 0-1.5h2.5V10a.75.75 0 0 1 1.5 0v3.25A.75.75 0 0 1 13.25 14Z"/>
+      </svg>
+    </button>
+  </div>
+
+  <%# Black, not glass. This is the one surface in the app that is not showing you
+      the room behind it — it is the picture itself, and Milkdrop was drawn on
+      black. %>
+  <div class="relative min-h-0 flex-1 bg-black">
+    <canvas data-visualizer-target="canvas" class="absolute inset-0 size-full"></canvas>
+
+    <%# Milkdrop is not one picture, it is thousands, and each one is somebody's
+        work with their name on it. So the rail says whose you are looking at. %>
+    <p data-visualizer-target="preset" aria-live="off"
+       class="pointer-events-none absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/80 to-transparent
+              px-3 pb-2 pt-6 text-[11px] leading-tight text-white/70"></p>
+  </div>
+</aside>

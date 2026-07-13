@@ -35,6 +35,23 @@
                                   focus:border-accent focus:bg-white/15 focus:outline-none" %>
   <% end %>
 
+  <%# Opens the picture. Milkdrop, drawn from the sound itself — so the icon is
+      the sound itself, the bars the old players danced while a song ran.
+
+      Unlike the microphone beside it, this is never dead: a song with no words
+      has nothing to show, but there is no such thing as a song with no sound. %>
+  <button type="button" data-action="player#toggleVisualizer" data-player-target="visualizerToggle"
+          aria-label="Visualizer" aria-expanded="false"
+          class="shrink-0 rounded-full bg-white/10 p-2.5 text-neutral-300 transition hover:bg-white/15 hover:text-white active:scale-90
+                 aria-expanded:text-accent">
+    <svg class="size-5" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <rect x="1.5" y="7.5" width="2" height="6" rx="1"/>
+      <rect x="5.2" y="2.5" width="2" height="11" rx="1"/>
+      <rect x="8.8" y="5.5" width="2" height="8" rx="1"/>
+      <rect x="12.5" y="9" width="2" height="4.5" rx="1"/>
+    </svg>
+  </button>
+
   <%# Opens the words, beside the queue and before it: a microphone, because what
       it opens is a karaoke — the line being sung lights up as the song runs.
 
