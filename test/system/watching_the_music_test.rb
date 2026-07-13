@@ -112,9 +112,15 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
   # in the bottom corner of its own rail. Two numbers have to agree, and a screen
   # that draws two pixels where it says one is the whole reason they can differ —
   # so this asks on such a screen, which is the screen this is looked at on.
+  #
+  # No song, on purpose. What is asked here is where Milkdrop aims, and it aims
+  # the moment the rail opens — a still picture answers it as well as a moving one.
+  # A moving one, four times the pixels because of the retina, drawn on a runner
+  # that has no GPU to draw it with, answers it while holding the whole browser
+  # under: it timed out mid-question.
   test "the picture is drawn at the size of the rail, and fills it" do
     retina
-    play "Desencuentro"
+    visit root_path
     click_button "Visualizer"
     assert_selector PRESET, text: /\S/
 
