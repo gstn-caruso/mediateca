@@ -244,6 +244,34 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
     assert_includes wiring.map(&:last), "AnalyserNode"
   end
 
+  # The one that actually took the music away, in the house, on the real thing.
+  #
+  # A browser will not let a page nobody has touched make a sound. That is why an
+  # AudioContext is born asleep, and it is why the rail — which is remembered, and
+  # so opens itself on the next load, which is nobody pressing anything — builds
+  # its graph asleep. The music is routed through that graph the moment the picture
+  # taps the <audio>, and the graph was tapped once and never spoken to again. So
+  # the song runs, the clock ticks, the picture moves, every test passes, and the
+  # house is silent.
+  #
+  # Headless Chrome will make any sound for anybody and never sleeps, so it cannot
+  # be asked whether this would have happened — asking it to enforce the rule does
+  # nothing. It is put to sleep by hand instead, which is precisely what the real
+  # browser was doing, and then the music is started the way a hand starts it.
+  test "a sleeping graph wakes when the music does" do
+    visit album_path(@album)
+    click_button "Visualizer"
+    assert_selector PRESET, text: /\S/
+
+    doze_off
+    assert_equal "suspended", audio_graph_state
+
+    find("button[data-player-track]", text: "Desencuentro").click
+    assert_selector "[data-player-target='title']", text: "Desencuentro"
+
+    assert graph_awake?, "the song is playing into a graph that is #{audio_graph_state}: the house is silent"
+  end
+
   # Left open, it is still open next time — the way the queue and the words are.
   test "a rail left open comes back open" do
     visit root_path
@@ -320,6 +348,25 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
         }
       }
     JS
+  end
+
+  # A graph that is not running is a graph making no sound, and the music goes
+  # through it the moment the picture taps the <audio>.
+  def audio_graph_state
+    page.evaluate_script("document.querySelector('audio').tap?.context?.state ?? 'never tapped'")
+  end
+
+  # What the browser does on its own to a page nobody has touched.
+  def doze_off
+    page.execute_script("document.querySelector('audio').tap.context.suspend()")
+    eventually { audio_graph_state == "suspended" }
+  end
+
+  def graph_awake?
+    Timeout.timeout(3) { sleep 0.1 until audio_graph_state == "running" }
+    true
+  rescue Timeout::Error
+    false
   end
 
   def frames_so_far

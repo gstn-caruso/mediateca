@@ -115,6 +115,18 @@ export default class extends Controller {
   // had its loop cancelled, and would quietly start a second one that nothing is
   // left holding the handle of: two loops drawing one picture, forever.
   async raise() {
+    // Every time, not just the first. A browser will not let a page nobody has
+    // touched make a sound, so a graph built on such a page is born asleep — and a
+    // rail that remembered itself open is built on exactly such a page, before any
+    // hand has gone near it. The graph was tapped once and never spoken to again,
+    // and the music, which runs through it from the moment it is tapped, ran
+    // through a sleeping graph into a silent house.
+    //
+    // This is the other end of that. The rail is raised again whenever the music
+    // starts, and the music starts because a hand said so — which is the one thing
+    // the browser was waiting to be told.
+    this.tap()
+
     const show = await this.show()
     if (!this.live || !this.open) return
 
@@ -235,9 +247,10 @@ export default class extends Controller {
       return { context, source }
     })()
 
-    // A graph built before anybody pressed anything is born asleep. Opening the
-    // rail is a press, and this is where it is spent.
-    audio.tap.context.resume()
+    // A graph built before anybody pressed anything is born asleep, and a browser
+    // wakes one only for a page a hand has been on. Asking anyway costs nothing and
+    // is refused quietly; the hand will come, and this is asked again when it does.
+    audio.tap.context.resume().catch(() => { /* not yet; there will be a hand */ })
 
     return audio.tap
   }
