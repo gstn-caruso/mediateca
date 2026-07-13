@@ -60,15 +60,18 @@ class Show {
   // of its own rail, on a retina screen and nowhere else. One number, one meaning.
   //
   // Sized twice with the same numbers, the assignment alone would blank the
-  // buffer. Nothing to do is nothing to do.
+  // buffer. Nothing to do is nothing to do — and saying so is worth something,
+  // because whoever asked has a picture to put back.
   fit(width, height) {
     const across = Math.round(width * this.sharpness)
     const down = Math.round(height * this.sharpness)
-    if (this.canvas.width === across && this.canvas.height === down) return
+    if (this.canvas.width === across && this.canvas.height === down) return false
 
     this.canvas.width = across
     this.canvas.height = down
     this.visualizer.setRendererSize(across, down)
+
+    return true
   }
 }
 
@@ -89,6 +92,7 @@ export default class extends Controller {
   disconnect() {
     this.live = false
     this.hold()
+    this.sizes?.disconnect()
   }
 
   // Draw while the rail is open, and not a frame while it is shut. The player
@@ -122,10 +126,13 @@ export default class extends Controller {
     else this.still(show)
   }
 
+  // Stopping is not asking for another frame. It is not stopping watching the
+  // room: a rail that is open is still a rail that can be resized — thrown across
+  // the whole screen, even — and a picture standing still has to be told, or it
+  // stands there stretched. Watching is not drawing. Only the drawing stops here.
   hold() {
     cancelAnimationFrame(this.frame)
     this.frame = null
-    this.sizes?.disconnect()
   }
 
   // A picture of the music, drawn while there is no music, is a picture of
@@ -237,11 +244,18 @@ export default class extends Controller {
 
   // Milkdrop draws at the size it was last told, and a rail that has just been
   // thrown across the whole screen is not that size any more.
+  //
+  // Resizing a canvas empties it — that is what a canvas does when it is resized,
+  // and while the music runs the next frame is a sixtieth of a second away and
+  // nobody sees it happen. Stopped, no frame is coming: a paused picture thrown
+  // full screen would have gone black on its way there. So it is drawn again by
+  // hand, and only when there was actually a resize to undo.
   fit() {
     const { show, clientWidth: width, clientHeight: height } = this.canvasTarget
     if (!show || !width || !height) return
 
-    show.fit(width, height)
+    const resized = show.fit(width, height)
+    if (resized && !this.playing) this.still(show)
   }
 
   // The arrows walk the presets — but they are the search box's arrows first, and

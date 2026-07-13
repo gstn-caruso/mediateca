@@ -1,5 +1,13 @@
 require "application_system_test_case"
 
+# Only the tests that are about the sound put a song on. The others — the rail,
+# the presets, the screen, the visit — are answered by a picture standing still,
+# and a picture standing still is one frame.
+#
+# A moving one is sixty a second, drawn on the CPU here because the runner has no
+# card to draw them with, and it drowns the browser it is drawn in: Selenium's own
+# questions started timing out, in a different test each run. The machine this is
+# looked at on has a card and never notices. The runner does, so it is not asked to.
 class WatchingTheMusicTest < ApplicationSystemTestCase
   ALBUM_DIR = "Almafuerte/1995 - Mundo guanaco".freeze
 
@@ -36,7 +44,7 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
   end
 
   test "the rail shuts the way it opened" do
-    play "Desencuentro"
+    visit root_path
     click_button "Visualizer"
     assert_selector "#visualizer-panel"
 
@@ -48,7 +56,7 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
   # Milkdrop is not one picture, it is thousands of them, and each one is
   # somebody's. So the rail says whose you are looking at.
   test "the picture on the wall says which one it is" do
-    play "Desencuentro"
+    visit root_path
 
     click_button "Visualizer"
 
@@ -58,7 +66,7 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
   # Twenty years of presets, and the only way through them anybody ever wanted:
   # the arrow keys.
   test "the arrows walk through the presets" do
-    play "Desencuentro"
+    visit root_path
     click_button "Visualizer"
     assert_selector PRESET, text: /\S/
     first = find(PRESET).text
@@ -77,8 +85,9 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
   # Arrows are for the presets, but only once the picture is up: typing a search
   # is the same keyboard, and a caret has to be able to move through a word.
   test "the arrows are the search box's while you are typing in it" do
-    play "Desencuentro"
+    visit root_path
     click_button "Visualizer"
+    assert_selector PRESET, text: /\S/
     first = find(PRESET).text
 
     find("input[aria-label='Search']").send_keys("guanaco", :arrow_left)
@@ -91,15 +100,27 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
   # header goes with it, and Escape is the way back, as it is out of every full
   # screen there ever was.
   test "the picture can take the whole screen, and nothing else goes with it" do
-    play "Desencuentro"
+    visit root_path
     click_button "Visualizer"
     assert_selector ".visualizer-chrome"
+    assert_selector PRESET, text: /\S/
+    count_the_frames
+    so_far = frames_so_far
 
     click_button "Full screen"
 
     assert_no_selector ".visualizer-chrome"
     assert_equal "visualizer-panel", page.evaluate_script("document.fullscreenElement?.id")
     assert_selector "button[aria-label='Full screen'][aria-pressed='true']", visible: :all
+
+    # Resizing a canvas empties it. With the music running the next frame is a
+    # sixtieth of a second away and nobody ever sees it happen — but this picture
+    # is stopped, and a stopped picture thrown across the screen would arrive there
+    # black, or stretched out of the shape of the rail it used to be in.
+    #
+    # Counted from before the screen was asked for: the picture is put back on the
+    # instant the canvas is resized, and a window that opens after that has missed it.
+    assert eventually { frames_so_far > so_far }, "the picture went black on its way to the screen"
   end
 
   # Milkdrop does not own the canvas it draws on: it sizes its own framebuffers,
@@ -112,9 +133,15 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
   # in the bottom corner of its own rail. Two numbers have to agree, and a screen
   # that draws two pixels where it says one is the whole reason they can differ —
   # so this asks on such a screen, which is the screen this is looked at on.
+  #
+  # No song, on purpose. What is asked here is where Milkdrop aims, and it aims
+  # the moment the rail opens — a still picture answers it as well as a moving one.
+  # A moving one, four times the pixels because of the retina, drawn on a runner
+  # that has no GPU to draw it with, answers it while holding the whole browser
+  # under: it timed out mid-question.
   test "the picture is drawn at the size of the rail, and fills it" do
     retina
-    play "Desencuentro"
+    visit root_path
     click_button "Visualizer"
     assert_selector PRESET, text: /\S/
 
@@ -122,6 +149,28 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
 
     assert_equal [ aim[:rail][0] * 2, aim[:rail][1] * 2 ], aim[:canvas], "the canvas is not the size of the rail"
     assert_equal aim[:canvas], aim[:aimed_at], "Milkdrop is not aiming at the whole canvas"
+  end
+
+  # Stopping is not the same as stopping watching. A rail that is open is a rail
+  # that can be resized — the window is dragged, the sidebar folds — and a picture
+  # standing still has to be told, or it stands there stretched into a shape that
+  # is not its own. The picture stops. The tape measure does not.
+  test "a picture standing still still follows the size of its rail" do
+    play "Desencuentro"
+    click_button "Visualizer"
+    assert_selector PRESET, text: /\S/
+    pause
+    was = canvas_aim[:rail]
+
+    page.current_window.resize_to(1100, 780)
+
+    eventually { canvas_aim[:rail] != was }
+    sleep 0.3
+    aim = canvas_aim
+
+    assert_equal aim[:rail], aim[:canvas], "the picture is stretched over a rail that changed size under it"
+  ensure
+    page.current_window.resize_to(*DESKTOP)
   end
 
   # A picture of the music, drawn while there is no music, is a picture of nothing
@@ -149,19 +198,16 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
   # does not take the picture down and put a new one up: behind that canvas is a
   # live WebGL context and a graph tapped off the music, and neither is a thing to
   # build again because somebody clicked on a record. The preset it was already
-  # wearing is how you can tell it is the same picture and not a new one.
+  # wearing is how you can tell it is the same picture and not a new one — a rebuilt
+  # one would have reached into the thousands and come back wearing something else.
   test "the picture rides through a visit" do
-    play "Desencuentro"
+    visit album_path(@album)
     click_button "Visualizer"
     assert_selector PRESET, text: /\S/
     was = find(PRESET).text
 
-    # A visit while the picture is up is the slowest thing this app ever does here.
-    # The runner has no GPU: Milkdrop is drawn on the CPU, a frame at a time, and
-    # it is drawing them the whole way across. On the machine this is looked at on
-    # the card does it and nobody waits. So the test does.
     click_link "Home"
-    using_wait_time(15) { assert_text "Your Library" }
+    assert_text "Your Library"
 
     assert_selector "#visualizer-panel canvas"
     assert_selector PRESET, exact_text: was
@@ -258,21 +304,34 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
 
   # Milkdrop draws by asking WebGL to draw, so WebGL is where you count. Every
   # frame is many of these; none at all is a picture that has stopped.
+  #
+  # Both ways of asking. Which one a frame uses is the preset's business — the warp
+  # mesh goes through an index buffer and the shapes and waves do not — and the
+  # preset is picked out of a hat. Counting only one of them counted some presets
+  # and not others, which is a coin toss wearing a lab coat.
   def count_the_frames
     page.execute_script(<<~JS)
       window.drawn = 0
-      const draw = WebGL2RenderingContext.prototype.drawArrays
-      WebGL2RenderingContext.prototype.drawArrays = function (...call) {
-        window.drawn++
-        return draw.apply(this, call)
+      for (const asking of [ "drawArrays", "drawElements" ]) {
+        const draw = WebGL2RenderingContext.prototype[asking]
+        WebGL2RenderingContext.prototype[asking] = function (...call) {
+          window.drawn++
+          return draw.apply(this, call)
+        }
       }
     JS
   end
 
+  def frames_so_far
+    page.evaluate_script("window.drawn")
+  end
+
+  # What was drawn over the last three quarters of a second — which, for a picture
+  # that has stopped, is nothing.
   def frames_drawn
-    before = page.evaluate_script("window.drawn")
+    before = frames_so_far
     sleep 0.75
-    page.evaluate_script("window.drawn") - before
+    frames_so_far - before
   end
 
   # Pressing the button is not the same as the song hearing it, and the frames of
