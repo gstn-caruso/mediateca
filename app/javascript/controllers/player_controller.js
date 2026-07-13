@@ -304,7 +304,12 @@ export default class extends Controller {
 
   // Open or shut, remembered, exactly as the queue is.
   toggleLyrics() {
-    const open = this.lyricsPanelTarget.classList.toggle(OPEN)
+    this.leaveLyrics(!this.lyricsOpen)
+  }
+
+  // The rail left the way it is being left, and remembered that way.
+  leaveLyrics(open) {
+    this.lyricsPanelTarget.classList.toggle(OPEN, open)
 
     try {
       localStorage.setItem(LYRICS, open ? "open" : "shut")
