@@ -135,10 +135,6 @@ class WideningThePanelsTest < ApplicationSystemTestCase
     File.join(Rails.configuration.x.media_root, ALBUM_DIR, name)
   end
 
-  def open_the(rail)
-    within("#topbar") { find("button[aria-label='#{rail}']").click }
-  end
-
   # The hand let go and the browser moved straight on: the width is written down
   # by a fetch nobody waited for. A test that navigates the instant it lets go can
   # outrun that write and then blame the page for forgetting — so it waits for the
@@ -155,23 +151,5 @@ class WideningThePanelsTest < ApplicationSystemTestCase
     end
 
     flunk "the #{panel} was never written down"
-  end
-
-  def width_of(selector)
-    page.evaluate_script("document.querySelector('#{selector}').getBoundingClientRect().width")
-  end
-
-  # A drag is a press, a journey and a release — and the journey is told in two
-  # legs rather than one leap, because a pointer that teleports is not a pointer
-  # anybody's hand ever made.
-  def widen(panel, by:)
-    half = by / 2
-
-    page.driver.browser.action
-      .click_and_hold(find("#{panel} .grip", visible: :all).native)
-      .move_by(half, 0)
-      .move_by(by - half, 0)
-      .release
-      .perform
   end
 end

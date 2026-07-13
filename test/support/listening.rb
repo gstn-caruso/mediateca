@@ -44,4 +44,29 @@ module ListeningInABrowser
     open_profile_menu
     within("#topbar") { click_on "Switch profile" }
   end
+
+  # The panels are summoned from the top bar and taken by their edge, and more
+  # than one test has to do both. They read as what a hand does to the room, not
+  # as what a browser does to a selector, so they say so.
+  def open_the(panel)
+    within("#topbar") { find("button[aria-label='#{panel}']").click }
+  end
+
+  def width_of(selector)
+    page.evaluate_script("document.querySelector('#{selector}').getBoundingClientRect().width")
+  end
+
+  # A drag is a press, a journey and a release — and the journey is told in two
+  # legs rather than one leap, because a pointer that teleports is not a pointer
+  # anybody's hand ever made.
+  def widen(panel, by:)
+    half = by / 2
+
+    page.driver.browser.action
+      .click_and_hold(find("#{panel} .grip", visible: :all).native)
+      .move_by(half, 0)
+      .move_by(by - half, 0)
+      .release
+      .perform
+  end
 end
