@@ -1,4 +1,5 @@
 <% content_for :title, @artist.name %>
+<% content_for :dressing, @artist.palette.to_style %>
 
 <%# The same head a record gets, and for the same reason: the picture of whoever
     the page is about, blown up behind their name, and their own colour over it.
@@ -9,7 +10,7 @@
     `sm:text-7xl` fired on a viewport while the column it had to fit in was a few
     hundred pixels wide. The name of the artist is the one thing this page is
     about; it is sized against the column it actually lands in. %>
-<header class="@container relative" style="<%= @artist.palette.to_style %>">
+<header class="@container relative">
   <%= render "shared/hero_wash", picture: (portrait_url(@artist) if @artist.portrait_path.present?) %>
 
   <div class="relative flex flex-col items-center gap-6 px-4 pb-10 pt-12 text-center @2xl:flex-row @2xl:items-end @2xl:gap-8 @2xl:text-left sm:px-8 sm:pt-24">
