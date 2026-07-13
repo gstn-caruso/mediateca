@@ -93,8 +93,10 @@ class WhatCountsAsListeningTest < ApplicationSystemTestCase
   end
 
   # The music plays in the browser and the row is written by the server, so there
-  # is nothing to wait on but the row itself.
-  def eventually(within: 5)
+  # is nothing to wait on but the row itself. Generously: this waits on a second
+  # of music actually playing, and the suite runs ten browsers at once, so that
+  # second is not a second of anybody's wall clock.
+  def eventually(within: 15)
     deadline = Time.current + within
 
     loop do

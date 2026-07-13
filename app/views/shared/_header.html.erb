@@ -79,6 +79,47 @@
 
       <div class="mx-1 my-1 h-px bg-white/10"></div>
 
+      <%# Last.fm, and only if somebody handed this Mediateca an API account.
+          Without one there is no Last.fm in the app at all, and a menu item that
+          leads nowhere is worse than no menu item.
+
+          Connected, it says who you are over there and links to you over there —
+          which Last.fm's terms ask for, and which is the plain courtesy anyway:
+          the listening leaves the house, so the house says where it went. %>
+      <% if Lastfm.api.configured? %>
+        <% if Current.profile.scrobbles? %>
+          <div class="flex items-center gap-3 rounded-xl px-3 py-2">
+            <%= render "shared/lastfm_mark" %>
+            <span class="min-w-0 flex-1">
+              <span class="block text-sm font-medium text-white">Scrobbling</span>
+              <%= link_to Current.profile.scrobbler.username, Current.profile.scrobbler.url,
+                          target: "_blank", rel: "noopener",
+                          class: "block truncate text-xs text-neutral-400 hover:text-white hover:underline" %>
+            </span>
+          </div>
+
+          <%= button_to scrobbler_path, method: :delete,
+                        class: "flex w-full cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-left text-sm
+                                text-neutral-300 transition hover:bg-white/10 hover:text-white" do %>
+            Disconnect Last.fm
+          <% end %>
+        <% else %>
+          <%= link_to connect_scrobbler_path,
+                      class: "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium
+                              text-neutral-200 transition hover:bg-white/10 hover:text-white" do %>
+            <%= render "shared/lastfm_mark" %>
+            Connect Last.fm
+          <% end %>
+        <% end %>
+
+        <%# Last.fm's terms ask for it by name, and it is the plain courtesy: the
+            scrobbles are theirs to keep, so their name is on the door. %>
+        <%= link_to "Powered by AudioScrobbler", "https://www.last.fm", target: "_blank", rel: "noopener",
+                    class: "block px-3 pb-1.5 pt-0.5 text-[10px] text-neutral-500 transition hover:text-neutral-300" %>
+
+        <div class="mx-1 my-1 h-px bg-white/10"></div>
+      <% end %>
+
       <%# The last option, lit up: leaving a profile is the deliberate exit. %>
       <%= button_to session_path, method: :delete,
                     class: "flex w-full cursor-pointer items-center gap-2 rounded-xl bg-accent/12 px-3 py-2 text-left text-sm font-semibold

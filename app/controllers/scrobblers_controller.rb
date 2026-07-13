@@ -1,0 +1,57 @@
+# Connecting a Last.fm is a journey out and back. The listener says yes on
+# Last.fm's own page — this app never sees a Last.fm password — and returns
+# holding a token, which is spent here for a session key that never expires.
+class ScrobblersController < ApplicationController
+  before_action :require_lastfm
+
+  def connect
+    redirect_to Lastfm.api.authorize_url(returning_to: way_back), allow_other_host: true
+  end
+
+  # The way back is a GET, and a GET is a link: without the handshake, anybody
+  # could send this listener a link carrying *their* token and quietly have the
+  # house scrobble into a stranger's account. So a token is only spent if we are
+  # the ones who sent them to Last.fm — and a handshake is good for one journey.
+  def callback
+    return refuse("That did not come back from Last.fm.") unless expected?(params[:handshake])
+
+    said = Lastfm.api.session_for(params[:token])
+    Current.profile.scrobbles_to(**said)
+
+    redirect_to root_path, notice: "Scrobbling to Last.fm as #{said.fetch(:username)}."
+  rescue Lastfm::Api::Unreachable, Lastfm::Api::Refused => e
+    refuse("Last.fm would not connect: #{e.message}")
+  end
+
+  def destroy
+    Current.profile.stops_scrobbling
+
+    redirect_to root_path, notice: "Last.fm disconnected. Nothing more will be scrobbled."
+  end
+
+  private
+
+  # No API account, no Last.fm anywhere in the app.
+  def require_lastfm
+    redirect_to root_path unless Lastfm.api.configured?
+  end
+
+  # Told to Last.fm as where to send them back, so it comes home in their hands.
+  def way_back
+    session[:lastfm_handshake] = SecureRandom.urlsafe_base64
+
+    callback_scrobbler_url(handshake: session[:lastfm_handshake])
+  end
+
+  # Spent on the way in, whether or not it turns out to be the right one: a
+  # handshake is for one journey, and a wrong guess does not get a second try.
+  def expected?(said)
+    session.delete(:lastfm_handshake).then do |sent|
+      sent.present? && said.present? && ActiveSupport::SecurityUtils.secure_compare(sent, said)
+    end
+  end
+
+  def refuse(why)
+    redirect_to root_path, alert: why
+  end
+end

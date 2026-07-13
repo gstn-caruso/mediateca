@@ -90,8 +90,14 @@ class LikingSongsTest < ApplicationSystemTestCase
 
   private
 
+  # Not Capybara's wait, which is sized for a DOM element that is either there or
+  # coming. This one waits on a second of music actually playing — and the suite
+  # runs ten browsers at once, so the second the song needs is not a second of
+  # anybody's wall clock.
+  A_SONG_AND_THEN_SOME = 15
+
   def wait_for_a_play
-    Timeout.timeout(Capybara.default_max_wait_time) { sleep 0.05 until Play.any? }
+    Timeout.timeout(A_SONG_AND_THEN_SOME) { sleep 0.05 until Play.any? }
   rescue Timeout::Error
     flunk "the player never recorded the play"
   end

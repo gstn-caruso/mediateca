@@ -7,6 +7,10 @@ class Profile < ApplicationRecord
   has_many :spins, dependent: :destroy
   has_many :standings, dependent: :destroy
 
+  # Nobody holds two Last.fm accounts at once, and a listener without one is the
+  # ordinary case: the app is whole without Last.fm in it.
+  has_one :scrobbler, dependent: :destroy
+
   normalizes :name, with: ->(name) { name.strip }
 
   validates :name, presence: true, uniqueness: true
@@ -99,6 +103,21 @@ class Profile < ApplicationRecord
       came_full_circle(play)
       forget_tally
     end
+  end
+
+  # Connecting a Last.fm — again, or to a different account — replaces whatever
+  # was there. Coming back from Last.fm twice is a double click, not two accounts.
+  def scrobbles_to(username:, session_key:)
+    (scrobbler || build_scrobbler).tap { it.update!(username:, session_key:) }
+  end
+
+  def stops_scrobbling
+    scrobbler&.destroy
+    reload_scrobbler
+  end
+
+  def scrobbles?
+    scrobbler.present?
   end
 
   # How many times this listener has heard the whole record.

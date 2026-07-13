@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_13_020000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_13_030000) do
   create_table "albums", force: :cascade do |t|
     t.string "album_type"
     t.integer "artist_id", null: false
@@ -83,6 +83,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_020000) do
     t.index ["name"], name: "index_profiles_on_name", unique: true
   end
 
+  create_table "scrobblers", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "profile_id", null: false
+    t.text "session_key", null: false
+    t.datetime "updated_at", null: false
+    t.string "username", null: false
+    t.index ["profile_id"], name: "index_scrobblers_on_profile_id", unique: true
+  end
+
   create_table "spins", force: :cascade do |t|
     t.integer "album_id", null: false
     t.datetime "created_at", null: false
@@ -133,6 +142,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_020000) do
   add_foreign_key "playlists", "profiles"
   add_foreign_key "plays", "profiles"
   add_foreign_key "plays", "tracks"
+  add_foreign_key "scrobblers", "profiles"
   add_foreign_key "spins", "albums"
   add_foreign_key "spins", "plays"
   add_foreign_key "spins", "profiles"

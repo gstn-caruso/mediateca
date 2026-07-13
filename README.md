@@ -127,6 +127,7 @@ Everything arrives from the environment.
 | `BEETS_DATABASE` | A beets library, read-only. Leave it empty and the disk decides alone. | `/mnt/data/beets/musiclibrary.db` |
 | `SECRET_KEY_BASE` | Signs the session cookie. Required in production. | — |
 | `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` | Optional. Only for artist portraits Wikimedia didn't have. | — |
+| `LASTFM_API_KEY` / `LASTFM_API_SECRET` | Optional. Without them there is no Last.fm in the app at all. Get them from an [API account](https://www.last.fm/api/account/create). | — |
 | `PORTRAITS_ROOT` | Where the portraits it fetches are kept. | `storage/portraits` |
 | `FFPROBE` | The ffprobe binary the scan reads tags with. | `ffprobe` |
 | `SOLID_QUEUE_IN_PUMA` | Run the nightly scan inside the web process. | — |

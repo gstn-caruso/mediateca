@@ -49,5 +49,11 @@ module Mediateca
 
     # The scanner reads each file's tags with ffprobe, which ships in the image.
     config.x.ffprobe = ENV.fetch("FFPROBE", "ffprobe")
+
+    # Last.fm, if somebody wants their listening to leave the house. Without
+    # these there is no Last.fm in the app at all: no menu item, no scrobbles.
+    # They come from an API account at last.fm/api/account/create.
+    config.x.lastfm_api_key = ENV["LASTFM_API_KEY"]
+    config.x.lastfm_api_secret = ENV["LASTFM_API_SECRET"]
   end
 end
