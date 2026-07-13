@@ -134,10 +134,6 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
     assert_selector PRESET, exact_text: was
   end
 
-  # The one that matters. A visualizer has to listen to the music to draw it, and
-  # the way it listens is by putting itself in the middle of the audio — between
-  # the file and the speakers. Done wrong, the picture comes up beautifully and
-  # the house goes silent.
   test "putting the picture up does not take the music away" do
     play "Desencuentro"
 
@@ -145,6 +141,28 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
     assert_selector "#visualizer-panel canvas"
 
     assert page.evaluate_script("!document.querySelector('audio').paused"), "the music stopped"
+  end
+
+  # The one that matters, and the one nothing else would catch.
+  #
+  # To draw the music the picture has to hear it, and the only way to hear an
+  # <audio> is to stand in the middle of it: the sound is taken off the element
+  # and handed to the graph. Which leaves the graph owing the speakers their sound
+  # back. Forget that one line and everything here still passes — the song still
+  # plays, the picture still comes up, the rail still says which preset it is —
+  # and the house is silent. No test can hear, so this one asks the browser to
+  # show its wiring instead.
+  test "the sound the picture borrows is given back to the speakers" do
+    play "Desencuentro"
+    watch_the_wiring
+
+    click_button "Visualizer"
+    assert_selector PRESET, text: /\S/
+
+    assert_includes wiring, [ "MediaElementAudioSourceNode", "AudioDestinationNode" ]
+    # And the other half of it: the picture is drawn from the song, not from nothing.
+    assert_includes wiring.map(&:first), "MediaElementAudioSourceNode"
+    assert_includes wiring.map(&:last), "AnalyserNode"
   end
 
   # Left open, it is still open next time — the way the queue and the words are.
@@ -163,6 +181,24 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
 
   # What a <canvas> measures when nobody has ever told it otherwise.
   BARE_CANVAS = [ 300, 150 ].freeze
+
+  # Every wire the page is about to run, taken down as it is run. Web Audio will
+  # not say afterwards what is plugged into what, so it is asked on the way past.
+  # Set before the rail is ever opened — the graph is built the first time it is.
+  def watch_the_wiring
+    page.execute_script(<<~JS)
+      window.wiring = []
+      const connect = AudioNode.prototype.connect
+      AudioNode.prototype.connect = function (to, ...rest) {
+        window.wiring.push([ this.constructor.name, to?.constructor?.name ?? String(to) ])
+        return connect.call(this, to, ...rest)
+      }
+    JS
+  end
+
+  def wiring
+    eventually { page.evaluate_script("window.wiring").presence }
+  end
 
   # What Milkdrop is drawing, and what the rail actually gave it to draw on.
   def canvas_size
