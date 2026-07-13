@@ -36,20 +36,43 @@ class ConnectingSpotifyTest < ActionDispatch::IntegrationTest
   # So the word is swapped for the address it means. It has to be swapped in both
   # legs of the journey: Spotify checks the redirect again when the code is
   # exchanged, and the two must match to the character.
-  test "Spotify is never sent the word localhost, which it refuses" do
+  # Spotify allows a loopback address as a way back and refuses the word
+  # `localhost` — it is explicit about the distinction. Which means that in
+  # development this app has to be reached at 127.0.0.1, and there is nothing it
+  # can do about that.
+  #
+  # What it must not do is paper over it. Quietly sending 127.0.0.1 as the way back
+  # while the listener stands on localhost splits the journey across two origins,
+  # and a browser keeps a separate cookie jar for each — so they come home to a
+  # session that never heard of them, and the app says the handshake failed. Which
+  # is true, and is the least useful true thing it could have said.
+  test "a listener on localhost is told the truth rather than sent on a journey home to nowhere" do
     listening_from "localhost:3000"
 
     get connect_spotify_path
 
-    assert_match CGI.escape("http://127.0.0.1:3000/spotify/callback"), response.location
-    assert_no_match(/localhost/, response.location)
+    assert_no_match "accounts.spotify.com", response.location.to_s
+    assert_match "127.0.0.1", flash[:alert]
+    assert_predicate SpotifyAccount.all, :empty?
   end
 
-  test "a listener who came in by name is still sent back to it" do
+  test "a listener on the loopback address is sent to Spotify" do
+    listening_from "127.0.0.1:3000"
+
+    get connect_spotify_path
+
+    assert_match "accounts.spotify.com", response.location
+    assert_match CGI.escape("http://127.0.0.1:3000/spotify/callback"), response.location
+  end
+
+  # Which is all a development wart. On the NAS, where this actually lives, the
+  # host is a name and Spotify is perfectly happy with it.
+  test "a listener who came in by name is sent back to that name" do
     listening_from "nas.local"
 
     get connect_spotify_path
 
+    assert_match "accounts.spotify.com", response.location
     assert_match CGI.escape("/spotify/callback"), response.location
     assert_match "nas.local", response.location
   end

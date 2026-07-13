@@ -12,6 +12,19 @@
 class SpotifyController < ApplicationController
   before_action :require_spotify
 
+  # Spotify allows a loopback address as a way back and refuses the *word*
+  # `localhost` — it is explicit about the distinction, and will not even let you
+  # register one. Which means that in development this app has to be reached at
+  # 127.0.0.1, and there is nothing it can do about that.
+  #
+  # What it must not do is paper over it. Quietly sending 127.0.0.1 as the way back
+  # while the listener stands on localhost splits the journey across two origins,
+  # and a browser keeps a separate cookie jar for each — so they come home to a
+  # session that never heard of them, and are told the handshake failed. Which is
+  # true, and is the least useful true thing the app could have said.
+  NOT_LOCALHOST = "Spotify will not send anybody back to `localhost` — only to the address it stands for. " \
+                  "Open Mediateca at http://127.0.0.1:3000 and connect from there.".freeze
+
   def show
     return redirect_to root_path unless Current.profile.spotify?
 
@@ -19,11 +32,13 @@ class SpotifyController < ApplicationController
   end
 
   def connect
+    return refuse(NOT_LOCALHOST) if on_localhost?
+
     session[:spotify_verifier] = SecureRandom.urlsafe_base64(64)
     session[:spotify_handshake] = SecureRandom.urlsafe_base64
 
     redirect_to Spotify.api.authorize_url(
-      returning_to: way_back,
+      returning_to: callback_spotify_url,
       verifier: session[:spotify_verifier],
       state: session[:spotify_handshake]
     ), allow_other_host: true
@@ -60,22 +75,13 @@ class SpotifyController < ApplicationController
   private
 
   def tokens(code, verifier)
-    given = Spotify.api.tokens_for(code:, verifier:, returning_to: way_back)
+    given = Spotify.api.tokens_for(code:, verifier:, returning_to: callback_spotify_url)
 
     Spotify.api.me(token: given.fetch(:access_token)).merge(given)
   end
 
-  # Spotify will not have the word `localhost` in a redirect, and says so by name:
-  # a loopback address is allowed and the word is not. But anybody developing this
-  # opens http://localhost:3000 without a thought, and the callback built from the
-  # host they typed is the one Spotify then refuses — with "Not matching
-  # configuration", and no hint as to which part of it was wrong.
-  #
-  # So the word is swapped for the address it means. Both legs of the journey use
-  # this one method, because Spotify checks the redirect again when the code is
-  # exchanged, and the two must match to the character.
-  def way_back
-    callback_spotify_url.sub(%r{\A(https?://)localhost\b}, '\1127.0.0.1')
+  def on_localhost?
+    request.host == "localhost"
   end
 
   def require_spotify
