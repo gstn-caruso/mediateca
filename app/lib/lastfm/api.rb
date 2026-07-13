@@ -80,7 +80,50 @@ module Lastfm
       signed_post("track.unlove", **song, sk: as)
     end
 
+    # All Last.fm will hand over in one page of a history, and it will hand over
+    # the whole history: a listener with 127,000 scrobbles is 637 pages of them.
+    PAGE = 200
+
+    # Somebody's listening, back to the day they joined. No session key: a Last.fm
+    # history is public, and this asks for it the way anybody could.
+    #
+    # The song playing *right now* is handed back in the list with no date on it.
+    # It has not happened yet, and taking it would file a play at the epoch.
+    def recent_tracks(user:, page: 1)
+      said = get("user.getRecentTracks", user:, page:, limit: PAGE).fetch("recenttracks")
+
+      {
+        pages: said.dig("@attr", "totalPages").to_i,
+        songs: Array.wrap(said["track"]).filter_map { heard(it) }
+      }
+    end
+
+    # And the hearts. Note the artist arrives under a different key here than it
+    # does in a history — `name` rather than `#text`. That is Last.fm's, not ours,
+    # and it is the sort of thing that breaks an import in silence.
+    def loved_tracks(user:, page: 1)
+      said = get("user.getLovedTracks", user:, page:, limit: PAGE).fetch("lovedtracks")
+
+      {
+        pages: said.dig("@attr", "totalPages").to_i,
+        songs: Array.wrap(said["track"]).map { { artist: it.dig("artist", "name"), track: it["name"] } }
+      }
+    end
+
     private
+
+    def heard(song)
+      at = song.dig("date", "uts")
+      return if at.blank?
+
+      { artist: song.dig("artist", "#text"), track: song["name"], at: Time.zone.at(at.to_i) }
+    end
+
+    # A read anybody could make: the API key says who is asking, and nothing else
+    # is needed. No signature, no session, no listener.
+    def get(method, **params)
+      answered(fetch(uri_for(params.merge(method:, api_key: key, format: "json"))))
+    end
 
     # artist[0], track[0], timestamp[0], artist[1]… The signature sorts these by
     # the ASCII table, which is why Signature does too.

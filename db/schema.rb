@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_13_050000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_13_060000) do
   create_table "albums", force: :cascade do |t|
     t.string "album_type"
     t.integer "artist_id", null: false
@@ -85,6 +85,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_050000) do
     t.integer "track_id", null: false
     t.datetime "updated_at", null: false
     t.index ["profile_id", "played_at"], name: "index_plays_on_profile_id_and_played_at"
+    t.index ["profile_id", "track_id", "played_at"], name: "index_plays_on_profile_id_and_track_id_and_played_at", unique: true
     t.index ["profile_id"], name: "index_plays_on_profile_id"
     t.index ["track_id"], name: "index_plays_on_track_id"
   end
@@ -98,8 +99,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_050000) do
 
   create_table "scrobblers", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.datetime "imported_at"
+    t.integer "imported_hearts", default: 0, null: false
+    t.integer "imported_plays", default: 0, null: false
     t.integer "profile_id", null: false
     t.text "session_key", null: false
+    t.integer "strangers", default: 0, null: false
     t.datetime "updated_at", null: false
     t.string "username", null: false
     t.index ["profile_id"], name: "index_scrobblers_on_profile_id", unique: true

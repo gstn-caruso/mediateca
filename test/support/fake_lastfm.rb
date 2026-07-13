@@ -6,9 +6,13 @@
 class FakeLastfm
   attr_reader :spent, :scrobbled, :announced, :loved, :unloved
 
-  # `ignoring` is what Last.fm says it did with each scrobble: 0 is "took it",
-  # and 3 is "that is too far in the past" — which it says inside a 200 OK, and
-  # which is the one that quietly eats a backfill.
+  # Last.fm hands a history over 200 at a time. Two is enough to catch an importer
+  # that reads the first page and calls it a history.
+  PAGE = 2
+
+  # `ignoring` is what Last.fm says it did with each scrobble: 0 is "took it", and
+  # 3 is "that is too far in the past" — which it says inside a 200 OK, and which
+  # is the one that quietly eats a backfill.
   def initialize(configured: true, username: "gaston", session_key: "s3ss10nk3y", ignoring: 0)
     @configured = configured
     @username = username
@@ -19,6 +23,15 @@ class FakeLastfm
     @announced = []
     @loved = []
     @unloved = []
+    @history = []
+    @hearts = []
+  end
+
+  # What Last.fm has been keeping for this listener, for the tests that import it.
+  def keeping(history: [], hearts: [])
+    @history = history
+    @hearts = hearts
+    self
   end
 
   def configured?
@@ -29,8 +42,8 @@ class FakeLastfm
     "https://www.last.fm/api/auth/?#{URI.encode_www_form(api_key: "fake", cb: returning_to)}"
   end
 
-  # A token is good for one hour and one use. Ours is good unless the test says
-  # it is a token Last.fm will not take.
+  # A token is good for one hour and one use. Ours is good unless the test says it
+  # is a token Last.fm will not take.
   def session_for(token)
     @spent << token
     raise Lastfm::Api::Refused, "Last.fm: Invalid authentication token (4)" if token == "no"
@@ -54,6 +67,14 @@ class FakeLastfm
 
   def unlove(song, as:)
     @unloved << song
+  end
+
+  def recent_tracks(user:, page: 1)
+    paged(@history, page)
+  end
+
+  def loved_tracks(user:, page: 1)
+    paged(@hearts, page)
   end
 
   # The line is down: the NAS lost its uplink, or Last.fm did. Worth trying again.
@@ -84,5 +105,11 @@ class FakeLastfm
     def scrobble(*, **)
       raise Lastfm::Api::Revoked, "Last.fm: Invalid session key - Please re-authenticate (9)"
     end
+  end
+
+  private
+
+  def paged(all, page)
+    { pages: [ (all.size / PAGE.to_f).ceil, 1 ].max, songs: all[(page - 1) * PAGE, PAGE].to_a }
   end
 end

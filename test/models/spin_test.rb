@@ -84,10 +84,77 @@ class SpinTest < ActiveSupport::TestCase
     assert_equal 0, Profile.create!(name: "Ana").spins_of(@mundo)
   end
 
+  # A turn of the record is about the order the songs were *heard*, not the order
+  # somebody got around to writing them down. Importing a decade of listening from
+  # Last.fm writes down old plays today: they land with the newest row numbers in
+  # the table and the oldest hours on the clock. A rule that read the row numbers
+  # would think the record was interrupted by music you heard years afterwards.
+  # A turn of the record is about the order the songs were *heard*, and an import
+  # files a decade of listening today: old plays land with the newest row numbers
+  # in the table and the oldest hours on the clock. Worse, they land out of order
+  # among themselves — so nothing can be judged as it arrives, because the song
+  # that interrupts a record may not be filed until after the record is.
+  #
+  # So after an import the turns are counted again, from the top, by the clock.
+  # Here that changes the answer: filed, the record's three songs sit in a row and
+  # the other record comes after them. Heard, the other record cut right through
+  # the middle.
+  test "a record cut through by another is not spun, however it was filed" do
+    listen_to_out_of_order(@one => 4.hours.ago, @two => 3.hours.ago,
+                           @three => 1.hour.ago, @other => 2.hours.ago)
+
+    recount
+
+    assert_equal 0, @gaston.spins_of(@mundo)
+  end
+
+  # And the other way. Filed, the other record lands in the middle of ours. Heard,
+  # it came along after the whole thing had played through — so it is a turn, and
+  # counting rows would have missed it.
+  test "a record heard end to end is spun, however out of order it was filed" do
+    listen_to_out_of_order(@one => 4.hours.ago, @other => 1.hour.ago,
+                           @two => 3.hours.ago, @three => 2.hours.ago)
+
+    recount
+
+    assert_equal 1, @gaston.spins_of(@mundo)
+  end
+
+  test "counting again from the top agrees with counting as you go" do
+    listen_to @one, @two, @three, @one, @two, @three, @other, @one
+
+    assert_equal 2, @gaston.spins_of(@mundo)
+    recount
+    assert_equal 2, @gaston.spins_of(@mundo)
+  end
+
+  # The live rule has to survive an import too. These three songs were heard just
+  # now, one after another, with nothing in between — but the import filed a play
+  # from two years ago in the middle of them, and it has the highest row number in
+  # the table. It interrupted nothing: it was heard in 2024.
+  test "a record you are playing now is not interrupted by a decade filed this morning" do
+    @gaston.played(@one, at: 3.minutes.ago)
+    @gaston.played(@two, at: 2.minutes.ago)
+    @gaston.played(@other, at: 2.years.ago)
+
+    @gaston.played(@three, at: 1.minute.ago)
+
+    assert_equal 1, @gaston.spins_of(@mundo)
+  end
+
   private
 
   def listen_to(*tracks)
     tracks.each { @gaston.played(it) }
+  end
+
+  # Written down in one order, heard in another — which is what an import is.
+  def listen_to_out_of_order(when_heard)
+    when_heard.each { |track, at| @gaston.played(track, at:) }
+  end
+
+  def recount
+    Spins.new(@gaston).recount
   end
 
   def track_of(album, number)

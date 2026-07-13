@@ -88,6 +88,27 @@ class CatchingUpOnLastfmTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
+  # The other direction, and the one that actually works: the years Last.fm kept
+  # before this library existed.
+  test "asking Last.fm for the history it kept sets something long-running going" do
+    connect
+
+    assert_enqueued_with job: ImportFromLastfmJob do
+      post import_scrobbler_path
+    end
+
+    assert_redirected_to scrobbler_path
+    assert_match(/Bringing your Last.fm home/i, flash[:notice])
+  end
+
+  test "a listener with no Last.fm has nothing to bring home" do
+    assert_no_enqueued_jobs only: ImportFromLastfmJob do
+      post import_scrobbler_path
+    end
+
+    assert_redirected_to root_path
+  end
+
   private
 
   def connect

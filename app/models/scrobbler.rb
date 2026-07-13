@@ -28,6 +28,14 @@ class Scrobbler < ApplicationRecord
     "https://www.last.fm/user/#{CGI.escape(username)}"
   end
 
+  def imported?
+    imported_at.present?
+  end
+
+  def imported(plays:, hearts:, strangers:)
+    update!(imported_at: Time.current, imported_plays: plays, imported_hearts: hearts, strangers:)
+  end
+
   # Queued, not sent: the sending is somebody else's afternoon, and a listener
   # pressing play should never wait on a website.
   def scrobble(play)

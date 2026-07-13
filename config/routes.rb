@@ -24,6 +24,10 @@ Rails.application.routes.draw do
   resource :scrobbler, only: [ :show, :destroy ] do
     get :connect
     get :callback
+
+    # The other direction, and the one that actually works: the years of listening
+    # Last.fm has been keeping since before this library existed.
+    post :import
   end
 
   resources :playlists, only: [ :show, :create, :update, :destroy ] do

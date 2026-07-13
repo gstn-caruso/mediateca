@@ -34,6 +34,18 @@ class ScrobblersController < ApplicationController
     refuse("Last.fm would not connect: #{e.message}")
   end
 
+  # Slow, and said so plainly. Last.fm hands a history over two hundred at a time
+  # and suspends accounts that ask several times a second, so it is asked once a
+  # second — and a long history is a long wait that nobody has to sit through.
+  def import
+    return redirect_to root_path unless Current.profile.scrobbles?
+
+    ImportFromLastfmJob.perform_later(Current.profile)
+
+    redirect_to scrobbler_path,
+                notice: "Bringing your Last.fm home. It is asked for politely, one page a second, so a long history takes a while — you can close this."
+  end
+
   def destroy
     Current.profile.stops_scrobbling
 

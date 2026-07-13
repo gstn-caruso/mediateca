@@ -191,20 +191,27 @@ class Profile < ApplicationRecord
   # A turn of the record is uninterrupted, so the run begins after the last thing
   # that broke it: something else put on, or the turn this record already made —
   # whose songs are finished business, and whose successor starts from there.
+  #
+  # Measured by when the music was *heard*, never by the order the rows were
+  # written. Importing a history from Last.fm files old plays today: they get the
+  # newest row numbers in the table and the oldest hours on the clock, and a rule
+  # that counted rows would think a record had been interrupted by music heard
+  # years after it.
   def heard_since_the_run_began(album)
-    began = [ last_put_on_something_else(album), last_turn_of(album) ].compact.max || 0
+    began = [ last_put_on_something_else(album), last_turn_of(album) ].compact.max
 
-    plays.joins(:track)
-         .where(tracks: { album_id: album.id }, plays: { id: began.succ.. })
-         .distinct.pluck(:track_id).to_set
+    heard = plays.joins(:track).where(tracks: { album_id: album.id })
+    heard = heard.where(plays: { played_at: began.. }).where.not(plays: { played_at: began }) if began
+
+    heard.distinct.pluck(:track_id).to_set
   end
 
   def last_put_on_something_else(album)
-    plays.joins(:track).where.not(tracks: { album_id: album.id }).maximum(:id)
+    plays.joins(:track).where.not(tracks: { album_id: album.id }).maximum(:played_at)
   end
 
   def last_turn_of(album)
-    spins.where(album:).maximum(:play_id)
+    spins.where(album:).joins(:play).maximum("plays.played_at")
   end
 
   # A page full of songs asks about every one of them, and asking the database
