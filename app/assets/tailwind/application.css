@@ -225,6 +225,61 @@
     color-mix(in oklab, var(--color-accent) 24%, transparent), transparent 70%);
 }
 
+/* The player floats free of the layout, and now it floats where it is put: it is
+   picked up by anything on it that is not a control (pill#grab) and carried, and
+   where a hand leaves it is where it stays.
+
+   Where that is rides in two custom properties rather than in inline left/top,
+   for the same reason the lit pill under the library's tabs rides in --tab: the
+   layout has already said where the player rests, in its own classes, and a hand
+   that has never touched it must not be able to tell that any of this is here.
+   Untouched, the player wears none of these classes and nothing below applies. */
+#player {
+  cursor: grab;
+  /* The hand that drags the player would otherwise be scrolling something. */
+  touch-action: none;
+}
+
+/* The transport is pressed, not carried. It has to go on saying so: `cursor` is
+   inherited, and a Play button under a grabbing hand is a Play button nobody is
+   sure they can press. */
+#player button {
+  cursor: auto;
+}
+
+#player.is-dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
+/* `translate`, and not `transform`: the resting player is centred by a left of 50%
+   pulled back by half its own width, and Tailwind writes that pull to the
+   standalone translate property. A player placed by a hand is placed where the
+   hand left it, so the pull has to go — and `transform: none` does not touch it. */
+#player.is-floating {
+  left: var(--x);
+  top: var(--y);
+  bottom: auto;
+  translate: none;
+}
+
+/* Pushed into the floor, the pill gives way: it stops being a thing floating
+   over the room and becomes the foot of the room — the whole width of the row,
+   standing on the bottom edge, its contents spread out along it.
+
+   It keeps the corners on its head and loses the ones on its feet, because they
+   are no longer corners: they are where the app ends. A bar that kept all four
+   reads as a pane somebody dropped there rather than as the edge itself. */
+#player.is-docked {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: auto;
+  width: auto;
+  translate: none;
+  border-radius: 1rem 1rem 0 0;
+}
+
 /* The mini-player is the one pane that floats free of the layout, so it earns
    the full glass read: a diagonal gloss raked across it and screened over the
    pane, the way light catches the near edge of a lens. */

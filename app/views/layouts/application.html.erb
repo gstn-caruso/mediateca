@@ -114,9 +114,20 @@
         </div>
 
         <%# The player floats free of the edges: a centred pill, a touch up from
-            the bottom, over the cover the way Apple Music's mini-player sits. %>
+            the bottom, over the cover the way Apple Music's mini-player sits.
+
+            How wide it is belongs here, to the box that is placed, and not to
+            what is inside it — the contents simply fill whatever room they are
+            given. %>
+        <%# And it is not nailed there: it can be picked up by anything on it that
+            is not a control and put down anywhere in the room — and pushed into
+            the floor it gives way to a bar across the foot of it. %>
         <div id="player" data-turbo-permanent
-             class="absolute bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-2xl glass">
+             data-controller="pill"
+             data-action="pointerdown->pill#grab pointermove->pill#drag
+                          pointerup->pill#drop pointercancel->pill#drop
+                          resize@window->pill#settle"
+             class="absolute bottom-6 left-1/2 z-40 w-[21rem] -translate-x-1/2 rounded-2xl glass sm:w-[26rem]">
           <%= render "shared/player" %>
         </div>
       </div>

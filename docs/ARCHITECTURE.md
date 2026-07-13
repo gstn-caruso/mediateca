@@ -100,6 +100,28 @@ The play history is written by the player when a track starts, not by the stream
 endpoint: `preload=metadata` asks for the file before anybody presses play, and
 every seek asks for it again.
 
+## The player goes where it is put
+
+Being permanent also means it can be *moved*. `pill` picks the player up by
+anything on it that is not a control — the transport is pressed and the scrubber
+is dragged for a living, so neither is a handle — and puts it down wherever the
+hand lets go, held inside the room, because a player dragged over the edge is
+gone for good: there is no scrolling to it, and it is the only transport there
+is.
+
+Pushed into the floor, it stops being a pill and becomes the bar across the foot
+of the room, the whole width of the row. What decides that is **the pointer, not
+the player**: the pill already rests a touch above the bottom, so a player that
+docked when its own foot reached the floor would dock on a nudge. The room holds
+it back at the floor, the hand goes on pushing past where it can follow, and that
+push is the ask — a window thrown at the edge of a screen.
+
+Where it was left is written to `localStorage`, for the same reason the queue is:
+the element rides through a Turbo visit on its own, but a cold load builds it
+again out of HTML the server wrote knowing nothing about anybody's hand. And, as
+with the queue, the controller is asked nothing — the element carries its own
+state, in two classes and two custom properties, and the CSS does the placing.
+
 ## Nothing that isn't navigation navigates
 
 A heart, and a song added to a playlist, answer with a Turbo Stream and change in
