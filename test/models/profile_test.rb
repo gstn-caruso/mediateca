@@ -23,4 +23,76 @@ class ProfileTest < ActiveSupport::TestCase
 
     assert_equal [ "Zoe", "Ana", "Beto" ], Profile.ordered.map(&:name)
   end
+
+  # Where a listener stands on an artist. Most artists get no say at all, and
+  # that silence is the ordinary case — a row exists only where somebody
+  # bothered to have an opinion.
+  test "an artist nobody has an opinion about is neither hidden nor highlighted" do
+    refute gaston.hides?(piazzolla)
+    refute gaston.highlights?(piazzolla)
+  end
+
+  test "an artist can be hidden, and shown again" do
+    gaston.hide(piazzolla)
+    assert gaston.hides?(piazzolla)
+
+    gaston.unhide(piazzolla)
+    refute gaston.hides?(piazzolla)
+  end
+
+  test "an artist can be highlighted, and let go again" do
+    gaston.highlight(piazzolla)
+    assert gaston.highlights?(piazzolla)
+
+    gaston.unhighlight(piazzolla)
+    refute gaston.highlights?(piazzolla)
+  end
+
+  # The two are opposites, not a pair of switches: to hide somebody you were
+  # pushing forward is to stop pushing them forward.
+  test "hiding an artist takes back the highlight" do
+    gaston.highlight(piazzolla)
+
+    gaston.hide(piazzolla)
+
+    assert gaston.hides?(piazzolla)
+    refute gaston.highlights?(piazzolla)
+  end
+
+  test "highlighting an artist brings it out of hiding" do
+    gaston.hide(piazzolla)
+
+    gaston.highlight(piazzolla)
+
+    assert gaston.highlights?(piazzolla)
+    refute gaston.hides?(piazzolla)
+  end
+
+  # Pressed twice — a double click, or the phone and the tablet at once — both
+  # presses find nothing and both insert. The unique index is what says no, the
+  # way it does for a heart.
+  test "hiding an artist twice hides it once" do
+    gaston.hide(piazzolla)
+    gaston.hide(piazzolla)
+
+    assert_equal 1, gaston.standings.count
+  end
+
+  # This is the whole point of it being per listener: the house does not agree
+  # about music, and nobody has to.
+  test "one listener hiding an artist does not hide it for anybody else" do
+    gaston.hide(piazzolla)
+
+    refute Profile.create!(name: "Ana").hides?(piazzolla)
+  end
+
+  private
+
+  def gaston
+    @gaston ||= Profile.create!(name: "Gastón")
+  end
+
+  def piazzolla
+    @piazzolla ||= Artist.create!(name: "Astor Piazzolla")
+  end
 end

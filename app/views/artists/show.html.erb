@@ -10,10 +10,26 @@
       <p class="text-sm font-semibold text-white">Artist</p>
       <h1 class="mt-2 text-4xl font-bold tracking-tight text-white sm:text-7xl"><%= @artist.name %></h1>
       <p class="mt-4 text-sm text-neutral-300"><%= pluralize(@albums.size, "album") %></p>
+
+      <%# The menu offers the opposite of what is true; this is where what is true
+          gets said. It is the one page a hidden artist still has — the rail no
+          longer leads here, and search and this line are the way back. %>
+      <% if Current.profile.hides?(@artist) %>
+        <p class="mt-2 text-xs font-semibold text-neutral-400">
+          Hidden from your library. Nothing will offer them, and search will still find them.
+        </p>
+      <% elsif Current.profile.highlights?(@artist) %>
+        <p class="mt-2 text-xs font-semibold text-accent">Highlighted — they turn up in what's next more often.</p>
+      <% end %>
+
       <% if @artist.portrait_credit.present? %>
         <%# The licence asks for the photographer's name, so it is here. %>
         <p class="mt-2 text-xs text-neutral-500"><%= @artist.portrait_credit %></p>
       <% end %>
+    </div>
+
+    <div class="sm:ml-auto sm:pb-2">
+      <%= render "shared/standing", artist: @artist %>
     </div>
   </div>
 </header>

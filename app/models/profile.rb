@@ -4,6 +4,7 @@ class Profile < ApplicationRecord
   has_many :playlists, dependent: :destroy
   has_many :likes, dependent: :destroy
   has_many :plays, dependent: :destroy
+  has_many :standings, dependent: :destroy
 
   normalizes :name, with: ->(name) { name.strip }
 
@@ -32,25 +33,83 @@ class Profile < ApplicationRecord
   end
 
   # Newest first: the song you just hearted is the one you came looking for.
+  # Minus whoever you have hidden — the heart is still on the song, and comes
+  # back with them.
   def liked_tracks
-    Track.joins(:likes).where(likes: { profile_id: id }).includes(album: :artist).order("likes.id DESC")
+    Track.joins(:likes).where(likes: { profile_id: id })
+         .visible_to(self)
+         .includes(album: :artist).order("likes.id DESC")
   end
 
   # For the row that leads to them, which says how many there are rather than
-  # what kind of thing it is. Counted off the hearts already in hand, so a page
-  # that renders hearts pays nothing for the number.
+  # what kind of thing it is. It has to count the same songs the page lists, or
+  # the rail promises a number the list does not keep — so it counts them, and
+  # a hearted song by a hidden artist is not one of them.
   def liked_songs_count
-    hearts.count { |type, _id| type == "Track" }
+    liked_tracks.count
+  end
+
+  # An artist you would rather not be shown. It is not a deletion: the records
+  # are still on the disk and still in the catalog, and searching the name by
+  # hand still finds them. It only means the library stops putting them in front
+  # of you, and nothing ever offers them unasked.
+  def hide(artist)
+    stand(artist, as: :hidden)
+  end
+
+  def unhide(artist)
+    drop(artist, if_it_is: :hidden)
+  end
+
+  # The opposite, and the reason the two share a row: an artist worth hearing
+  # more of, whatever else is playing.
+  def highlight(artist)
+    stand(artist, as: :highlighted)
+  end
+
+  def unhighlight(artist)
+    drop(artist, if_it_is: :highlighted)
+  end
+
+  def hides?(artist)
+    hidden_artist_ids.include?(artist.id)
+  end
+
+  def highlights?(artist)
+    highlighted_artist_ids.include?(artist.id)
+  end
+
+  def hidden_artist_ids
+    @hidden_artist_ids ||= artist_ids_standing("hidden")
+  end
+
+  def highlighted_artist_ids
+    @highlighted_artist_ids ||= artist_ids_standing("highlighted")
   end
 
   def played(track)
     plays.create!(track:)
   end
 
+  # Reloading is going back to the database to ask again, so what was remembered
+  # from the last time has to go with it. Without this a reloaded profile answers
+  # about hearts and standings out of a memory the reload was meant to throw
+  # away — which never bites a request, since Current.profile lives and dies
+  # inside one, and bites every test that reloads.
+  def reload(...)
+    forget_hearts
+    forget_standings
+    super
+  end
+
   # Albums, not songs: four songs off one record are one record. Ordered by the
   # last play's id, which is monotonic where two timestamps could tie.
+  #
+  # A hidden artist is dropped in the *query*, not after it: dropped afterwards,
+  # a shelf of eight would come back with seven and no eighth to take the place.
   def recently_played_albums(limit: 8)
-    ids = plays.joins(:track)
+    ids = plays.joins(track: :album)
+               .where.not(albums: { artist_id: hidden_artist_ids })
                .group("tracks.album_id")
                .order(Arel.sql("MAX(plays.id) DESC"))
                .limit(limit)
@@ -72,5 +131,38 @@ class Profile < ApplicationRecord
 
   def forget_hearts
     @hearts = nil
+  end
+
+  # Pressed twice, both presses find nothing and both insert; and pressing hide
+  # on somebody already highlighted has to *replace* the standing, not add a
+  # second one. create_or_find_by lets the unique index settle the first, and
+  # the update settles the second.
+  def stand(artist, as:)
+    standings.create_or_find_by!(artist:) { it.standing = as }.tap do |standing|
+      standing.update!(standing: as)
+      forget_standings
+    end
+  end
+
+  # Undoing one standing is not undoing the other: unhiding an artist you have
+  # since highlighted would quietly take the highlight away.
+  def drop(artist, if_it_is:)
+    standings.where(artist:, standing: if_it_is).destroy_all
+    forget_standings
+  end
+
+  # The same bargain the hearts strike: a page full of artists asks about every
+  # one of them, and a listener's standings are a handful of rows. They come
+  # back once, and the page reads them off memory.
+  def artist_ids_standing(standing)
+    standings_taken.filter_map { |artist_id, taken| artist_id if taken == standing }
+  end
+
+  def standings_taken
+    @standings_taken ||= standings.pluck(:artist_id, :standing)
+  end
+
+  def forget_standings
+    @standings_taken = @hidden_artist_ids = @highlighted_artist_ids = nil
   end
 end

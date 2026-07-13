@@ -79,7 +79,9 @@
             </span>
             <span class="min-w-0">
               <span class="block truncate text-sm font-medium text-neutral-100"><%= playlist.name %></span>
-              <span class="block truncate text-xs text-neutral-400"><%= pluralize(playlist.entries.size, "song") %></span>
+              <span class="block truncate text-xs text-neutral-400">
+                <%= pluralize(playlist_song_counts.fetch(playlist.id, 0), "song") %>
+              </span>
             </span>
           <% end %>
         <% end %>

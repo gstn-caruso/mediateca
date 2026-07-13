@@ -56,6 +56,12 @@ anybody. See [SECURITY.md](SECURITY.md).
   history.
 - **Playlists, likes, play history**, and a "recently played" shelf that fills
   itself.
+- **Hide an artist, or highlight one** — and it is yours, not the house's. A
+  hidden artist leaves your library and is never offered again; they are not
+  deleted, and searching the name by hand still finds them. A highlighted one
+  gets the opposite: a couple of the "what's next" slots are theirs whatever
+  else is playing, filled with the songs of theirs you actually go back to, and
+  they come up heavier when the library is drawn from.
 - **The music doesn't stop when you navigate.** The player lives outside the page
   Turbo replaces.
 - **Your media keys work.** The OS is told what's playing, so the lock screen and

@@ -19,6 +19,9 @@ Rails.application.routes.draw do
 
   resources :artists, only: [ :index, :show ] do
     resource :portrait, only: [ :show ]
+    # Where the listener stands on them: out of sight, or out in front. Singular,
+    # because nobody holds two opinions of the same artist at once.
+    resource :standing, only: [ :create, :destroy ]
   end
 
   resources :albums, only: [ :show ] do

@@ -10,6 +10,17 @@ class Playlist < ApplicationRecord
 
   scope :ordered, -> { order(:name) }
 
+  # What the list looks like to whoever is reading it: the songs of a hidden
+  # artist are not drawn. They are not thrown away, though — hiding is not
+  # deleting, and somebody who changes their mind wants the list they made back,
+  # not a list with a hole in it. So the entry stays, and unhiding restores it.
+  #
+  # Sifted in Ruby, off the entries already in hand, so a list costs no more to
+  # draw than it did.
+  def entries_visible_to(profile)
+    entries.reject { |entry| profile.hidden_artist_ids.include?(entry.track.album.artist_id) }
+  end
+
   # A playlist is a list, not a set: the same song may appear twice.
   #
   # But two songs may not appear in the same place, and reading the last position
