@@ -1,3 +1,78 @@
-<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="256" cy="256" r="256" fill="red"/>
+<!--
+  The icon is the app in one shape: a record, lit from the upper left, standing
+  on the same black-with-a-red-corner floor the app itself stands on. The colour
+  is Apple Music's red-pink — Mediateca's standing accent — and the hole is a 7"
+  single's, wide, because a spindle hole disappears at the size a Dock draws it.
+
+  The disc is 392px across on a 512 canvas, which keeps it inside the circle of
+  80% diameter a maskable icon has to hold its content within. So one drawing
+  survives every cut: a circle on Android, a squircle in the macOS Dock, or no
+  mask at all in a browser tab. That is why there is one file here, not three.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- The floor: black, with the accent lighting one corner and a far violet
+         answering it from the other. bg-ambient, drawn as an icon. -->
+    <radialGradient id="ambient-accent" cx="14%" cy="2%" r="78%">
+      <stop offset="0" stop-color="#3a0f1a"/>
+      <stop offset="60%" stop-color="#0b0b0c" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ambient-violet" cx="104%" cy="8%" r="62%">
+      <stop offset="0" stop-color="#7c3aed" stop-opacity="0.20"/>
+      <stop offset="70%" stop-color="#7c3aed" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- The record, lit from the upper left: the bright tint where the light
+         lands, the standing accent across the face, a deeper red as it falls. -->
+    <linearGradient id="record" x1="16%" y1="6%" x2="84%" y2="94%">
+      <stop offset="0" stop-color="#ff5468"/>
+      <stop offset="46%" stop-color="#fa2d48"/>
+      <stop offset="100%" stop-color="#b81733"/>
+    </linearGradient>
+
+    <!-- The sheen the glass everywhere else in the app has: a soft wash from the
+         light, and a hard specular rim on the arc that faces it. -->
+    <radialGradient id="gloss" cx="30%" cy="20%" r="72%">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.30"/>
+      <stop offset="55%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <!-- The rim runs from where the arc starts to where it ends — the other
+         diagonal — so it dies out at both ends instead of being cut off at its
+         brightest. -->
+    <linearGradient id="rim" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- The record's own light, thrown back onto the floor around it. -->
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="26"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" fill="#000000"/>
+  <rect width="512" height="512" fill="url(#ambient-accent)"/>
+  <rect width="512" height="512" fill="url(#ambient-violet)"/>
+
+  <circle cx="256" cy="256" r="196" fill="#fa2d48" fill-opacity="0.45" filter="url(#glow)"/>
+  <circle cx="256" cy="256" r="196" fill="url(#record)"/>
+
+  <!-- Grooves. Black, and barely there: at 32px they are a texture, not lines. -->
+  <g fill="none" stroke="#000000" stroke-opacity="0.13" stroke-width="2">
+    <circle cx="256" cy="256" r="178"/>
+    <circle cx="256" cy="256" r="163"/>
+    <circle cx="256" cy="256" r="148"/>
+    <circle cx="256" cy="256" r="133"/>
+    <circle cx="256" cy="256" r="118"/>
+    <circle cx="256" cy="256" r="103"/>
+  </g>
+
+  <circle cx="256" cy="256" r="196" fill="url(#gloss)"/>
+  <path d="M 256 60 A 196 196 0 0 0 60 256" fill="none" stroke="url(#rim)" stroke-width="3"/>
+
+  <!-- The label, and the hole punched through it to the floor below. -->
+  <circle cx="256" cy="256" r="74" fill="#000000" fill-opacity="0.14"/>
+  <circle cx="256" cy="256" r="46" fill="#000000"/>
+  <circle cx="256" cy="256" r="46" fill="none" stroke="#ffffff" stroke-opacity="0.10" stroke-width="2"/>
 </svg>

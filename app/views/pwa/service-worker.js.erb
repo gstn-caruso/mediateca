@@ -1,0 +1,50 @@
+// Mediateca in the Dock is a window with no address bar and no reload button.
+// This worker is what stands between that window and a server gone quiet —
+// which, in a house, is a thing that happens: the NAS reboots, somebody pulls
+// the switch out to plug a lamp in, the laptop is carried out of range.
+//
+// It does not try to make the app work offline, and it should not. The music is
+// on the far side of the network that just went away, and a library with no
+// songs in it is not worth pretending to. What it does is *say so* — in the
+// app's voice, on the app's black, with a button that tries again — rather than
+// leave the window on the browser's error page, which inside a Dock app reads as
+// though the app itself is what broke.
+
+const BUILD = "<%= Rails.configuration.x.build %>"
+const CACHE = `mediateca-${BUILD}`
+const OFFLINE = "/offline.html"
+
+// The one page that has to be there when nothing else is. Fetched past the HTTP
+// cache, so the worker a new build installs doesn't hold on to the old page.
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE)
+      .then((cache) => cache.add(new Request(OFFLINE, { cache: "reload" })))
+      .then(() => self.skipWaiting())
+  )
+})
+
+// A deploy leaves the build before it behind. Take the open windows over, and
+// throw away every cache that isn't this build's.
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys()
+      .then((names) => Promise.all(
+        names.filter((name) => name !== CACHE).map((name) => caches.delete(name))
+      ))
+      .then(() => self.clients.claim())
+  )
+})
+
+// Navigations only, and only to answer for a server that didn't. Everything else
+// is left strictly alone — above all the FLAC, which the player asks for one byte
+// range at a time so that seeking into a 34 MB file doesn't download 34 MB. A
+// worker that answered a range request with a whole file, or with a cached one,
+// would break seeking in a way that is very hard to see and very easy to ship.
+self.addEventListener("fetch", (event) => {
+  if (event.request.mode !== "navigate") return
+
+  event.respondWith(
+    fetch(event.request).catch(() => caches.match(OFFLINE))
+  )
+})
