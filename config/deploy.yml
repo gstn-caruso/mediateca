@@ -129,8 +129,18 @@ env:
 <% end %>
     # Single process: there is no concurrency here worth spreading over more.
     SOLID_QUEUE_IN_PUMA: true
+
+    # Spotify's client id, so a listener can bring home the songs they hearted
+    # there and the lists they made. It sits in the clear on purpose: the sign-in
+    # is PKCE, whose whole point is that a public client has no secret to keep —
+    # and this one is handed to every browser that starts the journey anyway.
+    SPOTIFY_CLIENT_ID: <%= ENV["SPOTIFY_CLIENT_ID"] %>
   secret:
     - RAILS_MASTER_KEY
+    # Last.fm. Without these there is no Last.fm in the app at all: no menu item,
+    # no scrobbles, no import.
+    - LASTFM_API_KEY
+    - LASTFM_API_SECRET
 
 # The music is mounted read-only, and under the SAME path as on the host, so a
 # path stored in the catalog means the same thing inside and outside the
