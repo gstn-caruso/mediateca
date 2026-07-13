@@ -93,22 +93,54 @@ class SingingAlongTest < ApplicationSystemTestCase
     assert_selector "#{LINES}[aria-current='true']", text: "La tercera línea"
   end
 
-  # 126 of the 1590 songs on the disk have no .lrc beside them. The rail says so
-  # rather than standing empty and looking broken.
-  test "a song nobody wrote the words for says so" do
+  # 126 of the 1590 songs on the disk have no .lrc beside them. The microphone
+  # opens the words, so on one of those there is nothing for it to open, and it
+  # goes dead rather than opening onto a rail with nothing in it.
+  test "a song nobody wrote the words for leaves the microphone dead" do
     play "El Pibe Tigre"
 
-    click_button "Lyrics"
-
-    within("[data-player-target='lyrics']") { assert_text "No lyrics for this song" }
+    assert_button "Lyrics", disabled: true
   end
 
-  test "with nothing playing there is nothing to sing" do
+  test "a song somebody did write them for leaves the microphone alive" do
+    play "Desencuentro"
+
+    assert_button "Lyrics", disabled: false
+  end
+
+  # No song is no words either.
+  test "with nothing playing there is nothing to open" do
     visit root_path
 
-    click_button "Lyrics"
+    assert_button "Lyrics", disabled: true
+  end
 
+  # The rail was opened on a song that had words, and the next one has none. It
+  # has nothing left to show — and the button that would shut it has just gone
+  # dead — so it shuts itself.
+  test "a song with no words shuts the rail behind it" do
+    play "Desencuentro"
+    click_button "Lyrics"
+    assert_selector "#lyrics-panel"
+
+    find("button[data-player-track]", text: "El Pibe Tigre").click
+
+    assert_no_selector "#lyrics-panel"
+    assert_button "Lyrics", disabled: true
+  end
+
+  # An empty queue is not a song without words. The rail was left open, and it
+  # stays open and says why it is empty: shutting it here would throw away the
+  # choice to have it open at all, on nothing more than having pressed nothing yet.
+  test "a rail left open with nothing playing says so and stays open" do
+    visit root_path
+    page.execute_script("window.localStorage.setItem('mediateca:lyrics', 'open')")
+
+    visit root_path
+
+    assert_selector "#lyrics-panel"
     within("[data-player-target='lyrics']") { assert_text "Nothing playing" }
+    assert_button "Lyrics", disabled: true
   end
 
   private

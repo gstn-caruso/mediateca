@@ -36,10 +36,16 @@
   <% end %>
 
   <%# Opens the words, beside the queue and before it: a microphone, because what
-      it opens is a karaoke — the line being sung lights up as the song runs. %>
+      it opens is a karaoke — the line being sung lights up as the song runs.
+
+      A song nobody wrote the words for has nothing for it to open, and then it
+      goes dead rather than opening onto an empty rail. The player says when: it
+      is the one that knows what is playing. %>
   <button type="button" data-action="player#toggleLyrics" data-player-target="lyricsToggle"
           aria-label="Lyrics" aria-expanded="false"
-          class="shrink-0 rounded-full bg-white/10 p-2.5 text-neutral-300 transition hover:bg-white/15 hover:text-white active:scale-90 aria-expanded:text-accent">
+          class="shrink-0 rounded-full bg-white/10 p-2.5 text-neutral-300 transition hover:bg-white/15 hover:text-white active:scale-90
+                 aria-expanded:text-accent
+                 disabled:cursor-default disabled:text-neutral-700 disabled:hover:bg-white/10 disabled:hover:text-neutral-700 disabled:active:scale-100">
     <svg class="size-5" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
       <path d="M8 1a2.5 2.5 0 0 1 2.5 2.5v4a2.5 2.5 0 0 1-5 0v-4A2.5 2.5 0 0 1 8 1Z"/>
       <path d="M4 6.75a.75.75 0 0 1 .75.75v.5a3.25 3.25 0 0 0 6.5 0v-.5a.75.75 0 0 1 1.5 0v.5a4.75 4.75 0 0 1-4 4.69V14h1.75a.75.75 0 0 1 0 1.5h-5a.75.75 0 0 1 0-1.5H7.25v-1.31a4.75 4.75 0 0 1-4-4.69v-.5A.75.75 0 0 1 4 6.75Z"/>

@@ -118,8 +118,11 @@ export default class extends Controller {
   // reasons: the button that opens it is rebuilt on every visit, the rail itself
   // is permanent and only lands on a full load — which is where the choice to
   // have left it open is read back off storage.
+  // A visit builds a new bar, and the microphone in it comes back alive — it is a
+  // fresh button, and the markup cannot know what is playing. It is told.
   lyricsToggleTargetConnected() {
     this.syncLyricsToggles()
+    this.renderLyricsToggle()
   }
 
   lyricsPanelTargetConnected() {
@@ -304,14 +307,24 @@ export default class extends Controller {
 
   // Open or shut, remembered, exactly as the queue is.
   toggleLyrics() {
-    const open = this.lyricsPanelTarget.classList.toggle(OPEN)
+    this.leaveLyrics(!this.lyricsOpen)
+  }
+
+  // The rail left the way it is being left, and remembered that way.
+  //
+  // Opening it is what asks for the words — of a song already asked about, that
+  // is the words already in hand, and the rail opens onto them at once. Shutting
+  // it asks for nothing: there is nothing to show, and it is showLyrics that
+  // shuts the rail in the first place.
+  leaveLyrics(open) {
+    this.lyricsPanelTarget.classList.toggle(OPEN, open)
 
     try {
       localStorage.setItem(LYRICS, open ? "open" : "shut")
     } catch { /* a private window just forgets which way it was left */ }
 
     this.syncLyricsToggles()
-    this.showLyrics()
+    if (open) this.showLyrics()
   }
 
   // Following on or off. Turning it off leaves the words standing exactly where
@@ -451,6 +464,17 @@ export default class extends Controller {
 
   get wordsFor() { return this.audioTarget.wordsFor }
   set wordsFor(trackId) { this.audioTarget.wordsFor = trackId }
+
+  // Whether the song playing has any words at all — the fact the microphone in
+  // the bar is showing. Undefined until the answer comes back.
+  get sung() { return this.audioTarget.sung }
+  set sung(has) { this.audioTarget.sung = has }
+
+  // And whether they were timed, which is what the rail can follow. Remembered
+  // beside them: the rail is opened long after the song was asked about, and the
+  // answer has to still be there to paint.
+  get synced() { return this.audioTarget.synced ?? false }
+  set synced(is) { this.audioTarget.synced = is }
 
   // Whether next has anywhere to go: another track ahead, or repeat-all to wrap
   // back to the top. Mirrors what next() actually does.
@@ -614,22 +638,30 @@ export default class extends Controller {
   // file and hands the lines over with the moment each one is sung, and the rail
   // shows what it is given.
   //
-  // They are asked for only while the rail is open. A shut rail is a rail nobody
-  // is reading, and asking the library for the words of every song that plays,
-  // forever, to show them to nobody, is a request the disk does not need.
+  // Every song that plays is asked about, open rail or shut. They used to be
+  // asked for only while the rail was open — a shut rail is a rail nobody is
+  // reading, and the words would have been fetched to be shown to nobody. But
+  // the microphone in the bar now shows whether there are any, and a shut rail
+  // does not make it disappear: somebody is reading the answer either way. What
+  // comes back is one .lrc, a couple of kilobytes, once per song.
 
   async showLyrics() {
-    if (!this.hasLyricsTarget || !this.hasAudioTarget || !this.lyricsOpen) return
+    if (!this.hasLyricsTarget || !this.hasAudioTarget) return
 
     const track = this.current
-    if (!track) return this.sayLyrics("Nothing playing")
+    if (!track) return this.nothingToSing("Nothing playing")
 
-    // Already showing this song's words. render() runs on every press, and the
-    // words do not change under a song.
-    if (this.wordsFor === track.trackId) return
+    // The words do not change under a song, and render() runs on every press, so
+    // a song is asked about once. What came back is simply shown again — which is
+    // what opening the rail on a song already asked about does, with no second
+    // trip to the disk.
+    if (this.wordsFor === track.trackId) return this.renderLyrics()
 
     this.wordsFor = track.trackId
     this.words = []
+    // Not known yet, and not knowing is not the same as knowing there are none:
+    // the microphone gets the benefit of the doubt until the answer lands.
+    this.sung = undefined
     this.sayLyrics("Looking for the words…")
 
     try {
@@ -638,28 +670,62 @@ export default class extends Controller {
       // The song moved on while we were asking, and these are the last one's words.
       if (this.wordsFor !== track.trackId) return
 
-      // 404 is the answer, not a failure: most of the record has no .lrc beside
-      // it, and a rail standing empty would read as one that had broken.
-      if (!answer.ok) return this.sayLyrics("No lyrics for this song")
+      // 404 is the answer, not a failure: most of the record has no .lrc beside it.
+      if (!answer.ok) return this.nothingToSing("No lyrics for this song")
 
       const { synced, lines } = await answer.json()
       if (this.wordsFor !== track.trackId) return
 
       this.words = lines
-      this.paintLyrics(synced)
+      this.synced = synced
+      this.sung = true
+      this.renderLyrics()
     } catch {
       // A NAS catching its breath is not a song without words, and saying it was
-      // would be a lie the listener cannot tell from the truth.
+      // would be a lie the listener cannot tell from the truth. Nothing is settled,
+      // so the microphone stays alive: pressing it goes and asks again.
       this.wordsFor = null
       this.sayLyrics("Couldn't reach the words")
     }
   }
 
-  paintLyrics(synced) {
-    this.lyricsPanelTarget.dataset.synced = String(synced)
+  // There is nothing to sing, and it is settled: no song at all, or a song nobody
+  // wrote the words for. The rail says which, and the microphone that opens the
+  // rail goes dead — there is nothing left for it to open.
+  nothingToSing(reason) {
+    this.sung = false
+    this.sayLyrics(reason)
+    this.renderLyricsToggle()
+  }
+
+  // What is shown of the words: the lines, if the rail is open to take them — and
+  // the microphone either way, because it is in the bar, and the bar is always up.
+  renderLyrics() {
+    this.renderLyricsToggle()
+
+    if (this.lyricsOpen) this.paintLyrics()
+  }
+
+  // The microphone opens the words, so it goes dead when there are none to open.
+  //
+  // And a rail left standing open when such a song comes on has nothing left to
+  // show, so it shuts itself. Only for a song with no words: an empty queue is
+  // not one, and shutting the rail on it would throw away the choice to have left
+  // it open — over nothing more than having pressed nothing yet.
+  renderLyricsToggle() {
+    if (!this.hasAudioTarget || !this.hasLyricsPanelTarget) return
+
+    const nothing = !this.current || this.sung === false
+    this.lyricsToggleTargets.forEach((toggle) => { toggle.disabled = nothing })
+
+    if (this.current && this.sung === false && this.lyricsOpen) this.leaveLyrics(false)
+  }
+
+  paintLyrics() {
+    this.lyricsPanelTarget.dataset.synced = String(this.synced)
     // A file nobody timed cannot be followed, so the button that would follow it
     // goes dead rather than lying about what it would do.
-    this.syncToggleTarget.disabled = !synced
+    this.syncToggleTarget.disabled = !this.synced
 
     this.lyricsTarget.replaceChildren(...this.words.map((line) => this.lyricLine(line)))
     this.lit = null
