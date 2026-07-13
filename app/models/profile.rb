@@ -91,6 +91,17 @@ class Profile < ApplicationRecord
     plays.create!(track:)
   end
 
+  # Reloading is going back to the database to ask again, so what was remembered
+  # from the last time has to go with it. Without this a reloaded profile answers
+  # about hearts and standings out of a memory the reload was meant to throw
+  # away — which never bites a request, since Current.profile lives and dies
+  # inside one, and bites every test that reloads.
+  def reload(...)
+    forget_hearts
+    forget_standings
+    super
+  end
+
   # Albums, not songs: four songs off one record are one record. Ordered by the
   # last play's id, which is monotonic where two timestamps could tie.
   #
