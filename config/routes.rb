@@ -31,6 +31,8 @@ Rails.application.routes.draw do
     resource :like,   only: [ :create, :destroy ]
     # What to play when this one is the last thing in the queue.
     resource :suggestions, only: [ :show ]
+    # The words, and when each one is sung.
+    resource :lyrics, only: [ :show ]
   end
 
   # Which build is answering, for a tab coming back from a deploy.

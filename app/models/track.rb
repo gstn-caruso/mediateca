@@ -25,4 +25,12 @@ class Track < ApplicationRecord
   def audio
     Music::Audio.new(codec:, bit_depth:, sample_rate:, bit_rate:, bit_rate_mode:)
   end
+
+  # The words, which live beside the song rather than in this table: an .lrc the
+  # scan never has to know about, that can be rewritten without a re-import, and
+  # that any other player on the disk can read. The track only knows to go and
+  # look where they would be.
+  def lyrics
+    Music::Lyrics.beside(path)
+  end
 end
