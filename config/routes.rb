@@ -13,6 +13,15 @@ Rails.application.routes.draw do
 
   resources :plays, only: [ :create ]
 
+  # Everything this listener ever heard, in the order they heard it — theirs and
+  # whatever Last.fm was keeping for them. The most interesting table in the
+  # database, and until now nothing ever read it back.
+  resource :history, only: [ :show ]
+
+  # And what it adds up to: who you actually listen to, over a month, a year, a
+  # life.
+  resource :statistics, only: [ :show ], path: "stats"
+
   # What is on right now. A play is written down once the song has been listened
   # to; this is told the moment it starts, because it is what puts the song on a
   # listener's Last.fm page while it is still playing.

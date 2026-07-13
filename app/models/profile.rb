@@ -183,6 +183,19 @@ class Profile < ApplicationRecord
             .sort_by { [ -it.songs, it.name ] }
   end
 
+  # Everything they ever heard, newest first — theirs and whatever Last.fm was
+  # keeping for them, the songs they own and the ones they do not.
+  #
+  # Read by the clock rather than by an offset: a life is a hundred thousand rows,
+  # and asking the database to count past ninety-nine thousand of them to show the
+  # next hundred gets slower every page. The clock is what it is ordered by anyway.
+  def history(before: Time.current, limit: 100)
+    plays.where(played_at: ...before)
+         .includes(:absence, track: { album: :artist })
+         .order(played_at: :desc, id: :desc)
+         .limit(limit)
+  end
+
   # How many times this listener has heard the whole record.
   def spins_of(album)
     spins.where(album:).count
