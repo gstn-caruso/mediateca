@@ -394,54 +394,24 @@ html[data-turbo-preview] .animate-enter {
   animation: none;
 }
 
-/* The queue rail. Shut, it is not there at all.
+/* The three rails that are summoned: the queue, the words and the picture. Shut,
+   a rail is not there at all.
 
    Open on a desktop it stands beside the content and the content makes room.
    Open on a phone it comes over the top: 390px split in two is two columns of
-   nothing, so the queue takes the screen while you are looking at it, and the
-   player pill stays above it so the music is still in reach. */
-#queue-panel {
-  display: none;
-}
-#queue-panel.is-open {
-  display: flex;
-}
-@media (width < 48rem) {
-  #queue-panel.is-open {
-    position: absolute;
-    inset: 0;
-    z-index: 30;
-    width: auto;
-  }
-}
+   nothing, so the rail takes the screen while you are looking at it, and the
+   player pill stays above it so the music is still in reach.
 
-/* The lyrics rail, which opens and shuts exactly as the queue does — and on a
-   phone takes the screen the same way, for the same reason. */
-#lyrics-panel {
+   All three said this separately, three times over, and the second and third
+   said it in comments pointing at the first. They are one rule, and this is it. */
+.rail {
   display: none;
 }
-#lyrics-panel.is-open {
+.rail.is-open {
   display: flex;
 }
 @media (width < 48rem) {
-  #lyrics-panel.is-open {
-    position: absolute;
-    inset: 0;
-    z-index: 30;
-    width: auto;
-  }
-}
-
-/* The picture, which opens and shuts exactly as the other two rails do — and on
-   a phone takes the screen the same way, for the same reason. */
-#visualizer-panel {
-  display: none;
-}
-#visualizer-panel.is-open {
-  display: flex;
-}
-@media (width < 48rem) {
-  #visualizer-panel.is-open {
+  .rail.is-open {
     position: absolute;
     inset: 0;
     z-index: 30;
