@@ -126,7 +126,8 @@ Everything arrives from the environment.
 | `MUSIC_ROOT` | Where the scan looks for music. | `$MEDIA_ROOT/Música` |
 | `BEETS_DATABASE` | A beets library, read-only. Leave it empty and the disk decides alone. | `/mnt/data/beets/musiclibrary.db` |
 | `SECRET_KEY_BASE` | Signs the session cookie. Required in production. | — |
-| `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` | Optional. Only for artist portraits Wikimedia didn't have. | — |
+| `SPOTIFY_CLIENT_ID` | Optional. Lets a listener connect their Spotify and bring home the songs they hearted there and the lists they made. Register a [Spotify app](https://developer.spotify.com/dashboard) — the sign-in is PKCE, so the id is all that's needed and there is no secret to keep on a NAS. | — |
+| `SPOTIFY_CLIENT_SECRET` | Optional, and only for artist portraits Wikimedia didn't have. Nothing to do with the import. | — |
 | `LASTFM_API_KEY` / `LASTFM_API_SECRET` | Optional. Without them there is no Last.fm in the app at all. Get them from an [API account](https://www.last.fm/api/account/create). | — |
 | `PORTRAITS_ROOT` | Where the portraits it fetches are kept. | `storage/portraits` |
 | `FFPROBE` | The ffprobe binary the scan reads tags with. | `ffprobe` |

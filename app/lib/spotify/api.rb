@@ -6,9 +6,27 @@ module Spotify
   # So it is asked only when somebody deliberately hands it credentials.
   class Api
     Unreachable = Class.new(StandardError)
+    Refused = Class.new(StandardError)
 
     TOKEN_URL = "https://accounts.spotify.com/api/token".freeze
     SEARCH_URL = "https://api.spotify.com/v1/search".freeze
+    AUTHORIZE_URL = "https://accounts.spotify.com/authorize".freeze
+    API = "https://api.spotify.com/v1".freeze
+
+    # Only what is needed to read what the listener kept: their songs, their
+    # records, their lists. Nothing that could change any of it, and nothing about
+    # anybody else.
+    SCOPE = "user-library-read playlist-read-private playlist-read-collaborative".freeze
+
+    # All Spotify hands over in one page of anything.
+    PAGE = 50
+
+    # Reading a listener's own library needs only the client id — PKCE is for
+    # public clients, and its whole point is that there is no secret to keep on a
+    # NAS. The portraits need the secret, and they are a different errand.
+    def signed_in?
+      Rails.configuration.x.spotify_client_id.present?
+    end
 
     def configured?
       Rails.configuration.x.spotify_client_id.present? &&
@@ -24,7 +42,112 @@ module Spotify
 
     def download(url) = get(URI.parse(url))
 
+    # --- The listener's own Spotify --------------------------------------------
+    #
+    # PKCE: the app proves it is the same app that started the journey by showing,
+    # at the end, the secret it hashed at the beginning. No client secret is
+    # involved, which is exactly right for something running on a NAS.
+
+    def authorize_url(returning_to:, verifier:, state:)
+      "#{AUTHORIZE_URL}?#{URI.encode_www_form(
+        client_id: Rails.configuration.x.spotify_client_id,
+        response_type: 'code',
+        redirect_uri: returning_to,
+        code_challenge_method: 'S256',
+        code_challenge: challenge_for(verifier),
+        scope: SCOPE,
+        state:
+      )}"
+    end
+
+    def tokens_for(code:, verifier:, returning_to:)
+      granted(
+        grant_type: "authorization_code", code:, redirect_uri: returning_to,
+        client_id: Rails.configuration.x.spotify_client_id, code_verifier: verifier
+      )
+    end
+
+    # Spotify may hand back a new refresh token, and may not. Both are correct, and
+    # a caller that overwrites the old one with nothing has disconnected itself.
+    def refreshed(refresh_token)
+      granted(
+        grant_type: "refresh_token", refresh_token:,
+        client_id: Rails.configuration.x.spotify_client_id
+      )
+    end
+
+    def me(token:)
+      said = ask("/me", token:)
+
+      { username: said["display_name"].presence || said.fetch("id") }
+    end
+
+    # Every song the listener ever hearted. Fifty at a time, following the `next`
+    # link Spotify itself hands back, which is the only page count it can be
+    # trusted about.
+    def saved_tracks(token:)
+      through("/me/tracks?limit=#{PAGE}", token:).map { song_in(it["track"]) }
+    end
+
+    def saved_albums(token:)
+      through("/me/albums?limit=#{PAGE}", token:).map do |kept|
+        { artist: kept.dig("album", "artists", 0, "name"), title: kept.dig("album", "name") }
+      end
+    end
+
+    def playlists(token:)
+      through("/me/playlists?limit=#{PAGE}", token:).map { { id: it["id"], name: it["name"] } }
+    end
+
+    def playlist_songs(id, token:)
+      through("/playlists/#{id}/tracks?limit=#{PAGE}", token:).filter_map do |kept|
+        song_in(kept["track"]) if kept["track"].is_a?(Hash) && kept.dig("track", "name").present?
+      end
+    end
+
     private
+
+    # A local file or a podcast episode can sit in a playlist, and neither of them
+    # is a song with an artist.
+    def song_in(track)
+      { artist: track.dig("artists", 0, "name"), track: track["name"] }
+    end
+
+    # PKCE's whole trick, in one line: the challenge is the hash of the verifier,
+    # so whoever completes the journey must be whoever started it.
+    def challenge_for(verifier)
+      Base64.urlsafe_encode64(Digest::SHA256.digest(verifier), padding: false)
+    end
+
+    def granted(**form)
+      response = Net::HTTP.post_form(URI.parse(TOKEN_URL), form)
+      said = JSON.parse(response.body)
+
+      raise Refused, "Spotify: #{said["error_description"] || said["error"]}" unless response.is_a?(Net::HTTPSuccess)
+
+      { access_token: said.fetch("access_token"), refresh_token: said["refresh_token"], expires_in: said.fetch("expires_in") }
+    rescue SystemCallError, SocketError, Net::OpenTimeout, Net::ReadTimeout, JSON::ParserError => e
+      raise Unreachable, "Spotify: #{e.message}"
+    end
+
+    def ask(path, token:)
+      JSON.parse(get(URI.parse(path.start_with?("http") ? path : "#{API}#{path}"),
+                     "Authorization" => "Bearer #{token}"))
+    end
+
+    # Spotify pages by handing back the URL of the next page, and nothing else it
+    # says about how many there are can be relied on.
+    def through(path, token:)
+      all = []
+
+      while path
+        said = ask(path, token:)
+        all.concat(said.fetch("items"))
+        path = said["next"]
+      end
+
+      all
+    end
 
     # No user signs in: reading the catalogue is the client's own business.
     def token

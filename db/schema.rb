@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_13_070000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_13_080000) do
   create_table "albums", force: :cascade do |t|
     t.string "album_type"
     t.integer "artist_id", null: false
@@ -147,6 +147,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_070000) do
     t.index ["profile_id"], name: "index_spins_on_profile_id"
   end
 
+  create_table "spotify_accounts", force: :cascade do |t|
+    t.text "access_token", null: false
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "imported_at"
+    t.integer "imported_hearts", default: 0, null: false
+    t.integer "imported_lists", default: 0, null: false
+    t.integer "profile_id", null: false
+    t.text "refresh_token", null: false
+    t.integer "strangers", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.string "username", null: false
+    t.index ["profile_id"], name: "index_spotify_accounts_on_profile_id", unique: true
+  end
+
   create_table "standings", force: :cascade do |t|
     t.integer "artist_id", null: false
     t.datetime "created_at", null: false
@@ -195,6 +210,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_070000) do
   add_foreign_key "spins", "albums"
   add_foreign_key "spins", "plays"
   add_foreign_key "spins", "profiles"
+  add_foreign_key "spotify_accounts", "profiles"
   add_foreign_key "standings", "artists"
   add_foreign_key "standings", "profiles"
   add_foreign_key "tracks", "albums"

@@ -16,8 +16,10 @@ class Profile < ApplicationRecord
   has_many :loves, class_name: "Love", dependent: :destroy
 
   # Nobody holds two Last.fm accounts at once, and a listener without one is the
-  # ordinary case: the app is whole without Last.fm in it.
+  # ordinary case: the app is whole without Last.fm in it. The same goes for the
+  # Spotify a listener may connect so that what they kept there can be brought home.
   has_one :scrobbler, dependent: :destroy
+  has_one :spotify_account, dependent: :destroy
 
   normalizes :name, with: ->(name) { name.strip }
 
@@ -137,6 +139,21 @@ class Profile < ApplicationRecord
 
   def scrobbles?
     scrobbler.present?
+  end
+
+  def connects_spotify(username:, access_token:, refresh_token:, expires_in:)
+    (spotify_account || build_spotify_account).tap do |connected|
+      connected.update!(username:, access_token:, refresh_token:, expires_at: expires_in.seconds.from_now)
+    end
+  end
+
+  def forgets_spotify
+    spotify_account&.destroy
+    reload_spotify_account
+  end
+
+  def spotify?
+    spotify_account.present?
   end
 
   # How many times this listener has heard the whole record.

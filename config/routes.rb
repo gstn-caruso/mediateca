@@ -30,6 +30,15 @@ Rails.application.routes.draw do
     post :import
   end
 
+  # A listener's Spotify — for the two things Last.fm cannot give: the songs they
+  # hearted there and the lists they made. Not their history: Spotify has no
+  # endpoint for one, and never has had.
+  resource :spotify, only: [ :show, :destroy ], controller: "spotify" do
+    get :connect
+    get :callback
+    post :import
+  end
+
   resources :playlists, only: [ :show, :create, :update, :destroy ] do
     resources :entries, only: [ :create, :update, :destroy ], controller: "playlist_entries"
   end
