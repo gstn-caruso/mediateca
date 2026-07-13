@@ -21,7 +21,8 @@ module TracksHelper
       subtitle: track.artist_name,
       cover: cover_url(track.album),
       album: album_path(track.album),
-      album_title: track.album.title
+      album_title: track.album.title,
+      palette: track.album.palette.to_h.to_json
     }
   end
 

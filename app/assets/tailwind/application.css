@@ -17,14 +17,12 @@
   --color-on-accent: #ffffff;
 }
 
-/* The accent, spread as ready-to-use tints for the glows that pick it up: the
-   glass edges, the gel button and the ambient corner light. They live here as
-   whole-value vars (not color-mix) on purpose — the compiler folds a color-mix
-   of a known accent to a static color, but leaves a bare var() to be swapped at
-   runtime, which is how player#setAccent retints every glow to the record. */
+/* The two places the accent is thinned rather than worn straight: the bead of
+   light under a colored button, and the wash in the corners of the room. Both
+   arrive from the server already mixed — Palette derives every one of these off
+   the single striking colour read from the sleeve, and the browser only sets
+   what it is handed. */
 :root {
-  --glass-tint: rgba(250, 45, 72, 0.16);
-  --glass-tint-deep: rgba(250, 45, 72, 0.12);
   --gel-glow: rgba(250, 45, 72, 0.55);
   --ambient-tint: rgba(250, 45, 72, 0.14);
 }
@@ -34,8 +32,6 @@
    it can be told to ease. */
 @property --color-accent { syntax: "<color>"; inherits: true; initial-value: #fa2d48; }
 @property --color-accent-bright { syntax: "<color>"; inherits: true; initial-value: #ff5468; }
-@property --glass-tint { syntax: "<color>"; inherits: true; initial-value: rgba(250, 45, 72, 0.16); }
-@property --glass-tint-deep { syntax: "<color>"; inherits: true; initial-value: rgba(250, 45, 72, 0.12); }
 @property --gel-glow { syntax: "<color>"; inherits: true; initial-value: rgba(250, 45, 72, 0.55); }
 @property --ambient-tint { syntax: "<color>"; inherits: true; initial-value: rgba(250, 45, 72, 0.14); }
 
@@ -65,9 +61,17 @@
 
 /* Liquid glass: a dark translucent pane that blurs and heavily saturates the
    wash behind it. Its light is layered, not a single line — a bright specular
-   rim across the top, a sheen falling from that edge, an accent-tinted glow
-   the pane picks up from the record playing behind it, and a grounding shade
-   along the bottom so it reads as a lit sheet of glass, not a flat panel. */
+   rim across the top, a sheen falling from that edge, and a grounding shade
+   along the bottom so it reads as a lit sheet of glass, not a flat panel.
+
+   The glass is not tinted, and that is the rule, not an omission. It used to
+   pick up the record's colour, and so did the rail, the queue, the topbar and
+   the page under them — five persistent surfaces all washed the same hue at
+   once, over a background that is already a cover burning behind them. Apple:
+   "refrain from adding colour to the background of multiple controls", and, for
+   an app whose backdrop is this busy, "prefer a monochromatic appearance for
+   toolbars". The colour of the record belongs on the things you press and the
+   line that is playing — not on every pane in the building. */
 @utility glass {
   background-color: rgba(20, 20, 24, 0.62);
   -webkit-backdrop-filter: blur(30px) saturate(200%) brightness(1.05);
@@ -75,7 +79,6 @@
   box-shadow:
     inset 0 1px 0 0 rgba(255, 255, 255, 0.28),
     inset 0 12px 28px -18px rgba(255, 255, 255, 0.16),
-    inset 0 0 34px -8px var(--glass-tint),
     inset 0 -1px 2px 0 rgba(0, 0, 0, 0.40),
     inset 0 0 0 1px rgba(255, 255, 255, 0.10),
     0 24px 64px -20px rgba(0, 0, 0, 0.80);
@@ -96,7 +99,6 @@
   backdrop-filter: blur(20px) saturate(170%);
   box-shadow:
     inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
-    inset 0 0 26px -10px var(--glass-tint-deep),
     inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 

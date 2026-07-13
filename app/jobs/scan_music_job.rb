@@ -8,5 +8,7 @@ class ScanMusicJob < ApplicationJob
 
     # New music brings new artists, and nobody photographed them onto the NAS.
     FetchPortraitsJob.perform_later
+    # And new sleeves, which is where the app gets the colour it wears.
+    ReadColoursJob.perform_later
   end
 end

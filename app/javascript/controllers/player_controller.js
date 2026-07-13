@@ -389,13 +389,6 @@ export default class extends Controller {
   get wordsFor() { return this.audioTarget.wordsFor }
   set wordsFor(trackId) { this.audioTarget.wordsFor = trackId }
 
-  // Which cover the accent was taken from. On the <audio> with the rest of the
-  // state, because the controller is destroyed on every visit — and a memo that
-  // forgets re-reads the canvas and re-paints the theme to the colour it is
-  // already wearing, on every single navigation.
-  get accentCover() { return this.audioTarget.accentCover }
-  set accentCover(cover) { this.audioTarget.accentCover = cover }
-
   // Whether next has anywhere to go: another track ahead, or repeat-all to wrap
   // back to the top. Mirrors what next() actually does.
   get hasNext() {
@@ -684,7 +677,7 @@ export default class extends Controller {
     this.marquee(this.subtitleTarget, this.subtitleTextTarget)
 
     this.setBackdrop(track.cover)
-    this.paintAccentFrom(track.cover)
+    this.wear(track.palette)
   }
 
   // A title or artist too long for its lane scrolls, pausing at each end, and
@@ -730,137 +723,31 @@ export default class extends Controller {
     })
   }
 
-  // --- The accent, taken from the record --------------------------------------
+  // --- The look, taken from the record ----------------------------------------
   //
-  // The cover doesn't only wash the floor: its dominant color becomes the whole
-  // app's accent. Overriding the theme's --color-accent on <html> retints every
-  // bg-accent / text-accent / accent glow at once — the Play button, the playing
-  // row, the equalizer, the glass edges and the ambient corner light all take on
-  // the record's own hue. <html> survives Turbo, so the accent rides across
-  // navigation; covers are same-origin, so the canvas can be read.
-  paintAccentFrom(cover) {
-    if (!cover || cover === this.accentCover) return
-    this.accentCover = cover
+  // The colour is not worked out here. Rails read the sleeve, picked the one
+  // striking colour on it, and derived the whole look from that; what arrives on
+  // the row is the finished thing — the custom properties, ready to set. This
+  // controller does not know what a hue is, and does not need to.
+  //
+  // They go on <html>, which retints everything at once — the Play button, the
+  // playing row, the equalizer, the wash in the corners of the room — and which
+  // survives Turbo, so the colour rides across navigation.
+  wear(palette) {
+    if (!palette) return
 
-    const img = new Image()
-    img.addEventListener("load", () => {
-      try {
-        // The hue is the record's and stays the record's: a red sleeve gives a
-        // red accent. Only how vivid and how light it comes out is ours to
-        // decide, and only so it stays legible.
-        const [hue, saturation, lightness] = this.dominant(img)
-        // Pin it to a legible band: vivid enough to read as an accent, held
-        // between light-enough to glow on the dark panels and dark-enough that
-        // the flipped-to-fit label still contrasts.
-        const s = Math.min(0.92, Math.max(0.55, saturation))
-        const l = Math.min(0.62, Math.max(0.50, lightness))
-        const rgb = this.hslToRgb(hue, s, l)
-        const bright = this.hslToRgb(hue, s, Math.min(0.72, l + 0.09))
-        // White reads on most accents, but not on a pale yellow one; let the
-        // accent's own luminance decide whether its label goes white or near-black.
-        const onAccent = this.luminance(rgb) > 0.42 ? "#0a0a0a" : "#ffffff"
-        this.setAccent(rgb, bright, onAccent)
-      } catch { /* tainted or unreadable: keep the standing accent */ }
-    }, { once: true })
-    img.addEventListener("error", () => { this.accentCover = null }, { once: true })
-    img.src = cover
-  }
-
-  // Retint the app to a color. The bare-var tints (glass/gel/ambient) get the
-  // accent at the alphas their glows expect, since the compiler won't let those
-  // read the accent through a color-mix — see the :root defaults in the CSS.
-  setAccent(rgb, bright, onAccent) {
-    const [r, g, b] = rgb.map(Math.round)
-    const triplet = `${r}, ${g}, ${b}`
     const root = document.documentElement.style
-
-    root.setProperty("--color-accent", this.hex(rgb))
-    root.setProperty("--color-accent-bright", this.hex(bright))
-    root.setProperty("--color-on-accent", onAccent)
-    root.setProperty("--glass-tint", `rgba(${triplet}, 0.16)`)
-    root.setProperty("--glass-tint-deep", `rgba(${triplet}, 0.12)`)
-    root.setProperty("--gel-glow", `rgba(${triplet}, 0.55)`)
-    root.setProperty("--ambient-tint", `rgba(${triplet}, 0.14)`)
+    for (const [property, value] of Object.entries(JSON.parse(palette))) {
+      root.setProperty(property, value)
+    }
   }
 
   // Back to the standing Apple-red theme defaults when nothing is playing.
   clearAccent() {
-    this.accentCover = null
     const root = document.documentElement.style
     for (const name of [
-      "--color-accent", "--color-accent-bright", "--color-on-accent",
-      "--glass-tint", "--glass-tint-deep", "--gel-glow", "--ambient-tint"
+      "--color-accent", "--color-accent-bright", "--color-on-accent", "--gel-glow", "--ambient-tint"
     ]) root.removeProperty(name)
-  }
-
-  // The cover's dominant hue: sample it small, bucket every vivid, mid-toned
-  // pixel by hue weighted by how saturated it is, and return the heaviest
-  // bucket's average as [h, s, l]. Greys and near-black/white sit the vote out,
-  // so a mostly-grey sleeve is decided by its one splash of color.
-  dominant(img) {
-    const size = 36
-    const canvas = document.createElement("canvas")
-    canvas.width = canvas.height = size
-    const ctx = canvas.getContext("2d", { willReadFrequently: true })
-    ctx.drawImage(img, 0, 0, size, size)
-    const { data } = ctx.getImageData(0, 0, size, size)
-
-    const buckets = Array.from({ length: 12 }, () => ({ r: 0, g: 0, b: 0, w: 0 }))
-    for (let i = 0; i < data.length; i += 4) {
-      if (data[i + 3] < 200) continue
-      const r = data[i], g = data[i + 1], b = data[i + 2]
-      const [h, s, l] = this.rgbToHsl(r, g, b)
-      if (s < 0.2 || l < 0.12 || l > 0.9) continue
-
-      const bucket = buckets[Math.floor(h / 30) % 12]
-      bucket.r += r * s; bucket.g += g * s; bucket.b += b * s; bucket.w += s
-    }
-
-    const winner = buckets.reduce((best, bucket) => (bucket.w > best.w ? bucket : best), buckets[0])
-    if (winner.w === 0) return this.rgbToHsl(250, 45, 72) // a silent, grey sleeve stays red
-    return this.rgbToHsl(winner.r / winner.w, winner.g / winner.w, winner.b / winner.w)
-  }
-
-  rgbToHsl(r, g, b) {
-    r /= 255; g /= 255; b /= 255
-    const max = Math.max(r, g, b), min = Math.min(r, g, b)
-    const l = (max + min) / 2
-    const d = max - min
-    if (d === 0) return [0, 0, l]
-
-    const s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
-    let h
-    switch (max) {
-      case r: h = (g - b) / d + (g < b ? 6 : 0); break
-      case g: h = (b - r) / d + 2; break
-      default: h = (r - g) / d + 4
-    }
-    return [h * 60, s, l]
-  }
-
-  hslToRgb(h, s, l) {
-    h = ((h % 360) + 360) % 360
-    const c = (1 - Math.abs(2 * l - 1)) * s
-    const x = c * (1 - Math.abs((h / 60) % 2 - 1))
-    const m = l - c / 2
-    const [r, g, b] =
-      h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] :
-      h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x]
-    return [(r + m) * 255, (g + m) * 255, (b + m) * 255]
-  }
-
-  // WCAG relative luminance, to decide what color of text can sit on the accent.
-  luminance([r, g, b]) {
-    const channel = (v) => {
-      v /= 255
-      return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
-    }
-    return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
-  }
-
-  hex([r, g, b]) {
-    const pair = (v) => Math.round(v).toString(16).padStart(2, "0")
-    return `#${pair(r)}${pair(g)}${pair(b)}`
   }
 
   // Shuffle and repeat moved off the mini-player; when their buttons aren't on
