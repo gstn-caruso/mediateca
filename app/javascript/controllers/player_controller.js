@@ -497,6 +497,7 @@ export default class extends Controller {
   listenAfresh() {
     this.listened = 0
     this.heardAt = 0
+    this.sampledAt = Date.now()
     this.counted = false
     this.startedAt = Math.floor(Date.now() / 1000)
   }
@@ -505,12 +506,25 @@ export default class extends Controller {
   // can be dragged to the end of a song in an instant, having played none of it,
   // and a player that watched the thumb would call that a listen. So only the
   // ground the song covers under its own steam is counted.
+  //
+  // The clock is what tells the difference. A song cannot have run further than
+  // time itself has, so what a tick credits is never more than the seconds that
+  // actually passed since the one before it: music that ran asks for exactly what
+  // the clock allows, and a leap asks for more and gets only what it is owed.
+  //
+  // That is the whole of the rule, and it needed to be — `seeking` announces a
+  // jump from a queued task while the position changes at once, so a tick can and
+  // does land in between. This used to trust that news to arrive first, and a
+  // song dragged to its end in the wrong order counted as heard.
   keepListening() {
     const { currentTime, duration } = this.audioTarget
+    const sampledAt = Date.now()
     const ran = currentTime - this.heardAt
+    const passed = (sampledAt - this.sampledAt) / 1000
 
-    if (ran > 0) this.listened += ran
+    if (ran > 0) this.listened += Math.min(ran, passed)
     this.heardAt = currentTime
+    this.sampledAt = sampledAt
 
     if (this.counted || !Number.isFinite(duration)) return
     if (this.listened < Math.min(duration / 2, ENOUGH)) return
@@ -520,9 +534,13 @@ export default class extends Controller {
   }
 
   // A seek covers no ground: the song is suddenly somewhere else, having played
-  // none of the way there. This arrives before the tick that would see the leap,
-  // so moving the mark to where the song now is means the skipped stretch is
-  // never counted as heard.
+  // none of the way there, so the mark moves to where the song now is and the
+  // stretch it skipped is never counted as heard.
+  //
+  // This is not what makes that true — the clock in keepListening is, and it holds
+  // whether this news comes early or late. What this catches is the one jump the
+  // clock cannot: a thumb dragged while the song is paused. No tick runs to bound
+  // that leap, and time passes anyway, so the clock would find it justified.
   jumped() {
     this.heardAt = this.audioTarget.currentTime
   }
