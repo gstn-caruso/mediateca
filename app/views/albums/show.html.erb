@@ -37,6 +37,15 @@
             <span aria-hidden="true" class="text-neutral-500">•</span>
           <% end %>
           <span><%= pluralize(@album.tracks.size, "song") %><%= ", #{length}" if length %></span>
+
+          <%# What the whole record is, as files — when the whole record is one
+              thing. The rows still say it song by song; this answers the question
+              without making anybody read twenty of them. %>
+          <% if @album.quality %>
+            <span class="ml-1 inline-flex shrink-0 items-center whitespace-nowrap rounded bg-white/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white ring-1 ring-inset ring-white/20">
+              <%= @album.quality %>
+            </span>
+          <% end %>
         </p>
       </div>
     </div>
