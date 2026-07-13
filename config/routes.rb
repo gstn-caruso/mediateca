@@ -19,6 +19,9 @@ Rails.application.routes.draw do
 
   resources :artists, only: [ :index, :show ] do
     resource :portrait, only: [ :show ]
+    # The songs they put on: everything they made, for a press that happened
+    # somewhere with no tracklist to queue from.
+    resource :queue, only: [ :show ]
     # Where the listener stands on them: out of sight, or out in front. Singular,
     # because nobody holds two opinions of the same artist at once.
     resource :standing, only: [ :create, :destroy ]
@@ -27,6 +30,9 @@ Rails.application.routes.draw do
   resources :albums, only: [ :show ] do
     resource :cover, only: [ :show ]
     resource :like,  only: [ :create, :destroy ]
+    # The songs it puts on, for a press that came from a rail or a shelf rather
+    # than from the record's own page, where the songs are already on the screen.
+    resource :queue, only: [ :show ]
   end
 
   resources :tracks, only: [] do

@@ -14,6 +14,13 @@ class Artist < ApplicationRecord
     portrait_path
   end
 
+  # What putting an artist on plays: their shelf, end to end. Oldest record first
+  # and each in its running order — which is the order the records stand in, and
+  # the only order a body of work has ever been listened to in.
+  def songs
+    albums.ordered.includes(:tracks).flat_map(&:tracks)
+  end
+
   # Everyone a listener has not hidden — which is nearly everyone, since hiding
   # somebody is a thing you have to go and do. This is what the library shows of
   # its own accord; it is not what a search answers, because somebody typing a

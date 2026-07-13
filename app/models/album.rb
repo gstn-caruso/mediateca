@@ -15,6 +15,13 @@ class Album < ApplicationRecord
     cover_path
   end
 
+  # What putting this record on plays: the record, in its running order. Said out
+  # loud so that a record and the person who made it can both be pressed, and
+  # neither has to be asked which of the two it is.
+  def songs
+    tracks
+  end
+
   # What the record is, as files, said once at its head instead of song by song —
   # which is the question somebody is actually asking when they open it: is this
   # the good copy?

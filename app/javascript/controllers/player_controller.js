@@ -146,8 +146,32 @@ export default class extends Controller {
   play({ params: { index } }) {
     if (this.held(() => this.play({ params: { index } }))) return
 
-    this.queue = this.rowTargets.map((row) => ({ ...row.dataset }))
-    this.order = this.shuffled ? this.shuffleAround(index) : this.queue.map((_, at) => at)
+    this.queueUp(this.rowTargets.map((row) => ({ ...row.dataset })), index)
+  }
+
+  // Pressing play on a record you are not looking at: a row in the rail, an
+  // artist's own header. There is no tracklist on the page to queue from, so the
+  // button carries the address where the songs can be had, and the player goes and
+  // asks for them. The answer is spelled exactly as a row is, so from here on it
+  // is the same queue.
+  async putOn({ params: { queue, shuffled } }) {
+    if (this.held(() => this.putOn({ params: { queue, shuffled } }))) return
+
+    const answer = await fetch(queue, { headers: { Accept: "application/json" } })
+    if (!answer.ok) return
+
+    const { tracks } = await answer.json()
+    if (!tracks.length) return
+
+    this.shuffled = Boolean(shuffled)
+    this.queueUp(tracks, this.shuffled ? Math.floor(Math.random() * tracks.length) : 0)
+  }
+
+  // Take this list, start on this one, and deal the rest — in order, or shuffled
+  // around the one that is starting.
+  queueUp(tracks, index) {
+    this.queue = tracks
+    this.order = this.shuffled ? this.shuffleAround(index) : tracks.map((_, at) => at)
     this.cursor = this.order.indexOf(index)
     this.start()
   }
