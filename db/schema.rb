@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_13_080000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_13_090000) do
   create_table "albums", force: :cascade do |t|
     t.string "album_type"
     t.integer "artist_id", null: false
@@ -156,6 +156,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_080000) do
     t.integer "imported_lists", default: 0, null: false
     t.integer "profile_id", null: false
     t.text "refresh_token", null: false
+    t.integer "refused_lists", default: 0, null: false
     t.integer "strangers", default: 0, null: false
     t.datetime "updated_at", null: false
     t.string "username", null: false

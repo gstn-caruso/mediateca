@@ -53,5 +53,16 @@ class FakeSpotify
     @lists.keys.map { { id: it, name: it } }
   end
 
-  def playlist_songs(id, token:) = @lists.fetch(id, [])
+  # Spotify will not hand over every list it names — one made by somebody else, one
+  # it has decided this app may not read. It answers 403 and it is entitled to.
+  def refusing(*lists)
+    @refused = lists
+    self
+  end
+
+  def playlist_songs(id, token:)
+    raise Spotify::Api::Refused, "Spotify: #{id} answered 403" if @refused.to_a.include?(id)
+
+    @lists.fetch(id, [])
+  end
 end

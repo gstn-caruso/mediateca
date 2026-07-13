@@ -42,6 +42,16 @@
         There is nothing here to heart them onto.
       </p>
     <% end %>
+
+    <%# Spotify will not hand over every list it names, and it is entitled not to.
+        Said out loud rather than quietly coming home short. %>
+    <% if @account.refused_lists.positive? %>
+      <p class="mt-4 text-sm leading-relaxed text-neutral-400">
+        Spotify would not hand over <strong class="font-semibold text-neutral-200"><%= @account.refused_lists %></strong>
+        of your lists — the ones somebody else made, and the ones it has decided this app may not read.
+        Nothing to be done about those.
+      </p>
+    <% end %>
   <% end %>
 
   <div class="mt-8 flex items-center gap-3">

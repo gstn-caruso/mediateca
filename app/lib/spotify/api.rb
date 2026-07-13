@@ -5,8 +5,14 @@ module Spotify
   # content not be stored or altered, and this app stores it and crops it round.
   # So it is asked only when somebody deliberately hands it credentials.
   class Api
+    # Never got an answer, or got one nobody could act on. Worth trying again.
     Unreachable = Class.new(StandardError)
+
+    # Answered, and the answer is no. Trying again changes nothing.
     Refused = Class.new(StandardError)
+
+    # Asked to slow down. Worth trying again, later and slower.
+    Busy = Class.new(StandardError)
 
     TOKEN_URL = "https://accounts.spotify.com/api/token".freeze
     SEARCH_URL = "https://api.spotify.com/v1/search".freeze
@@ -99,8 +105,12 @@ module Spotify
       through("/me/playlists?limit=#{PAGE}", token:).map { { id: it["id"], name: it["name"] } }
     end
 
+    # `/items`, not `/tracks`. The older one is deprecated, and in the development
+    # mode every self-hosted app is stuck in forever it does not merely warn — it
+    # answers 403, for every list, and takes the import down with it. Checked
+    # against the real Spotify: `/tracks` is a 403 and `/items` is a 200.
     def playlist_songs(id, token:)
-      through("/playlists/#{id}/tracks?limit=#{PAGE}", token:).filter_map do |kept|
+      through("/playlists/#{id}/items?limit=#{PAGE}", token:).filter_map do |kept|
         song_in(kept["track"]) if kept["track"].is_a?(Hash) && kept.dig("track", "name").present?
       end
     end
@@ -130,9 +140,41 @@ module Spotify
       raise Unreachable, "Spotify: #{e.message}"
     end
 
-    def ask(path, token:)
-      JSON.parse(get(URI.parse(path.start_with?("http") ? path : "#{API}#{path}"),
-                     "Authorization" => "Bearer #{token}"))
+    # Not through `get`, which is the portraits' door and answers to a different
+    # question. Here the status *is* the answer, and the answers differ in kind:
+    #
+    #   429 — "not so fast". Spotify says how long to wait, and waiting is the
+    #         whole of the fix.
+    #   5xx — "not right now". Worth trying again later.
+    #   4xx — "no". Spotify will not hand over that list, and it is entitled not
+    #         to. Asking again five times changes nothing and is how an API account
+    #         gets suspended.
+    #
+    # Telling a 403 apart from a dead socket is not pedantry. Conflating them is
+    # what turned one refused playlist into five retries of an entire import, and
+    # then into an import that never finished at all.
+    def ask(path, token:, patience: 1)
+      uri = URI.parse(path.start_with?("http") ? path : "#{API}#{path}")
+      answer = Net::HTTP.get_response(uri, "Authorization" => "Bearer #{token}")
+
+      case answer
+      when Net::HTTPSuccess then JSON.parse(answer.body)
+      when Net::HTTPTooManyRequests then wait_out(answer, path, token:, patience:)
+      when Net::HTTPServerError then raise Unreachable, "Spotify: #{uri.path} answered #{answer.code}"
+      else raise Refused, "Spotify: #{uri.path} answered #{answer.code}"
+      end
+    rescue SystemCallError, SocketError, Net::OpenTimeout, Net::ReadTimeout, JSON::ParserError => e
+      raise Unreachable, "Spotify: #{e.message}"
+    end
+
+    # Spotify says how long to wait, and it means it. Once, though: a 429 that
+    # survives being waited out is a rhythm this import cannot keep, and the job
+    # that called it will come back later with a longer one.
+    def wait_out(answer, path, token:, patience:)
+      raise Busy, "Spotify: asked to slow down, and did, and it was not enough" if patience.zero?
+
+      sleep [ answer["retry-after"].to_i, 1 ].max
+      ask(path, token:, patience: patience - 1)
     end
 
     # Spotify pages by handing back the URL of the next page, and nothing else it

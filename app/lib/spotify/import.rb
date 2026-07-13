@@ -17,6 +17,7 @@ module Spotify
       @hearts = 0
       @lists = 0
       @strangers = 0
+      @refused = 0
     end
 
     def bring_it_all_home
@@ -26,7 +27,7 @@ module Spotify
       records_for(Spotify.api.saved_albums(token:))
       lists_from(token)
 
-      @profile.spotify_account.imported(hearts: @hearts, lists: @lists, strangers: @strangers)
+      @profile.spotify_account.imported(hearts: @hearts, lists: @lists, strangers: @strangers, refused: @refused)
     end
 
     private
@@ -55,6 +56,11 @@ module Spotify
     # A list is a list: the songs of it this house owns, in the order they were put
     # there. A list that lands empty is not made — an empty playlist named after
     # one you cannot play is worse than no playlist.
+    # Spotify will not hand over every list it names — one made by somebody else,
+    # one it has decided this app may not read. It answers 403 and it is entitled
+    # to. One refusal is not a reason to throw an import away: the hearts already
+    # home stay home, the other lists still come, and the one that was refused is
+    # counted and said out loud.
     def lists_from(token)
       Spotify.api.playlists(token:).each do |list|
         songs = Spotify.api.playlist_songs(list.fetch(:id), token:).filter_map { known(it) }
@@ -62,6 +68,8 @@ module Spotify
 
         fill(list.fetch(:name), songs)
         @lists += 1
+      rescue Api::Refused
+        @refused += 1
       end
     end
 

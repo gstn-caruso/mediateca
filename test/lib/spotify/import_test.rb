@@ -60,6 +60,22 @@ module Spotify
       assert_equal 1, @gaston.spotify_account.strangers
     end
 
+    # Spotify refuses to hand over some lists, and it is entitled to: one made by
+    # somebody else, one it has decided this app may not read. One refusal is not a
+    # reason to throw away an import — the hearts already home stay home, the other
+    # lists still come, and the one that was refused is counted and said out loud.
+    test "a list Spotify will not hand over does not take the whole import down with it" do
+      spotify.keeping(songs: [ { artist: "Elliott Smith", track: "Angeles" } ],
+                      lists: { "Mine" => [ { artist: "Elliott Smith", track: "Between the Bars" } ] })
+      spotify.refusing("Mine")
+
+      assert_nothing_raised { bring_it_home }
+
+      assert @gaston.reload.likes?(@angeles), "the hearts were already home and must stay home"
+      assert_predicate @gaston.playlists, :empty?
+      assert_equal 1, @gaston.spotify_account.refused_lists
+    end
+
     # The guard that matters. A heart you gave on Spotify years ago is not a heart
     # you are giving now — and pushing it to Last.fm would say it was.
     test "nothing brought from Spotify is pushed on to Last.fm" do

@@ -33,8 +33,9 @@ class SpotifyAccount < ApplicationRecord
     imported_at.present?
   end
 
-  def imported(hearts:, lists:, strangers:)
-    update!(imported_at: Time.current, imported_hearts: hearts, imported_lists: lists, strangers:)
+  def imported(hearts:, lists:, strangers:, refused:)
+    update!(imported_at: Time.current, imported_hearts: hearts, imported_lists: lists,
+            strangers:, refused_lists: refused)
   end
 
   private
