@@ -4,6 +4,17 @@
 class ScrobblersController < ApplicationController
   before_action :require_lastfm
 
+  # Where the app owns up to what Last.fm actually did with the listening it was
+  # handed. It is a page rather than a line in a menu because the interesting
+  # answer is not "connected" — it is how much of a year Last.fm quietly refused
+  # as too old, which nothing else in the app would ever have said out loud.
+  def show
+    return redirect_to root_path unless Current.profile.scrobbles?
+
+    @scrobbler = Current.profile.scrobbler
+    @scrobbles = Current.profile.scrobbles
+  end
+
   def connect
     redirect_to Lastfm.api.authorize_url(returning_to: way_back), allow_other_host: true
   end

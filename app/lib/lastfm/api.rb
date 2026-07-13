@@ -3,10 +3,16 @@ require "net/http"
 module Lastfm
   # Last.fm's web service.
   #
-  # Two things about it shape everything here. It answers 200 OK and then says no
-  # in the body, so a status code only proves it was asked — the body is what is
-  # read. And it is explicit about which refusals are worth trying again: two of
-  # them, and no others. Retrying the rest is how an application gets banned.
+  # Two things about it shape everything here.
+  #
+  # The first: the HTTP status is never the answer. Sometimes it is honest — a 403
+  # for a bad API key, a 400 for a bad parameter — and sometimes it is a 200 that
+  # means no, which is how it reports a scrobble it silently threw away. Last.fm
+  # says so itself: "No matter what the HTTP status code is, you must inspect the
+  # content of the response." So the status is never read and the body always is.
+  #
+  # The second: it is explicit about which refusals are worth trying again. Two of
+  # them, and no others. Retrying the rest is how an API account gets suspended.
   class Api
     # Never got an answer at all. The NAS lost its uplink, or Last.fm did.
     Unreachable = Class.new(StandardError)
@@ -123,9 +129,11 @@ module Lastfm
       raise Unreachable, "Last.fm: #{e.message}"
     end
 
-    # A 200 is not a yes: Last.fm says no inside a perfectly successful response.
-    # So the body is always read, and what it says decides whether trying again
-    # could ever help.
+    # The status is not the answer, so it is not read. A refusal arrives as JSON
+    # with an `error` in it — sometimes under an honest 403, sometimes under a 200
+    # — and what that error says is what decides whether trying again could ever
+    # help. A body that is not JSON at all means nobody who speaks for Last.fm was
+    # at the other end: a captive portal, a proxy, a NAS with no uplink.
     def answered(response)
       said = JSON.parse(response.body)
       raise refusal_of(said["error"]), "Last.fm: #{said["message"]} (#{said["error"]})" if said.key?("error")

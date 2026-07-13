@@ -112,8 +112,14 @@ class Profile < ApplicationRecord
 
   # Connecting a Last.fm — again, or to a different account — replaces whatever
   # was there. Coming back from Last.fm twice is a double click, not two accounts.
+  #
+  # And it hands over the listening this library already has: everything heard
+  # here before Last.fm was ever mentioned to it.
   def scrobbles_to(username:, session_key:)
-    (scrobbler || build_scrobbler).tap { it.update!(username:, session_key:) }
+    (scrobbler || build_scrobbler).tap do |connected|
+      connected.update!(username:, session_key:)
+      CatchUpOnLastfmJob.perform_later(self)
+    end
   end
 
   def stops_scrobbling

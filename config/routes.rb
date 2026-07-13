@@ -21,7 +21,7 @@ Rails.application.routes.draw do
   # A listener's Last.fm. Connecting it is a journey out to Last.fm and back, and
   # both legs are GETs: the way back is Last.fm's own redirect, not a form anybody
   # posted. Singular, because nobody scrobbles to two accounts at once.
-  resource :scrobbler, only: [ :destroy ] do
+  resource :scrobbler, only: [ :show, :destroy ] do
     get :connect
     get :callback
   end

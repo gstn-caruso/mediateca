@@ -1,0 +1,66 @@
+<% content_for :title, "Last.fm — Mediateca" %>
+<%
+  waiting  = @scrobbles.waiting.count
+  taken    = @scrobbles.taken.count
+  too_old  = @scrobbles.too_old.count
+  refused  = @scrobbles.turned_away.count - too_old
+%>
+
+<div class="mx-auto max-w-2xl px-4 pb-10 pt-10 sm:px-8 sm:pt-16">
+  <header class="flex items-center gap-4">
+    <%= render "shared/lastfm_mark" %>
+    <div class="min-w-0">
+      <h1 class="text-3xl font-bold tracking-tight text-white">Last.fm</h1>
+      <p class="mt-1 text-sm text-neutral-400">
+        Scrobbling as
+        <%= link_to @scrobbler.username, @scrobbler.url, target: "_blank", rel: "noopener",
+                    class: "font-semibold text-white hover:underline" %>
+      </p>
+    </div>
+  </header>
+
+  <%# The numbers, and the one that matters is not the first. %>
+  <dl class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <% {
+         "Scrobbled" => [ taken, "Songs Last.fm took and kept." ],
+         "Waiting"   => [ waiting, "Queued here. Last.fm takes them late, so an evening without internet loses nothing." ],
+         "Too old"   => [ too_old, "Last.fm refused these as too far in the past. It does not say how far is too far — it just quietly drops them, inside a response that otherwise looks like success." ],
+         "Refused"   => [ refused, "Turned away for some other reason of Last.fm's own." ]
+       }.each do |label, (count, why)| %>
+      <div title="<%= why %>"
+           class="rounded-2xl bg-white/5 px-4 py-3 ring-1 ring-inset ring-white/10
+                  <%= "ring-red-400/30" if label == "Too old" && count.positive? %>">
+        <dt class="text-xs uppercase tracking-widest text-neutral-500"><%= label %></dt>
+        <dd class="mt-1 text-2xl font-semibold tabular-nums text-white"><%= number_with_delimiter(count) %></dd>
+      </div>
+    <% end %>
+  </dl>
+
+  <%# The thing a quieter app would have hidden. If a year of listening went into
+      a hole, the page that sent it there is the page that has to say so. %>
+  <% if too_old.positive? %>
+    <p class="mt-6 rounded-2xl bg-white/5 p-4 text-sm leading-relaxed text-neutral-300 ring-1 ring-inset ring-white/10">
+      Last.fm threw away <strong class="font-semibold text-white"><%= number_with_delimiter(too_old) %></strong>
+      of the songs it was handed, because they were played too long ago for it to accept —
+      and it did that inside a response that looked like success. Nothing was lost here:
+      those plays are still in your history, still in your counts, still yours.
+      They just never made it onto Last.fm, and nothing Mediateca can do will change that.
+    </p>
+  <% end %>
+
+  <% if waiting.positive? %>
+    <p class="mt-4 text-sm text-neutral-400">
+      <%= number_with_delimiter(waiting) %> still to go. They go out on their own, oldest first —
+      and they keep until they can.
+    </p>
+  <% end %>
+
+  <div class="mt-8 flex items-center gap-3">
+    <%= button_to "Disconnect Last.fm", scrobbler_path, method: :delete,
+                  class: "cursor-pointer rounded-full bg-white/10 px-5 py-2.5 text-sm font-semibold text-white
+                          ring-1 ring-inset ring-white/15 transition hover:bg-white/15" %>
+
+    <%= link_to "Powered by AudioScrobbler", "https://www.last.fm", target: "_blank", rel: "noopener",
+                class: "text-xs text-neutral-500 transition hover:text-neutral-300" %>
+  </div>
+</div>

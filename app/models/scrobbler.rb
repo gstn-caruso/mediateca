@@ -44,6 +44,25 @@ class Scrobbler < ApplicationRecord
     Lastfm.api.now_playing(what(track), as: session_key)
   end
 
+  # You listened to this library for a year before you ever told it about Last.fm.
+  # That year is sitting right there, and keeping it was the point.
+  #
+  # So all of it is queued. Last.fm takes a scrobble late — but not *any* late: it
+  # throws away anything "too far in the past", it never says how far in its
+  # documentation, and it throws it away inside a 200 OK. Sending them and reading
+  # what comes back is the only honest way to find out, and the Last.fm page says
+  # plainly what became of them.
+  def catch_up_on_the_history
+    now = Time.current
+    already_heard = profile.plays.joins(:track).where("tracks.duration > ?", BRIEFEST).pluck(:track_id, :played_at)
+    return if already_heard.empty?
+
+    Scrobble.insert_all(
+      already_heard.map { |track_id, played_at| { profile_id: profile.id, track_id:, played_at:, created_at: now, updated_at: now } },
+      unique_by: %i[profile_id track_id played_at]
+    )
+  end
+
   # Everything waiting, oldest first and fifty at a time, until there is nothing
   # left. A batch that fails raises, and the job that called this tries again —
   # which is the whole reason the songs are rows and not requests.
