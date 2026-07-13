@@ -114,11 +114,19 @@ class Profile < ApplicationRecord
   # A song is also the last song of some record, and hearing it may be the moment
   # that record came full circle.
   def played(track, at: Time.current)
-    plays.create!(track:, played_at: at).tap do |play|
+    plays.create!(track:, played_at: at, source: Play::HERE).tap do |play|
       came_full_circle(play)
       forget_tally
       scrobbler&.scrobble(play)
     end
+  end
+
+  # Listening that happened somewhere else and was told to us — by Last.fm, which
+  # hands over a whole life of it. It is history and nothing more: it is not told
+  # back to anybody, and no record comes full circle on the strength of a scrobble
+  # somebody else wrote down.
+  def heard_elsewhere(at:, from:, track: nil, absence: nil)
+    plays.create!(track:, absence:, played_at: at, source: from).tap { forget_tally }
   end
 
   # Connecting a Last.fm — again, or to a different account — replaces whatever
@@ -219,6 +227,8 @@ class Profile < ApplicationRecord
   # A song heard may be the one that was still missing off some record. Every
   # song on it, heard since the run began, means the record came full circle.
   def came_full_circle(play)
+    return unless play.ours?
+
     album = play.track.album
 
     spins.create!(album:, play:) if heard_since_the_run_began(album) == album.tracks.ids.to_set

@@ -118,6 +118,24 @@ class ScrobblerTest < ActiveSupport::TestCase
     assert_not_predicate Scrobble.sole, :sent?
   end
 
+  # The loop that would have been. Last.fm hands over a listener's whole history —
+  # a hundred thousand scrobbles — and those become plays here. Connect again, and
+  # a catch-up that could not tell where a play came from would hand Last.fm back
+  # its own history, every song of it, as if it were new listening.
+  #
+  # So a play knows where it was heard, and only the ones heard *here* are ever
+  # told to anybody.
+  test "what Last.fm told us is never told back to Last.fm" do
+    @gaston.played(@song, at: 1.hour.ago)
+    @gaston.heard_elsewhere(track: @song, at: 2.years.ago, from: "lastfm")
+
+    connected
+    @gaston.scrobbler.catch_up_on_the_history
+
+    assert_equal 1, Scrobble.count
+    assert_in_delta 1.hour.ago, Scrobble.sole.played_at, 1.second
+  end
+
   private
 
   def connected

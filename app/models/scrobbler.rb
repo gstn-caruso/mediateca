@@ -39,7 +39,7 @@ class Scrobbler < ApplicationRecord
   # Queued, not sent: the sending is somebody else's afternoon, and a listener
   # pressing play should never wait on a website.
   def scrobble(play)
-    return unless play.track.duration.to_f > BRIEFEST
+    return unless play.ours? && play.track.duration.to_f > BRIEFEST
 
     profile.scrobbles.create_or_find_by!(track: play.track, played_at: play.played_at)
     ScrobbleJob.perform_later(profile)
@@ -62,7 +62,7 @@ class Scrobbler < ApplicationRecord
   # plainly what became of them.
   def catch_up_on_the_history
     now = Time.current
-    already_heard = profile.plays.joins(:track).where("tracks.duration > ?", BRIEFEST).pluck(:track_id, :played_at)
+    already_heard = profile.plays.heard_here.joins(:track).where("tracks.duration > ?", BRIEFEST).pluck(:track_id, :played_at)
     return if already_heard.empty?
 
     Scrobble.insert_all(

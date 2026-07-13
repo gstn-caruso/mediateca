@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_13_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_13_110000) do
   create_table "absences", force: :cascade do |t|
     t.string "artist", null: false
     t.datetime "created_at", null: false
@@ -103,12 +103,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_100000) do
   end
 
   create_table "plays", force: :cascade do |t|
+    t.integer "absence_id"
     t.datetime "created_at", null: false
     t.datetime "played_at", null: false
     t.integer "profile_id", null: false
-    t.integer "track_id", null: false
+    t.string "source", default: "mediateca", null: false
+    t.integer "track_id"
     t.datetime "updated_at", null: false
+    t.index ["absence_id"], name: "index_plays_on_absence_id"
+    t.index ["profile_id", "absence_id", "played_at"], name: "index_plays_on_profile_id_and_absence_id_and_played_at", unique: true
     t.index ["profile_id", "played_at"], name: "index_plays_on_profile_id_and_played_at"
+    t.index ["profile_id", "source"], name: "index_plays_on_profile_id_and_source"
     t.index ["profile_id", "track_id", "played_at"], name: "index_plays_on_profile_id_and_track_id_and_played_at", unique: true
     t.index ["profile_id"], name: "index_plays_on_profile_id"
     t.index ["track_id"], name: "index_plays_on_track_id"
@@ -218,6 +223,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_100000) do
   add_foreign_key "playlist_entries", "playlists"
   add_foreign_key "playlist_entries", "tracks"
   add_foreign_key "playlists", "profiles"
+  add_foreign_key "plays", "absences"
   add_foreign_key "plays", "profiles"
   add_foreign_key "plays", "tracks"
   add_foreign_key "scrobblers", "profiles"

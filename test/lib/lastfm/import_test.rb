@@ -41,17 +41,30 @@ module Lastfm
       assert_equal 5, @gaston.times_played(@bars)
     end
 
-    # The number nobody wants to publish. Last.fm has heard everything this
-    # listener ever played anywhere; this house has the records it owns.
-    test "a song Last.fm knows and this house does not have is counted, not swallowed" do
+    # The whole of a life, and not only the part of it this house owns a copy of.
+    # An import that kept the songs it could match and dropped the rest would drop
+    # most of a hundred thousand scrobbles — and a history of only what is on your
+    # disk is a history of the wrong life. What is not here is a gap, and a gap is
+    # a thing that can be listened to.
+    test "a song Last.fm knows and this house does not have is still something you listened to" do
       @lastfm.keeping(history: [ scrobble("Between the Bars", at: 1.day.ago),
                                  { artist: "Some Band", track: "A Song We Do Not Own", at: 1.day.ago } ])
 
       bring_it_home
 
-      assert_equal 1, @gaston.plays.count
+      assert_equal 2, @gaston.plays.count
+      assert_equal [ "A Song We Do Not Own", "Between the Bars" ], @gaston.plays.map(&:title).sort
+      assert_equal 1, @gaston.plays.of_ours.count
       assert_equal 1, @gaston.scrobbler.strangers
-      assert_equal 1, @gaston.scrobbler.imported_plays
+    end
+
+    # And none of it is told back to Last.fm, which is where it came from.
+    test "nothing Last.fm handed over is listening this app did" do
+      @lastfm.keeping(history: [ scrobble("Between the Bars", at: 1.day.ago) ])
+
+      bring_it_home
+
+      assert_predicate @gaston.plays.heard_here, :empty?
     end
 
     # Case is nothing and accents are nothing: being right about "Café Tacvba"
@@ -59,15 +72,16 @@ module Lastfm
     test "a song is the same song in another case, and with its accents knocked off" do
       tacvba = Artist.create!(name: "Café Tacvba")
       re = Album.create!(directory: "/music/re", title: "Re", artist: tacvba)
-      song(re, "La Ingrata")
+      ingrata = song(re, "La Ingrata")
 
       @lastfm.keeping(history: [ { artist: "cafe tacuba", track: "la ingrata", at: 1.day.ago },
                                  { artist: "CAFÉ TACVBA", track: "La Ingrata", at: 2.days.ago } ])
 
       bring_it_home
 
-      assert_equal 1, @gaston.plays.count, "'cafe tacuba' is a different band's spelling; only the accented one is ours"
+      assert_equal 1, @gaston.times_played(ingrata), "'cafe tacuba' is a different band's spelling; only the accented one is ours"
       assert_equal 1, @gaston.scrobbler.strangers
+      assert_equal 2, @gaston.plays.count, "and the other one is still something you listened to"
     end
 
     # A duet is scrobbled under whoever sang it, not under whoever owns the record.
