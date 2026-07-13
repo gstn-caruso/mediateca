@@ -6,8 +6,12 @@ module Music
   # so gets read again next time — which costs a couple of milliseconds and means
   # a better scan of the cover, dropped onto the NAS later, is picked up.
   class Colours
+    # Records and the people who made them. Both wear a colour, both read it off
+    # a picture, and neither is asked how.
+    COLOURED = [ Album, Artist ].freeze
+
     def collect
-      Album.uncoloured.find_each { |album| paint(album) }
+      COLOURED.each { |kind| kind.uncoloured.find_each { |coloured| paint(coloured) } }
     end
 
     private
