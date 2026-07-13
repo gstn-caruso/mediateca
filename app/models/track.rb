@@ -12,6 +12,11 @@ class Track < ApplicationRecord
   # breaks what ties are left, which is how the disk itself would break them.
   scope :ordered, -> { order(:disc_no, Arel.sql("track_no IS NULL"), :track_no, :path) }
 
+  # A song is hidden by whoever made the record it sits on — not by the credit
+  # line on the file, which names guests and duets and is not somebody you own
+  # records by.
+  scope :visible_to, ->(profile) { where.not(album_id: Album.where(artist_id: profile.hidden_artist_ids)) }
+
   # Who sings this one. Usually it is simply whoever made the record, and the
   # file says nothing the sleeve doesn't — but a guest, a duet or a compilation
   # says otherwise on the file itself, and the file is the one to believe.

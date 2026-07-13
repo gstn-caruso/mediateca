@@ -1,5 +1,5 @@
 <% content_for :title, @playlist.name %>
-<% length = album_length(@playlist.entries.sum { |entry| entry.track.duration.to_f }) %>
+<% length = album_length(@entries.sum { |entry| entry.track.duration.to_f }) %>
 
 <%# Same shape as the hearts: the list, what it says when it holds nothing, and
     the buttons that play it, with `:has` deciding which of them shows. Dropping
@@ -9,7 +9,7 @@
     <p class="text-sm font-semibold text-white">Playlist</p>
     <h1 class="mt-2 text-4xl font-bold tracking-tight text-white sm:text-6xl"><%= @playlist.name %></h1>
     <p class="mt-4 text-sm text-neutral-300">
-      <%= pluralize(@playlist.entries.size, "song") %><%= ", #{length}" if length %>
+      <%= pluralize(@entries.size, "song") %><%= ", #{length}" if length %>
     </p>
   </header>
 
@@ -66,7 +66,7 @@
   </p>
 
   <ol class="the-songs">
-    <% @playlist.entries.each_with_index do |entry, index| %>
+    <% @entries.each_with_index do |entry, index| %>
       <li class="group/row flex items-center gap-1">
         <button type="button" <%= tag.attributes(data: playable(entry.track, index)) %>
                 aria-current="false"

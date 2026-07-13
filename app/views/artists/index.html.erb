@@ -85,7 +85,7 @@
             </svg>
           </div>
           <p class="mt-4 truncate text-base font-bold text-white"><%= playlist.name %></p>
-          <p class="mt-1 truncate text-sm text-neutral-400"><%= pluralize(playlist.entries.size, "song") %></p>
+          <p class="mt-1 truncate text-sm text-neutral-400"><%= pluralize(playlist_song_counts.fetch(playlist.id, 0), "song") %></p>
         <% end %>
       <% end %>
     </div>

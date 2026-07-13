@@ -1,7 +1,9 @@
 class PlaylistsController < ApplicationController
   before_action :set_playlist, only: [ :show, :update, :destroy ]
 
+  # The list as this listener sees it: their own, minus whoever they have hidden.
   def show
+    @entries = @playlist.entries_visible_to(Current.profile)
   end
 
   def create
