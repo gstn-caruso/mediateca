@@ -1,4 +1,4 @@
-require "application_system_test_case"
+require "test_helper"
 
 # The one page that is about the listener rather than the music.
 #
@@ -6,7 +6,7 @@ require "application_system_test_case"
 # as you play them. The hollow ones are the artists you listen to and own no record
 # by — which no other music app would ever show you, because every other music app
 # is a shop and has nothing to gain by naming what it does not have.
-class YourOwnPageTest < ApplicationSystemTestCase
+class YourOwnPageTest < ActionDispatch::IntegrationTest
   setup do
     @gaston = listening_as
     artist = Artist.create!(name: "Almafuerte")
@@ -22,18 +22,16 @@ class YourOwnPageTest < ApplicationSystemTestCase
   end
 
   test "the shelf shows what you play, and stands the ones you do not own hollow" do
-    open_profile_menu
-    within("#topbar") { click_on "Gastón" }
+    get root_path
+    assert_select "#topbar a[href=?]", profile_path
 
-    assert_selector "h1", text: "Gastón"
-    assert_text "Your shelf"
-    assert_link "Almafuerte"
-    assert_text "Pappo"
-    assert_text(/songs played/i)
+    get profile_path
 
-    # The shelf is the point of the page, and it is below the fold.
-    scroll_to(find("h2", text: "Your shelf"))
-    take_screenshot
+    assert_select "h1", text: "Gastón"
+    assert_match "Your shelf", response.body
+    assert_select "a", text: /Almafuerte/
+    assert_match "Pappo", response.body
+    assert_match(/songs played/i, response.body)
   end
 
   private

@@ -105,6 +105,24 @@ class ConnectingLastfmTest < ActionDispatch::IntegrationTest
     assert_no_match "Last.fm", response.body
   end
 
+  # The way in is the menu under the avatar — the one place in the app that is
+  # about the listener rather than the music.
+  test "the profile menu offers Last.fm before you have ever connected it" do
+    get root_path
+
+    assert_select "#topbar a", text: "Connect Last.fm"
+  end
+
+  # Without an API account there is no Last.fm in this app at all — not even a
+  # word about it in the one menu that would otherwise offer it.
+  test "the profile menu says nothing about Last.fm without an API account" do
+    Lastfm.api = FakeLastfm.new(configured: false)
+
+    get root_path
+
+    assert_select "#topbar", text: /Last\.fm/, count: 0
+  end
+
   private
 
   # What the listener's browser is holding when Last.fm sends it back. Leaving for
