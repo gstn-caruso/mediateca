@@ -12,5 +12,10 @@ class FetchPortraitsJob < ApplicationJob
 
   def perform
     Music::Portraits.new(source: self.class.chain).collect
+
+    # An artist wears the colour of their photograph, and the scan read the
+    # library's colours before any of these faces existed. Whoever brings a face
+    # asks for it to be read.
+    ReadColoursJob.perform_later
   end
 end

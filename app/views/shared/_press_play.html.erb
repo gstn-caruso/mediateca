@@ -1,0 +1,15 @@
+<%# Play, from a row in the rail — a record or an artist you are not looking at.
+
+    Beside the link, never inside it: a row is one big link to the thing, and a
+    button inside a link is not a button. And always there, not revealed on hover:
+    a phone has no hover, and a button only a pointer can summon is a button half
+    this app's screens cannot press. (The artist's menu on the shelf was built
+    this way first, for the same two reasons.) %>
+<button type="button"
+        data-action="player#putOn" data-player-queue-param="<%= queue %>"
+        aria-label="Play <%= label %>"
+        class="flex size-8 items-center justify-center rounded-full bg-white/10 text-white opacity-70 ring-1 ring-inset ring-white/15 transition hover:scale-110 hover:bg-accent hover:text-on-accent hover:opacity-100">
+  <svg class="size-3" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+    <path d="M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713Z"/>
+  </svg>
+</button>

@@ -9,9 +9,12 @@ class ScanMusicJob < ApplicationJob
     # New music brings new artists, and nobody photographed them onto the NAS.
     FetchPortraitsJob.perform_later
 
-    # Nor does the disk know who they are like. Both errands are the same kind:
-    # something a home library cannot work out for itself, fetched once and kept —
-    # never asked for on the way to answering a request.
+    # And new sleeves, which is where the app gets the colour it wears.
+    ReadColoursJob.perform_later
+
+    # Nor does the disk know who anybody is *like*. All three are the same kind of
+    # errand: something a home library cannot work out for itself, fetched once and
+    # kept — and never asked for on the way to answering a request.
     FindKinshipsJob.perform_later
   end
 end

@@ -23,6 +23,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_110000) do
   end
 
   create_table "albums", force: :cascade do |t|
+    t.string "accent"
     t.string "album_type"
     t.integer "artist_id", null: false
     t.string "cover_path"
@@ -37,6 +38,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_110000) do
   end
 
   create_table "artists", force: :cascade do |t|
+    t.string "accent"
     t.datetime "created_at", null: false
     t.string "name", null: false
     t.string "portrait_credit"

@@ -1,27 +1,44 @@
 module TracksHelper
   UNKNOWN_DURATION = "–:––".freeze
 
-  # Everything the player needs to start a song and keep the record playing
-  # after it. Four different lists of songs — a record, a playlist, the hearts, a
-  # search — each handed it the same eight things, written out eight times over.
-  # The player reads them straight off the row, so they are spelled here, once.
+  # A song, as the player writes one down: everything it needs to start it, to say
+  # what is playing, and to wear the colour of the record it came off.
   #
-  # `index` is the song's place in the list it belongs to, which is the queue the
-  # player deals when you press it: clicking track 5 of a record queues the
-  # record, from track 5.
-  def playable(track, index)
+  # It is written down twice, in two alphabets, and this is the one place that
+  # knows both. A row carries it in HTML, where the DOM dasherizes a name on the
+  # way in and camelCases it on the way out; the server hands it over in JSON,
+  # which has to arrive already spelled the way the DOM would have spelled it, or
+  # it is a queue of songs with no source and no title. Same words either way — so
+  # a record put on from the rail is the same queue as one put on from its own
+  # tracklist.
+  def queueable(track)
     {
-      player_track: "",
-      player_target: "row",
-      action: "player#play",
-      player_index_param: index,
       track_id: track.id,
       src: stream_url(track),
       title: track.title,
       subtitle: track.artist_name,
       cover: cover_url(track.album),
       album: album_path(track.album),
-      album_title: track.album.title
+      album_title: track.album.title,
+      palette: track.album.palette.to_h.to_json
+    }
+  end
+
+  # The JSON alphabet: what the DOM would have made of the same words.
+  def queued(track)
+    queueable(track).transform_keys { |word| word.to_s.camelize(:lower) }
+  end
+
+  # A song on a list you are looking at, which is a song you can press. `index` is
+  # its place in that list — the queue the player deals when you press it, so
+  # clicking track 5 of a record queues the record, from track 5.
+  def playable(track, index)
+    {
+      player_track: "",
+      player_target: "row",
+      action: "player#play",
+      player_index_param: index,
+      **queueable(track)
     }
   end
 

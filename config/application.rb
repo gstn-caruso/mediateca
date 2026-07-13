@@ -50,6 +50,10 @@ module Mediateca
     # The scanner reads each file's tags with ffprobe, which ships in the image.
     config.x.ffprobe = ENV.fetch("FFPROBE", "ffprobe")
 
+    # And the sleeves are decoded with ffmpeg, which ships in the same package:
+    # the colour the app wears is read off the cover.
+    config.x.ffmpeg = ENV.fetch("FFMPEG", "ffmpeg")
+
     # Last.fm, if somebody wants their listening to leave the house. Without
     # these there is no Last.fm in the app at all: no menu item, no scrobbles.
     # They come from an API account at last.fm/api/account/create.
