@@ -8,6 +8,7 @@ made. The short version is the [README](../README.md).
 - [The player outlives the page](#the-player-outlives-the-page)
 - [Nothing that isn't navigation navigates](#nothing-that-isnt-navigation-navigates)
 - [Who is listening](#who-is-listening)
+- [What comes next, and who you would rather it didn't be](#what-comes-next-and-who-you-would-rather-it-didnt-be)
 - [Search](#search)
 - [No page asks the database one question per row](#no-page-asks-the-database-one-question-per-row)
 - [The phone](#the-phone)
@@ -151,6 +152,54 @@ simply does not exist. That lookup is what stands in for a password.
 The cookie outlives the profile it names — a browser left open on the kitchen
 tablet still remembers somebody deleted last week — so a name that no longer
 exists means nobody is listening, and the picker comes back.
+
+## What comes next, and who you would rather it didn't be
+
+A home library has no recommender and needs none. The honest answer to "what
+now" is more of whoever you are already listening to, and only once they run
+out, anything else that is on the disk — and `Suggestions` says which of the two
+it found, so the rail can offer the second for what it is rather than dressing
+it up as the first.
+
+What a listener has said about an artist bends both halves of that. A
+**standing** is where one listener stands on one artist, and there are only two,
+and they are opposites — so it is one row, replaced rather than added to, and
+having no row at all is the ordinary case. Most artists are simply artists.
+
+**Hidden** is not deleted. The disk decides what music exists, and a scan at 4am
+would bring back anything this could delete; what it removes is not the music but
+the *offering* of it. Everything the library does on its own stops doing it — the
+rail, the shelf of records, the hearts, the playlists, the recently-played, and
+the rail of what's next, which will not offer them even while they are playing,
+because putting a record on by hand is not asking to be handed more of it. And
+everything you ask for by name still answers: search finds them, their page still
+loads, and that page is where the hiding is taken back. A playlist entry is left
+undrawn rather than thrown away — somebody who changes their mind wants the list
+they made back, not one with a hole in it.
+
+**Highlighted** is the same gesture pointed the other way. A couple of the rail's
+five slots are theirs whatever else is on, and they go to the songs of theirs the
+listener actually goes back to: *featured songs* is not a list anybody keeps here
+and does not need to be, because the play history has been writing it down all
+along. A song nobody has played counts nothing and sorts last, which is also the
+answer for an artist highlighted but never heard — any of them, then.
+
+And when the artist runs out and the library is drawn from, a highlighted artist
+is *heavier* in the draw rather than merely present in it: their songs go into
+the hat threefold, the hat is shuffled, and each song is kept where it first
+turns up. The draw happens in Ruby because a weighted draw is the one thing SQL
+makes hard to say plainly — and because SQLite's `RANDOM()` is a signed 64-bit
+integer, so multiplying one is not a weight, it is a bug that looks like one.
+Only the ids are drawn; the five songs are fetched once they are known.
+
+Pressing any of it answers with **the page you were standing on**, not a piece of
+it: hiding somebody changes the page in more places than the button pressed, and
+Turbo reads a visit to the URL you are already at as a refresh, which here is a
+morph. The library rearranges itself in place, the scroll stays, the history
+takes no entry for an opinion, and the morph steps around the permanent `<audio>`
+— the music does not stutter. `turbo_stream.refresh` looks like the shorter way
+to say that and is not: it carries the request id, and Turbo pointedly ignores a
+refresh a tab asked for itself. It is for telling the *other* tabs.
 
 ## Search
 
