@@ -1,4 +1,6 @@
 class Album < ApplicationRecord
+  include Coloured
+
   belongs_to :artist
   has_many :tracks, -> { ordered }, dependent: :destroy, inverse_of: :album
   has_many :likes, as: :likeable, dependent: :destroy
@@ -8,11 +10,9 @@ class Album < ApplicationRecord
 
   scope :ordered, -> { order(:year, :title) }
 
-  # The look a record hands the app while it plays, all of it derived from the
-  # one striking colour read off its sleeve. A record with no colour of its own —
-  # a black and white sleeve — hands over the app's standing red instead.
-  def palette
-    Palette.for(accent&.then { |hex| Colour.hex(hex) })
+  # A record's colour is printed on its sleeve.
+  def picture
+    cover_path
   end
 
   # How records stand on a shelf: under whoever made them, oldest first. Ordered
