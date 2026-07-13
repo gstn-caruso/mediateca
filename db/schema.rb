@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_13_030000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_13_040000) do
   create_table "albums", force: :cascade do |t|
     t.string "album_type"
     t.integer "artist_id", null: false
@@ -92,6 +92,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_030000) do
     t.index ["profile_id"], name: "index_scrobblers_on_profile_id", unique: true
   end
 
+  create_table "scrobbles", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "ignored_as"
+    t.datetime "played_at", null: false
+    t.integer "profile_id", null: false
+    t.datetime "sent_at"
+    t.integer "track_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["profile_id", "sent_at", "played_at"], name: "index_scrobbles_on_profile_id_and_sent_at_and_played_at"
+    t.index ["profile_id", "track_id", "played_at"], name: "index_scrobbles_on_profile_id_and_track_id_and_played_at", unique: true
+    t.index ["profile_id"], name: "index_scrobbles_on_profile_id"
+    t.index ["track_id"], name: "index_scrobbles_on_track_id"
+  end
+
   create_table "spins", force: :cascade do |t|
     t.integer "album_id", null: false
     t.datetime "created_at", null: false
@@ -143,6 +157,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_030000) do
   add_foreign_key "plays", "profiles"
   add_foreign_key "plays", "tracks"
   add_foreign_key "scrobblers", "profiles"
+  add_foreign_key "scrobbles", "profiles"
+  add_foreign_key "scrobbles", "tracks"
   add_foreign_key "spins", "albums"
   add_foreign_key "spins", "plays"
   add_foreign_key "spins", "profiles"

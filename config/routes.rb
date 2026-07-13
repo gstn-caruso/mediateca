@@ -13,6 +13,11 @@ Rails.application.routes.draw do
 
   resources :plays, only: [ :create ]
 
+  # What is on right now. A play is written down once the song has been listened
+  # to; this is told the moment it starts, because it is what puts the song on a
+  # listener's Last.fm page while it is still playing.
+  resource :now_playing, only: [ :create ]
+
   # A listener's Last.fm. Connecting it is a journey out to Last.fm and back, and
   # both legs are GETs: the way back is Last.fm's own redirect, not a form anybody
   # posted. Singular, because nobody scrobbles to two accounts at once.

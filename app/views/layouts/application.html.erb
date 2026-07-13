@@ -48,6 +48,7 @@
       body swap Turbo Drive does on navigation. %>
   <body class="h-full overflow-hidden bg-ambient text-neutral-200 antialiased"
         data-controller="player deploy" data-player-profile-value="<%= Current.profile&.id %>"
+        data-player-scrobbles-value="<%= Current.profile&.scrobbles? %>"
         data-deploy-build-value="<%= Rails.configuration.x.build %>"
         data-action="keydown@window->player#hotkey">
     <%# Open tabs outlive deploys — this one is on a kitchen tablet and has been

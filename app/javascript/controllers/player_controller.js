@@ -37,7 +37,10 @@ const FOLLOW = "mediateca:lyrics-follow"
 // #player, which is data-turbo-permanent. So the queue rides on the audio
 // element rather than on the controller, and playback survives navigation.
 export default class extends Controller {
-  static values = { profile: String }
+  // Whether this listener has a Last.fm. Without one there is nobody to tell what
+  // is on, and telling the server anyway would be a request per song that ends in
+  // a shrug.
+  static values = { profile: String, scrobbles: Boolean }
 
   static targets = [
     "audio", "title", "titleText", "idle", "subtitle", "subtitleText", "cover", "tail", "broken",
@@ -451,7 +454,24 @@ export default class extends Controller {
     this.audioTarget.play().catch(() => {})
     this.listenAfresh()
     this.announce(track)
+    this.announceToLastfm(track)
     this.render()
+  }
+
+  // Told at the first note, not at the halfway mark: what it is for is to put the
+  // song on the listener's Last.fm page *while it is playing*. Nothing waits on
+  // it and nothing retries it — a now-playing that arrived late would be a lie.
+  announceToLastfm({ trackId }) {
+    if (!this.scrobblesValue || !trackId) return
+
+    fetch("/now_playing", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": document.querySelector("meta[name='csrf-token']")?.content
+      },
+      body: JSON.stringify({ track_id: trackId })
+    }).catch(() => {})
   }
 
   // A song begins unheard. The clock stamped here is the wall clock, because it

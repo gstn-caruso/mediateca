@@ -7,6 +7,10 @@ class Profile < ApplicationRecord
   has_many :spins, dependent: :destroy
   has_many :standings, dependent: :destroy
 
+  # Not the scrobbler's: revoking a Last.fm must not throw away the songs waiting
+  # to go to it. They wait for whenever it is connected again.
+  has_many :scrobbles, dependent: :destroy
+
   # Nobody holds two Last.fm accounts at once, and a listener without one is the
   # ordinary case: the app is whole without Last.fm in it.
   has_one :scrobbler, dependent: :destroy
@@ -102,6 +106,7 @@ class Profile < ApplicationRecord
     plays.create!(track:, played_at: at).tap do |play|
       came_full_circle(play)
       forget_tally
+      scrobbler&.scrobble(play)
     end
   end
 

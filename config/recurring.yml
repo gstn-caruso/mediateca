@@ -19,3 +19,11 @@ production:
   scan_music:
     class: ScanMusicJob
     schedule: at 4am every day
+
+  # A job that fails keeps retrying for hours and then gives up. A NAS whose
+  # uplink is out for a whole weekend outlasts that — and the songs are still
+  # sitting in the queue, still perfectly good, because Last.fm takes them late.
+  # So something comes back for them, and keeps coming back.
+  send_waiting_scrobbles:
+    class: SweepScrobblesJob
+    schedule: every 30 minutes
