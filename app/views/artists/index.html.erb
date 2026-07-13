@@ -115,4 +115,39 @@
       </div>
     <% end %>
   </div>
+
+  <%# Everybody this library does *not* have.
+      Mediateca is a shelf of the records you own, and until now it could say
+      nothing at all about the ones you do not: an import counted them, reported a
+      number, and threw the names away. So it knew about a thousand songs somebody
+      loves and could not name one of them.
+
+      They are drawn the way they are because of what they are: no photograph,
+      because nobody here has a record with their face on it; grey, because there
+      is nothing to play; not clickable, because there is nowhere to go. This is a
+      shopping list, and the only honest thing it can do is be legible. %>
+  <% missing = Current.profile.absent_artists %>
+  <% if missing.any? %>
+    <div class="mt-14 border-t border-white/5 pt-8">
+      <h2 class="text-xl font-bold tracking-tight text-neutral-400 sm:text-2xl">Not here yet</h2>
+      <p class="mt-1 text-sm text-neutral-600">
+        You listen to these on Spotify. There isn't a record by them on the disk.
+      </p>
+
+      <ul class="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        <% missing.each do |stranger| %>
+          <li class="rounded-lg p-4">
+            <div aria-hidden="true"
+                 class="flex aspect-square items-center justify-center rounded-full bg-white/[0.03] text-5xl font-bold text-neutral-800 ring-1 ring-inset ring-white/5">
+              <%= stranger.name.first&.upcase %>
+            </div>
+            <p class="mt-4 truncate text-center text-base font-semibold text-neutral-500"><%= stranger.name %></p>
+            <p class="mt-1 truncate text-center text-sm text-neutral-700">
+              <%= pluralize(stranger.songs, "song") %> you don't have
+            </p>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
 </div>

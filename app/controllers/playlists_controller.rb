@@ -34,7 +34,7 @@ class PlaylistsController < ApplicationController
   # not fetched together.
   def set_playlist
     @playlist = Current.profile.playlists
-                               .includes(entries: { track: { album: :artist } })
+                               .includes(entries: [ :absence, { track: { album: :artist } } ])
                                .find(params[:id])
   end
 

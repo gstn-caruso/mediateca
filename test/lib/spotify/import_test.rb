@@ -49,14 +49,41 @@ module Spotify
       assert_equal 1, @gaston.spotify_account.imported_lists
     end
 
-    # A list of songs this house does not own would land empty, and an empty
-    # playlist named after one you cannot play is worse than no playlist.
-    test "a list of songs this house does not own is not made" do
+    # A list you kept somewhere else is the list you kept. Handing back only the
+    # songs this house happens to own would be a shorter list that never said why —
+    # so the songs that are not here come home as gaps: named, unplayable, and
+    # drawn grey. The list stays the list.
+    test "a list comes home whole, with the songs this house does not own as gaps" do
+      spotify.keeping(lists: { "Domingo" => [ { artist: "Elliott Smith", track: "Angeles" },
+                                              { artist: "Elliott Smith", track: "Say Yes" } ] })
+
+      bring_it_home
+
+      list = @gaston.playlists.sole
+
+      assert_equal [ "Angeles", "Say Yes" ], list.entries.ordered.map(&:title)
+      assert_equal [ true, false ], list.entries.ordered.map(&:playable?)
+      assert_equal [ @angeles ], list.entries.playable.map(&:track)
+    end
+
+    test "a list of nothing this house owns is still the list, all of it missing" do
       spotify.keeping(lists: { "Nothing We Own" => [ { artist: "Some Band", track: "A Song" } ] })
 
       bring_it_home
 
-      assert_predicate @gaston.playlists, :empty?
+      assert_equal [ "A Song" ], @gaston.playlists.sole.entries.map(&:title)
+      assert_equal 1, @gaston.spotify_account.strangers
+      assert_equal [ "Some Band" ], @gaston.absent_artists.map(&:name)
+    end
+
+    # One song you do not own is one gap, however many of your lists it turns up in.
+    test "the same missing song in two lists is one gap" do
+      spotify.keeping(lists: { "One" => [ { artist: "Pappo", track: "Desconfío" } ],
+                               "Two" => [ { artist: "Pappo", track: "Desconfío" } ] })
+
+      bring_it_home
+
+      assert_equal 1, Absence.count
       assert_equal 1, @gaston.spotify_account.strangers
     end
 

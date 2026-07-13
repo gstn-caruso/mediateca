@@ -16,8 +16,11 @@ module Spotify
       @library = Music::Lookup.new
       @hearts = 0
       @lists = 0
-      @strangers = 0
       @refused = 0
+
+      # A set, not a tally: one song you do not own is one gap, however many of
+      # your lists it turns up in.
+      @strangers = Set.new
     end
 
     def bring_it_all_home
@@ -27,7 +30,7 @@ module Spotify
       records_for(Spotify.api.saved_albums(token:))
       lists_from(token)
 
-      @profile.spotify_account.imported(hearts: @hearts, lists: @lists, strangers: @strangers, refused: @refused)
+      @profile.spotify_account.imported(hearts: @hearts, lists: @lists, strangers: @strangers.size, refused: @refused)
     end
 
     private
@@ -53,9 +56,11 @@ module Spotify
       ).count
     end
 
-    # A list is a list: the songs of it this house owns, in the order they were put
-    # there. A list that lands empty is not made — an empty playlist named after
-    # one you cannot play is worse than no playlist.
+    # A list you kept somewhere else is the list you kept. Handing back only the
+    # songs this house happens to own would be a shorter list that never said why —
+    # so the whole thing comes home, and the songs that are not here come as gaps:
+    # grey, unplayable, and named.
+    #
     # Spotify will not hand over every list it names — one made by somebody else,
     # one it has decided this app may not read. It answers 403 and it is entitled
     # to. One refusal is not a reason to throw an import away: the hearts already
@@ -63,31 +68,48 @@ module Spotify
     # counted and said out loud.
     def lists_from(token)
       Spotify.api.playlists(token:).each do |list|
-        songs = Spotify.api.playlist_songs(list.fetch(:id), token:).filter_map { known(it) }
-        next if songs.empty?
+        lines = Spotify.api.playlist_songs(list.fetch(:id), token:).map { line_for(it) }
+        next if lines.empty?
 
-        fill(list.fetch(:name), songs)
+        fill(list.fetch(:name), lines)
         @lists += 1
       rescue Api::Refused
         @refused += 1
       end
     end
 
-    def fill(name, songs)
+    # A line in a list: the song, or the gap where it should be. Both keys on every
+    # line, one of them empty — insert_all writes one statement for the lot, and one
+    # statement has one shape.
+    def line_for(song)
+      track_id = @library.find(artist: song[:artist], track: song[:track])
+
+      { track_id:, absence_id: track_id ? nil : missed(song).id }
+    end
+
+    def fill(name, lines)
       list = @profile.playlists.find_or_create_by!(name:)
       list.entries.destroy_all
 
       now = Time.current
       PlaylistEntry.insert_all(
-        songs.each_with_index.map { |track_id, at| { playlist_id: list.id, track_id:, position: at + 1, created_at: now, updated_at: now } }
+        lines.each_with_index.map { |line, at| line.merge(playlist_id: list.id, position: at + 1, created_at: now, updated_at: now) }
       )
     end
 
     def known(song)
       found = @library.find(artist: song[:artist], track: song[:track])
-      @strangers += 1 unless found
+      missed(song) if found.nil?
 
       found
+    end
+
+    # The names the import used to count and then throw away — a thousand songs
+    # somebody loves, and the app could not name one of them.
+    def missed(song)
+      @strangers << [ song[:artist], song[:track] ]
+
+      @profile.misses(artist: song[:artist].to_s, title: song[:track].to_s)
     end
 
     def known_record(record)

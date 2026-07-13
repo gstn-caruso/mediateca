@@ -10,6 +10,7 @@ class Profile < ApplicationRecord
   # Not the scrobbler's: revoking a Last.fm must not throw away what was waiting
   # to go to it. It waits for whenever it is connected again.
   has_many :scrobbles, dependent: :destroy
+  has_many :absences, dependent: :destroy
 
   # Named out loud, because Rails reads "loves" the way it reads "knives" and goes
   # looking for a model called Lofe.
@@ -154,6 +155,24 @@ class Profile < ApplicationRecord
 
   def spotify?
     spotify_account.present?
+  end
+
+  # A song they listen to somewhere else and do not own a copy of. One gap, however
+  # many times it turns up: hearted on Spotify and sitting in three playlists is
+  # one song you do not have.
+  def misses(artist:, title:)
+    absences.create_or_find_by!(artist:, title:)
+  end
+
+  # The shopping list, by the only unit a library is drawn in: people. Whoever the
+  # house owns nothing at all by, heaviest want first — a song of somebody's you
+  # have not got is a song that is short, and it would be a strange library that
+  # listed Elliott Smith under both what it has and what it wants.
+  def absent_artists
+    absences.by_strangers
+            .group(:artist).count
+            .map { |name, songs| Absence::Stranger.new(name:, songs:) }
+            .sort_by { [ -it.songs, it.name ] }
   end
 
   # How many times this listener has heard the whole record.

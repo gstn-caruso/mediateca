@@ -10,7 +10,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_13_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_13_100000) do
+  create_table "absences", force: :cascade do |t|
+    t.string "artist", null: false
+    t.datetime "created_at", null: false
+    t.integer "profile_id", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["profile_id", "artist", "title"], name: "index_absences_on_profile_id_and_artist_and_title", unique: true
+    t.index ["profile_id", "artist"], name: "index_absences_on_profile_id_and_artist"
+    t.index ["profile_id"], name: "index_absences_on_profile_id"
+  end
+
   create_table "albums", force: :cascade do |t|
     t.string "album_type"
     t.integer "artist_id", null: false
@@ -70,11 +81,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_090000) do
   end
 
   create_table "playlist_entries", force: :cascade do |t|
+    t.integer "absence_id"
     t.datetime "created_at", null: false
     t.integer "playlist_id", null: false
     t.integer "position", null: false
-    t.integer "track_id", null: false
+    t.integer "track_id"
     t.datetime "updated_at", null: false
+    t.index ["absence_id"], name: "index_playlist_entries_on_absence_id"
     t.index ["playlist_id", "position"], name: "index_playlist_entries_on_playlist_id_and_position", unique: true
     t.index ["playlist_id"], name: "index_playlist_entries_on_playlist_id"
     t.index ["track_id"], name: "index_playlist_entries_on_track_id"
@@ -194,12 +207,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_090000) do
     t.index ["path"], name: "index_tracks_on_path", unique: true
   end
 
+  add_foreign_key "absences", "profiles"
   add_foreign_key "albums", "artists"
   add_foreign_key "kinships", "artists"
   add_foreign_key "kinships", "artists", column: "kin_id"
   add_foreign_key "likes", "profiles"
   add_foreign_key "loves", "profiles"
   add_foreign_key "loves", "tracks"
+  add_foreign_key "playlist_entries", "absences"
   add_foreign_key "playlist_entries", "playlists"
   add_foreign_key "playlist_entries", "tracks"
   add_foreign_key "playlists", "profiles"

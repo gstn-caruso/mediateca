@@ -1,5 +1,9 @@
 <% content_for :title, @playlist.name %>
-<% length = album_length(@entries.sum { |entry| entry.track.duration.to_f }) %>
+<%# Only what can actually be played has a length, and only it is a song this
+    library has. The gaps are counted apart, and said apart. %>
+<% here = @entries.select(&:playable?) %>
+<% missing = @entries.size - here.size %>
+<% length = album_length(here.sum { |entry| entry.track.duration.to_f }) %>
 
 <%# Same shape as the hearts: the list, what it says when it holds nothing, and
     the buttons that play it, with `:has` deciding which of them shows. Dropping
@@ -9,7 +13,10 @@
     <p class="text-sm font-semibold text-white">Playlist</p>
     <h1 class="mt-2 text-4xl font-bold tracking-tight text-white sm:text-6xl"><%= @playlist.name %></h1>
     <p class="mt-4 text-sm text-neutral-300">
-      <%= pluralize(@entries.size, "song") %><%= ", #{length}" if length %>
+      <%= pluralize(here.size, "song") %><%= ", #{length}" if length %>
+      <% if missing.positive? %>
+        <span class="text-neutral-500">· <%= missing %> you don't have</span>
+      <% end %>
     </p>
   </header>
 
@@ -65,34 +72,61 @@
     Nothing here yet. Add songs from any album.
   </p>
 
+  <%# The queue the player builds is made of the rows it can see, and its index is
+      an index into that queue — so a gap must not be one of them. It is counted
+      separately: what the listener reads down the left is the position in the
+      list, and what the player is handed is the position among the songs that
+      actually exist. %>
+  <% at = 0 %>
   <ol class="the-songs">
     <% @entries.each_with_index do |entry, index| %>
       <li class="group/row flex items-center gap-1">
-        <button type="button" <%= tag.attributes(data: playable(entry.track, index)) %>
-                aria-current="false"
-                class="group flex min-w-0 flex-1 items-center gap-4 rounded-lg px-3 py-2 text-left transition hover:bg-white/10 aria-[current=true]:text-accent">
-          <span class="w-6 shrink-0 text-right text-sm tabular-nums text-neutral-400"><%= index + 1 %></span>
-          <span class="min-w-0 flex-1">
-            <span class="block truncate text-sm font-medium text-neutral-100 group-aria-[current=true]:text-accent">
-              <%= entry.track.title %>
+        <% if entry.playable? %>
+          <button type="button" <%= tag.attributes(data: playable(entry.track, at)) %>
+                  aria-current="false"
+                  class="group flex min-w-0 flex-1 items-center gap-4 rounded-lg px-3 py-2 text-left transition hover:bg-white/10 aria-[current=true]:text-accent">
+            <span class="w-6 shrink-0 text-right text-sm tabular-nums text-neutral-400"><%= index + 1 %></span>
+            <span class="min-w-0 flex-1">
+              <span class="block truncate text-sm font-medium text-neutral-100 group-aria-[current=true]:text-accent">
+                <%= entry.track.title %>
+              </span>
+              <span class="block truncate text-xs text-neutral-400"><%= entry.track.artist_name %></span>
             </span>
-            <span class="block truncate text-xs text-neutral-400"><%= entry.track.artist_name %></span>
-          </span>
-          <span class="shrink-0 text-sm tabular-nums text-neutral-400"><%= track_duration(entry.track.duration) %></span>
-        </button>
+            <span class="shrink-0 text-sm tabular-nums text-neutral-400"><%= track_duration(entry.track.duration) %></span>
+          </button>
+          <% at += 1 %>
 
-        <%= render "shared/heart", thing: entry.track %>
+          <%= render "shared/heart", thing: entry.track %>
+        <% else %>
+          <%# A song this house does not own. It is in the list because it was in
+              the list — handing back only the songs you happen to have would be a
+              shorter list that never said why. Drawn dim and doing nothing: there
+              is no file to play, no sleeve to show and no heart to give. What it
+              is for is to be *seen* — this is the shape of the gap between what
+              you listen to and what is on the disk. %>
+          <div class="flex min-w-0 flex-1 items-center gap-4 rounded-lg px-3 py-2">
+            <span class="w-6 shrink-0 text-right text-sm tabular-nums text-neutral-700"><%= index + 1 %></span>
+            <span class="min-w-0 flex-1">
+              <span class="block truncate text-sm font-medium text-neutral-500"><%= entry.title %></span>
+              <span class="block truncate text-xs text-neutral-600"><%= entry.artist_name %></span>
+            </span>
+            <span title="You don't have this one"
+                  class="shrink-0 rounded bg-white/5 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-600">
+              Not here
+            </span>
+          </div>
+        <% end %>
 
         <%# Moving a song one place at a time. The arrows used to be 24px of
             nothing to aim at; they are a thumb's worth now. %>
         <%= button_to "▲", playlist_entry_path(@playlist, entry, by: -1), method: :patch,
-                      "aria-label": "Move #{entry.track.title} up",
+                      "aria-label": "Move #{entry.title} up",
                       class: "cursor-pointer rounded-full p-2 text-xs text-neutral-500 transition hover:bg-white/10 hover:text-white active:scale-90" %>
         <%= button_to "▼", playlist_entry_path(@playlist, entry, by: 1), method: :patch,
-                      "aria-label": "Move #{entry.track.title} down",
+                      "aria-label": "Move #{entry.title} down",
                       class: "cursor-pointer rounded-full p-2 text-xs text-neutral-500 transition hover:bg-white/10 hover:text-white active:scale-90" %>
         <%= button_to "✕", playlist_entry_path(@playlist, entry), method: :delete,
-                      "aria-label": "Remove #{entry.track.title}",
+                      "aria-label": "Remove #{entry.title}",
                       class: "cursor-pointer rounded-full p-2 text-xs text-neutral-500 transition hover:bg-white/10 hover:text-rose-400 active:scale-90" %>
       </li>
     <% end %>

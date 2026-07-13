@@ -107,11 +107,22 @@ module Spotify
 
     # `/items`, not `/tracks`. The older one is deprecated, and in the development
     # mode every self-hosted app is stuck in forever it does not merely warn — it
-    # answers 403, for every list, and takes the import down with it. Checked
-    # against the real Spotify: `/tracks` is a 403 and `/items` is a 200.
+    # answers 403, for every list, and takes the import down with it.
+    #
+    # And it hands each line back under `item`, not `track` — which is the whole
+    # reason for the rename: a line in a Spotify list can be a podcast episode, and
+    # `item` is what a thing that might not be a song is called. Read it looking for
+    # `track` and every list comes back empty, which is a lie a client tells
+    # cheerfully and without any error at all.
+    #
+    # Both facts checked against the real Spotify: `/tracks` answers 403, `/items`
+    # answers 200, and what is inside it is `item`.
     def playlist_songs(id, token:)
-      through("/playlists/#{id}/items?limit=#{PAGE}", token:).filter_map do |kept|
-        song_in(kept["track"]) if kept["track"].is_a?(Hash) && kept.dig("track", "name").present?
+      through("/playlists/#{id}/items?limit=#{PAGE}", token:).filter_map do |line|
+        song = line["item"]
+        next unless song.is_a?(Hash) && song["type"] == "track" && song["name"].present?
+
+        song_in(song)
       end
     end
 
