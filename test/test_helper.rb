@@ -31,6 +31,7 @@ module ActiveSupport
     teardown do
       Lastfm.api = nil
       Spotify.api = nil
+      Qbittorrent.api = nil
     end
 
     # Add more helper methods to be used by all tests here...

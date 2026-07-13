@@ -98,6 +98,17 @@ module Lastfm
       }
     end
 
+    # The records this listener plays most, as records — which saves reconstructing
+    # them out of a hundred thousand scrobbles, and is the exact list a shopping
+    # list wants. No session key: a Last.fm profile is public.
+    def top_albums(user:, limit: 200)
+      said = get("user.getTopAlbums", user:, limit:, period: "overall").fetch("topalbums")
+
+      Array.wrap(said["album"]).map do
+        { artist: it.dig("artist", "name"), album: it["name"], plays: it["playcount"].to_i }
+      end
+    end
+
     # And the hearts. Note the artist arrives under a different key here than it
     # does in a history — `name` rather than `#text`. That is Last.fm's, not ours,
     # and it is the sort of thing that breaks an import in silence.

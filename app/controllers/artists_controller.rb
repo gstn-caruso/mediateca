@@ -4,6 +4,10 @@ class ArtistsController < ApplicationController
   # question, answered twice on the one page that asks it twice.
   def index
     @recently_played = Current.profile.recently_played_albums
+
+    # The records the house has gone and got, which are not on the disk yet and are
+    # drawn as though they were: the gap in the shelf, filling itself, in front of you.
+    @coming = OnTheWay.new(Current.profile).all
   end
 
   def show

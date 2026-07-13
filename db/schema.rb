@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_13_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_13_120000) do
   create_table "absences", force: :cascade do |t|
     t.string "artist", null: false
     t.datetime "created_at", null: false
@@ -212,6 +212,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_110000) do
     t.index ["album_id", "disc_no", "track_no"], name: "index_tracks_on_album_id_and_disc_no_and_track_no"
     t.index ["album_id"], name: "index_tracks_on_album_id"
     t.index ["path"], name: "index_tracks_on_path", unique: true
+  end
+
+  create_table "wanted_records", force: :cascade do |t|
+    t.string "artist", null: false
+    t.datetime "created_at", null: false
+    t.datetime "found_at"
+    t.string "nothing_doing"
+    t.integer "plays", default: 0, null: false
+    t.datetime "sought_at"
+    t.string "title", null: false
+    t.string "torrent_hash"
+    t.string "torrent_name"
+    t.datetime "updated_at", null: false
+    t.index ["artist", "title"], name: "index_wanted_records_on_artist_and_title", unique: true
+    t.index ["torrent_hash"], name: "index_wanted_records_on_torrent_hash", unique: true
   end
 
   add_foreign_key "absences", "profiles"

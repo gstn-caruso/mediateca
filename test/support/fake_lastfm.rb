@@ -77,6 +77,11 @@ class FakeLastfm
     paged(@hearts, page)
   end
 
+  # The records somebody plays most, which is what a shopping list is made of.
+  def top_albums(user:, limit: 200)
+    []
+  end
+
   # The line is down: the NAS lost its uplink, or Last.fm did. Worth trying again.
   class Unreachable < FakeLastfm
     def session_for(*, **) = no_route

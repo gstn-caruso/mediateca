@@ -59,5 +59,12 @@ module Mediateca
     # They come from an API account at last.fm/api/account/create.
     config.x.lastfm_api_key = ENV["LASTFM_API_KEY"]
     config.x.lastfm_api_secret = ENV["LASTFM_API_SECRET"]
+
+    # The house's torrent client, if it has one, and where it should put what it
+    # finds — which had better be under MUSIC_ROOT, or the scan will never see it.
+    # Without a URL there is no chasing of anything: the library is whatever is
+    # already on the disk, which is what it has always been.
+    config.x.qbittorrent = ENV["QBITTORRENT_URL"]
+    config.x.qbittorrent_into = ENV["QBITTORRENT_INTO"]
   end
 end

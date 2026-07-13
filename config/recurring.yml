@@ -27,3 +27,15 @@ production:
   send_waiting_scrobbles:
     class: SweepScrobblesJob
     schedule: every 30 minutes
+
+  # The records this house plays and does not have, gone and got. Three at a time,
+  # heaviest want first: the list is thousands long and would be a hundred gigabytes
+  # off the leash. It walks, and it gets there.
+  chase_wanted_records:
+    class: ChaseWantedRecordsJob
+    schedule: every 30 minutes
+
+  # And what became of them, so the clock on the library page has a number to show.
+  watch_the_chase:
+    class: WatchTheChaseJob
+    schedule: every 2 minutes
