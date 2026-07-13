@@ -7,6 +7,10 @@ class Profile < ApplicationRecord
   has_many :spins, dependent: :destroy
   has_many :standings, dependent: :destroy
 
+  # How wide this listener keeps each panel. Theirs and nobody else's: the house
+  # does not agree about how much room the queue deserves, and nobody has to.
+  has_many :panels, dependent: :destroy
+
   # Not the scrobbler's: revoking a Last.fm must not throw away what was waiting
   # to go to it. It waits for whenever it is connected again.
   has_many :scrobbles, dependent: :destroy
@@ -105,6 +109,27 @@ class Profile < ApplicationRecord
 
   def highlighted_artist_ids
     @highlighted_artist_ids ||= artist_ids_standing("highlighted")
+  end
+
+  # A panel a hand has widened. Dragged again, the row is replaced rather than
+  # added to — one listener holds one width per panel, and the unique index says
+  # so. The width is held inside its two ends on the way in: what arrives is a
+  # number off the network, not a hand that was held inside the room.
+  def widens(panel, to:)
+    raise ArgumentError, "no panel called #{panel}" unless Panel.known?(panel)
+
+    panels.create_or_find_by!(name: panel) { it.width = Panel.within_reach(to) }.tap do |widened|
+      widened.update!(width: Panel.within_reach(to))
+      forget_widths
+    end
+  end
+
+  # And the ordinary case, which is that nobody ever dragged this one: it is the
+  # width it was born.
+  def width_of(panel)
+    raise ArgumentError, "no panel called #{panel}" unless Panel.known?(panel)
+
+    widths.fetch(panel, Panel::BORN)
   end
 
   # Written down once the listener has heard enough of the song to have listened
@@ -234,6 +259,7 @@ class Profile < ApplicationRecord
     forget_hearts
     forget_standings
     forget_tally
+    forget_widths
     super
   end
 
@@ -341,6 +367,18 @@ class Profile < ApplicationRecord
 
   def standings_taken
     @standings_taken ||= standings.pluck(:artist_id, :standing)
+  end
+
+  # The same bargain again, and this one is on every page in the app: the layout
+  # asks how wide all four panels are, every time it draws, and a listener's
+  # panels are at most four rows. They come back once, and the chrome reads them
+  # off memory rather than asking four times for what one question answers.
+  def widths
+    @widths ||= panels.pluck(:name, :width).to_h
+  end
+
+  def forget_widths
+    @widths = nil
   end
 
   def forget_standings
