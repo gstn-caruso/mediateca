@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_13_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_13_130000) do
   create_table "absences", force: :cascade do |t|
     t.string "artist", null: false
     t.datetime "created_at", null: false
@@ -80,6 +80,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_120000) do
     t.index ["profile_id", "track_id"], name: "index_loves_on_profile_id_and_track_id", unique: true
     t.index ["profile_id"], name: "index_loves_on_profile_id"
     t.index ["track_id"], name: "index_loves_on_track_id"
+  end
+
+  create_table "panels", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.integer "profile_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "width", null: false
+    t.index ["profile_id", "name"], name: "index_panels_on_profile_id_and_name", unique: true
+    t.index ["profile_id"], name: "index_panels_on_profile_id"
   end
 
   create_table "playlist_entries", force: :cascade do |t|
@@ -236,6 +246,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_120000) do
   add_foreign_key "likes", "profiles"
   add_foreign_key "loves", "profiles"
   add_foreign_key "loves", "tracks"
+  add_foreign_key "panels", "profiles"
   add_foreign_key "playlist_entries", "absences"
   add_foreign_key "playlist_entries", "playlists"
   add_foreign_key "playlist_entries", "tracks"

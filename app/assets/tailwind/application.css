@@ -394,54 +394,95 @@ html[data-turbo-preview] .animate-enter {
   animation: none;
 }
 
-/* The queue rail. Shut, it is not there at all.
+/* The four panels: the library on one side, the picture, the words and the queue
+   on the other. Each is as wide as the listener keeps it, and all four were
+   nailed to 18rem until a hand could move them — which is still the width of one
+   nobody has ever touched.
+
+   The width itself is not here. It rides on the room (see panel_widths), and each
+   panel says only which of the room's four numbers is its own. The CSS does the
+   sizing; nothing else has to know. */
+.panel {
+  position: relative;
+  width: var(--panel, 18rem);
+}
+
+/* The edge you take a panel by.
+
+   The library's sits in the gap beside it, which belongs to neither of the things
+   it separates — so there is nothing to see and nothing in the way. The other
+   three cannot have that: they are clipped to their own rounded corners, and
+   anything hanging outside them is simply cut off. Theirs sit just inside their
+   near edge instead, which is the one strip of a rail with nothing on it — the
+   rows are padded off it, and the scrollbar is on the other side.
+
+   The cursor is the whole of the affordance until a hand comes near, which is how
+   every window that was ever resized has said so. */
+.grip {
+  position: absolute;
+  inset-block: 0;
+  width: 0.5rem;
+  z-index: 20;
+  cursor: col-resize;
+
+  /* Or a finger on the edge scrolls the rail instead of moving it. */
+  touch-action: none;
+}
+
+/* A hairline, in the colour of whatever is playing, that comes up under the hand:
+   the edge answering before it is pulled. The library's lands in the gap, where
+   it reads as the seam between two things; the other three light their own near
+   edge instead, because that is where their grip had to go. */
+.grip::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: 50%;
+  width: 2px;
+  translate: -50% 0;
+  border-radius: 1px;
+  background: transparent;
+  transition: background 120ms ease;
+}
+
+.grip:hover::after,
+.panel.is-resizing .grip::after {
+  background: color-mix(in oklab, var(--color-accent) 70%, white);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grip::after {
+    transition: none;
+  }
+}
+
+/* A phone has no edges to pull. A rail there does not stand beside the content —
+   it comes over the top and takes the screen, so there is no seam between two
+   things, and nothing to take hold of. */
+@media (width < 48rem) {
+  .grip {
+    display: none;
+  }
+}
+
+/* The three rails that are summoned: the queue, the words and the picture. Shut,
+   a rail is not there at all.
 
    Open on a desktop it stands beside the content and the content makes room.
    Open on a phone it comes over the top: 390px split in two is two columns of
-   nothing, so the queue takes the screen while you are looking at it, and the
-   player pill stays above it so the music is still in reach. */
-#queue-panel {
-  display: none;
-}
-#queue-panel.is-open {
-  display: flex;
-}
-@media (width < 48rem) {
-  #queue-panel.is-open {
-    position: absolute;
-    inset: 0;
-    z-index: 30;
-    width: auto;
-  }
-}
+   nothing, so the rail takes the screen while you are looking at it, and the
+   player pill stays above it so the music is still in reach.
 
-/* The lyrics rail, which opens and shuts exactly as the queue does — and on a
-   phone takes the screen the same way, for the same reason. */
-#lyrics-panel {
+   All three said this separately, three times over, and the second and third
+   said it in comments pointing at the first. They are one rule, and this is it. */
+.rail {
   display: none;
 }
-#lyrics-panel.is-open {
+.rail.is-open {
   display: flex;
 }
 @media (width < 48rem) {
-  #lyrics-panel.is-open {
-    position: absolute;
-    inset: 0;
-    z-index: 30;
-    width: auto;
-  }
-}
-
-/* The picture, which opens and shuts exactly as the other two rails do — and on
-   a phone takes the screen the same way, for the same reason. */
-#visualizer-panel {
-  display: none;
-}
-#visualizer-panel.is-open {
-  display: flex;
-}
-@media (width < 48rem) {
-  #visualizer-panel.is-open {
+  .rail.is-open {
     position: absolute;
     inset: 0;
     z-index: 30;

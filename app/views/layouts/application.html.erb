@@ -1,5 +1,10 @@
 <!DOCTYPE html>
-<html class="h-full">
+<%# How wide this listener keeps each of the four panels, worn by the room itself.
+    Turbo replaces the <body> on every visit and the room stands, so a width
+    written here is a width every page after this one is already wearing — and
+    nothing has to be told twice, or told again by a server that may not have
+    heard yet. %>
+<html class="h-full" style="<%= panel_widths %>">
   <head>
     <title><%= content_for(:title) || "Mediateca" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -92,7 +97,10 @@
                 "Don't use Liquid Glass in the content layer [...] use Standard
                 materials." The reading surface was already written for exactly
                 this, sitting in the stylesheet, wired to nothing. %>
-            <div class="relative min-w-0 flex-1">
+            <%# Named, because the panels beside it have to know how much room it
+                has left: a rail is widened until the content is down to the least
+                room a page can be read in, and not one pixel further. %>
+            <div id="content" class="relative min-w-0 flex-1">
               <%# A page is dressed in whatever it is about: a record's page wears
                   that record's colour, an artist's wears theirs, and the pages
                   that are about nothing in particular wear the app's own. It is
