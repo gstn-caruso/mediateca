@@ -745,17 +745,17 @@ export default class extends Controller {
     const img = new Image()
     img.addEventListener("load", () => {
       try {
+        // The hue is the record's and stays the record's: a red sleeve gives a
+        // red accent. Only how vivid and how light it comes out is ours to
+        // decide, and only so it stays legible.
         const [hue, saturation, lightness] = this.dominant(img)
-        // Warm the cover's hue toward orange, so the accent — and the text it
-        // tints — reads "medio anaranjada" rather than any raw sleeve colour.
-        const h = this.warm(hue)
         // Pin it to a legible band: vivid enough to read as an accent, held
         // between light-enough to glow on the dark panels and dark-enough that
         // the flipped-to-fit label still contrasts.
         const s = Math.min(0.92, Math.max(0.55, saturation))
         const l = Math.min(0.62, Math.max(0.50, lightness))
-        const rgb = this.hslToRgb(h, s, l)
-        const bright = this.hslToRgb(h, s, Math.min(0.72, l + 0.09))
+        const rgb = this.hslToRgb(hue, s, l)
+        const bright = this.hslToRgb(hue, s, Math.min(0.72, l + 0.09))
         // White reads on most accents, but not on a pale yellow one; let the
         // accent's own luminance decide whether its label goes white or near-black.
         const onAccent = this.luminance(rgb) > 0.42 ? "#0a0a0a" : "#ffffff"
@@ -791,15 +791,6 @@ export default class extends Controller {
       "--color-accent", "--color-accent-bright", "--color-on-accent",
       "--glass-tint", "--glass-tint-deep", "--gel-glow", "--ambient-tint"
     ]) root.removeProperty(name)
-  }
-
-  // Pull a hue toward orange (30°) along the shortest arc, so a warm sleeve
-  // reads clearly orange while a genuinely cool one is only nudged, not turned
-  // into a lie. The 0.6 weight and the ±45° cap are what keep it "medio".
-  warm(h) {
-    const arc = ((30 - h + 540) % 360) - 180
-
-    return (h + Math.max(-45, Math.min(45, arc * 0.6)) + 360) % 360
   }
 
   // The cover's dominant hue: sample it small, bucket every vivid, mid-toned
