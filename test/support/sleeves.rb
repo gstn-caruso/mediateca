@@ -16,6 +16,11 @@ module Sleeves
     write(rows.take(SIZE))
   end
 
+  # The same bands, called what they are when the picture is of a person rather
+  # than a record. The extractor cannot tell the difference, and neither can a
+  # PNG; only the test that reads it can.
+  alias_method :photograph, :sleeve
+
   private
 
   def write(rows)

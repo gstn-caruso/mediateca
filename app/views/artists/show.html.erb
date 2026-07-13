@@ -1,21 +1,33 @@
 <% content_for :title, @artist.name %>
+<% content_for :dressing, @artist.palette.to_style %>
 
-<header class="bg-gradient-to-b from-neutral-700/60 via-neutral-900/40 to-transparent px-4 pb-8 pt-8 sm:px-8 sm:pt-16">
-  <div class="flex flex-col items-center gap-6 text-center sm:flex-row sm:items-end sm:text-left">
-    <div class="size-40 shrink-0 overflow-hidden rounded-full bg-neutral-800 shadow-2xl ring-1 ring-white/10 sm:size-56">
+<%# The same head a record gets, and for the same reason: the picture of whoever
+    the page is about, blown up behind their name, and their own colour over it.
+    An artist's colour is read off their photograph — so it is theirs, and not the
+    colour of whichever of their records happened to be scanned first. %>
+<%# @container, not a breakpoint, and it is the same scar the album page has: the
+    name's room is decided by the sidebar and the queue, not by the window, and
+    `sm:text-7xl` fired on a viewport while the column it had to fit in was a few
+    hundred pixels wide. The name of the artist is the one thing this page is
+    about; it is sized against the column it actually lands in. %>
+<header class="@container relative">
+  <%= render "shared/hero_wash", picture: (portrait_url(@artist) if @artist.portrait_path.present?) %>
+
+  <div class="relative flex flex-col items-center gap-6 px-4 pb-10 pt-12 text-center @2xl:flex-row @2xl:items-end @2xl:gap-8 @2xl:text-left sm:px-8 sm:pt-24">
+    <div class="size-40 shrink-0 overflow-hidden rounded-full bg-neutral-800 shadow-2xl shadow-black/60 ring-1 ring-white/10 @2xl:size-56">
       <%= render "shared/artist_face", artist: @artist, text: "text-6xl" %>
     </div>
 
     <div class="min-w-0 pb-2">
-      <p class="text-sm font-semibold text-white">Artist</p>
-      <h1 class="mt-2 text-4xl font-bold tracking-tight text-white sm:text-7xl"><%= @artist.name %></h1>
-      <p class="mt-4 text-sm text-neutral-300"><%= pluralize(@albums.size, "album") %></p>
+      <p class="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Artist</p>
+      <h1 class="mt-3 text-[clamp(1.75rem,7cqi,4.5rem)] font-bold leading-[1.05] tracking-tight text-balance break-words hyphens-auto text-white drop-shadow-lg"><%= @artist.name %></h1>
+      <p class="mt-5 text-sm text-neutral-200"><%= pluralize(@albums.size, "album") %></p>
 
       <%# The menu offers the opposite of what is true; this is where what is true
           gets said. It is the one page a hidden artist still has — the rail no
           longer leads here, and search and this line are the way back. %>
       <% if Current.profile.hides?(@artist) %>
-        <p class="mt-2 text-xs font-semibold text-neutral-400">
+        <p class="mt-2 text-xs font-semibold text-neutral-300">
           Hidden from your library. Nothing will offer them, and search will still find them.
         </p>
       <% elsif Current.profile.highlights?(@artist) %>
@@ -24,25 +36,37 @@
 
       <% if @artist.portrait_credit.present? %>
         <%# The licence asks for the photographer's name, so it is here. %>
-        <p class="mt-2 text-xs text-neutral-500"><%= @artist.portrait_credit %></p>
+        <p class="mt-2 text-xs text-neutral-400"><%= @artist.portrait_credit %></p>
       <% end %>
     </div>
 
-    <div class="sm:ml-auto sm:pb-2">
+    <div class="@2xl:ml-auto @2xl:pb-2">
       <%= render "shared/standing", artist: @artist %>
     </div>
   </div>
 </header>
 
 <div class="px-4 pb-8 sm:px-8">
+  <%# Putting an artist on: their shelf, end to end, oldest record first. There is
+      no tracklist on this page to queue from — only sleeves — so the buttons carry
+      the address where the songs can be had, and the player goes and asks. %>
+  <% if @albums.any? %>
+    <div class="mb-8 flex items-center gap-3">
+      <%= render "shared/put_on", label: @artist.name,
+                 play: { action: "player#putOn", player_queue_param: artist_queue_path(@artist) },
+                 shuffle: { action: "player#putOn", player_queue_param: artist_queue_path(@artist),
+                            player_shuffled_param: true } %>
+    </div>
+  <% end %>
+
   <h2 class="mb-4 text-xl font-bold text-white">Albums</h2>
 
   <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
     <% @albums.each do |album| %>
       <%= link_to album_path(album), class: "group rounded-lg p-4 transition hover:bg-white/5" do %>
         <div class="aspect-square overflow-hidden rounded bg-neutral-800 shadow-lg">
-          <%= image_tag cover_url(album), alt: "", loading: "lazy",
-                        class: "size-full object-cover transition duration-300 group-hover:scale-105" %>
+          <%= render "shared/sleeve", album: album,
+                     class: "size-full object-cover transition duration-300 group-hover:scale-105" %>
         </div>
         <p class="mt-4 truncate text-base font-bold text-white"><%= album.title %></p>
         <p class="mt-1 truncate text-sm text-neutral-400">

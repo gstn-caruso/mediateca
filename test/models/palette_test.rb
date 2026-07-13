@@ -81,4 +81,15 @@ class PaletteTest < ActiveSupport::TestCase
     assert_equal %w[--color-accent --color-accent-bright --color-on-accent --gel-glow --ambient-tint],
       Palette.for(Colour.hex("#c8102e")).to_h.keys.map(&:to_s)
   end
+
+  # The same handover, said in CSS. What is playing is painted onto <html> by the
+  # player, from JSON; what you are looking at is painted onto its own header by
+  # the server, on the way out. Two readers, one palette, and no second opinion
+  # about what a record looks like.
+  test "a palette is also handed over as the style an element can wear" do
+    palette = Palette.for(Colour.hex("#c8102e"))
+
+    assert_equal palette.to_h.map { |property, value| "#{property}: #{value}" }.join("; "), palette.to_style
+    assert_includes palette.to_style, "--color-accent: #{palette.accent}"
+  end
 end

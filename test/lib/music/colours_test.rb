@@ -1,6 +1,7 @@
 require "test_helper"
 
-# Reading the colour off every sleeve in the library, once.
+# Reading the colour off every picture in the library, once: the sleeve of a
+# record, the photograph of an artist.
 class Music::ColoursTest < ActiveSupport::TestCase
   include Sleeves
 
@@ -40,6 +41,32 @@ class Music::ColoursTest < ActiveSupport::TestCase
 
     assert_nothing_raised { Music::Colours.new.collect }
     assert_nil coverless.reload.accent
+  end
+
+  # An artist's colour is their own, not one of their records'. It is read off
+  # the picture of them, so a singer photographed against a red wall is red even
+  # if every sleeve they ever made was blue.
+  test "an artist is painted the colour of their photograph" do
+    @artist.update!(portrait_path: photograph("#101010" => 0.6, "#1e6ad4" => 0.4))
+
+    Music::Colours.new.collect
+
+    assert_in_delta 214.0, Colour.hex(@artist.reload.accent).hue, 5
+  end
+
+  # Nobody has a picture of them: there is nothing to read, and an artist is not
+  # given the colour of one of their sleeves to stand in for a face.
+  test "an artist nobody photographed is left with no colour of their own" do
+    assert_nothing_raised { Music::Colours.new.collect }
+    assert_nil @artist.reload.accent
+  end
+
+  test "an artist already painted is not asked a second time" do
+    @artist.update!(portrait_path: photograph("#1e6ad4" => 1.0), accent: "#c8102e")
+
+    Music::Colours.new.collect
+
+    assert_equal "#c8102e", @artist.reload.accent
   end
 
   private

@@ -85,7 +85,13 @@
                 materials." The reading surface was already written for exactly
                 this, sitting in the stylesheet, wired to nothing. %>
             <div class="relative min-w-0 flex-1">
-              <main class="h-full animate-enter overflow-y-auto rounded-2xl glass-deep pb-32">
+              <%# A page is dressed in whatever it is about: a record's page wears
+                  that record's colour, an artist's wears theirs, and the pages
+                  that are about nothing in particular wear the app's own. It is
+                  written here and nowhere higher, so the rail, the bar and the
+                  pill around it go on wearing what is PLAYING while you browse. %>
+              <main class="h-full animate-enter overflow-y-auto rounded-2xl glass-deep pb-32"
+                    style="<%= yield :dressing %>">
                 <%= yield %>
               </main>
 

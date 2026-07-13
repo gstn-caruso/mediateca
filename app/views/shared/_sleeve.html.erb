@@ -1,0 +1,15 @@
+<%# A record whose sleeve nobody ever scanned — three of the seventy-five on the
+    NAS. The page used to ask for the cover anyway, get a 404, and let the browser
+    draw its broken-image icon: which says the app is broken, when what is missing
+    is a JPEG. A record with no sleeve is still a record, so it gets a plate. %>
+<% shape = local_assigns.fetch(:class, "size-full object-cover") %>
+
+<% if album.cover_path.present? %>
+  <%= image_tag cover_url(album), alt: "", loading: local_assigns.fetch(:loading, "lazy"), class: shape %>
+<% else %>
+  <span aria-hidden="true" class="flex items-center justify-center bg-neutral-800 text-neutral-600 <%= shape %>">
+    <svg class="w-1/3" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M14 1.5v9.25a2.25 2.25 0 1 1-1.5-2.122V4.2l-6 1.2v7.05a2.25 2.25 0 1 1-1.5-2.122V3.78a.75.75 0 0 1 .603-.735l7-1.4A.75.75 0 0 1 14 1.5Z"/>
+    </svg>
+  </span>
+<% end %>

@@ -57,6 +57,29 @@ class SeeingHowGoodAFileIsTest < ApplicationSystemTestCase
     assert_no_selector "span[title]", text: /MP3|FLAC/
   end
 
+  # Song by song is how the truth is told, but it is not how the question is
+  # asked. Somebody opening a record wants to know whether this is the good copy,
+  # and reading twenty rows to find out is not an answer.
+  test "a record that is one thing all the way through says so at its head" do
+    track "Zamba de resurreccion", codec: "flac", bit_depth: 24, sample_rate: 192000
+    track "Sé vos", codec: "flac", bit_depth: 24, sample_rate: 192000
+
+    visit album_path(@album)
+
+    assert_selector "header", text: "FLAC"
+  end
+
+  # A folder half ripped from the CD and half filled in off the internet is not
+  # one thing, and there is no honest badge for it.
+  test "a record that is two things at once says nothing at its head" do
+    track "Zamba de resurreccion", codec: "flac"
+    track "Sé vos", codec: "mp3", bit_rate: 128000
+
+    visit album_path(@album)
+
+    assert_no_selector "header", text: /FLAC|MP3/
+  end
+
   private
 
   def track(title, **audio)

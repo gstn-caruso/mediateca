@@ -1,4 +1,6 @@
 class Album < ApplicationRecord
+  include Coloured
+
   belongs_to :artist
   has_many :tracks, -> { ordered }, dependent: :destroy, inverse_of: :album
   has_many :likes, as: :likeable, dependent: :destroy
@@ -8,11 +10,29 @@ class Album < ApplicationRecord
 
   scope :ordered, -> { order(:year, :title) }
 
-  # The look a record hands the app while it plays, all of it derived from the
-  # one striking colour read off its sleeve. A record with no colour of its own —
-  # a black and white sleeve — hands over the app's standing red instead.
-  def palette
-    Palette.for(accent&.then { |hex| Colour.hex(hex) })
+  # A record's colour is printed on its sleeve.
+  def picture
+    cover_path
+  end
+
+  # What putting this record on plays: the record, in its running order. Said out
+  # loud so that a record and the person who made it can both be pressed, and
+  # neither has to be asked which of the two it is.
+  def songs
+    tracks
+  end
+
+  # What the record is, as files, said once at its head instead of song by song —
+  # which is the question somebody is actually asking when they open it: is this
+  # the good copy?
+  #
+  # Only when the record agrees with itself. A folder half ripped from the CD and
+  # half filled in off the internet is not one thing, and there is no honest badge
+  # for it: it says nothing, and the rows go on telling the truth song by song.
+  def quality
+    spoken = tracks.map { |track| track.audio.quality }.uniq
+
+    spoken.first if spoken.one?
   end
 
   # How records stand on a shelf: under whoever made them, oldest first. Ordered
