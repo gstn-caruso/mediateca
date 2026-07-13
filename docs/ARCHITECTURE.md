@@ -6,7 +6,10 @@ made. The short version is the [README](../README.md).
 - [The disk decides what music exists](#the-disk-decides-what-music-exists)
 - [Serving the bytes](#serving-the-bytes)
 - [The player outlives the page](#the-player-outlives-the-page)
+- [The player goes where it is put](#the-player-goes-where-it-is-put)
+- [The panels are as wide as you keep them](#the-panels-are-as-wide-as-you-keep-them)
 - [Nothing that isn't navigation navigates](#nothing-that-isnt-navigation-navigates)
+- [An app, not a tab](#an-app-not-a-tab)
 - [Who is listening](#who-is-listening)
 - [What comes next, and who you would rather it didn't be](#what-comes-next-and-who-you-would-rather-it-didnt-be)
 - [Search](#search)
@@ -128,6 +131,61 @@ the element rides through a Turbo visit on its own, but a cold load builds it
 again out of HTML the server wrote knowing nothing about anybody's hand. And, as
 with the queue, the controller is asked nothing — the element carries its own
 state, in two classes and two custom properties, and the CSS does the placing.
+
+## The panels are as wide as you keep them
+
+All four were nailed to 18rem: the library, the picture, the words and the queue.
+It is a fine width for a rail of artists and a poor one for a page of lyrics, and
+nobody had ever been asked. Now each is taken by its edge and given the room it is
+short of, and 18rem is only where a panel starts.
+
+**The width belongs to the listener, and this is the one piece of the layout that
+does.** Where the queue was left open, where the pill was put down, which turn of
+the library you were on — a browser remembers all of those for itself, in
+`localStorage`, because they are about the tab you are standing in front of. A
+width is not. It is about the eyes reading it, and the same eyes come back on the
+laptop and on the kitchen tablet and want the same room on both. So a `Panel` is a
+row: one listener, one panel, one width, replaced rather than added to, exactly as
+a standing is — and having no row at all is the ordinary case, because most people
+never drag anything.
+
+**The width is worn by `<html>`, not by the panels.** Turbo replaces the `<body>`
+on every visit, and the library rail is the one panel that cannot be permanent: it
+has to know which page you are standing on, so it is rebuilt each time. A width
+kept on that element would be gone the moment you clicked an artist — and reading
+it back off the server would put a `PATCH` nobody waited for in a race with the
+`GET` of whatever was clicked next. Lose that race and the rail comes back at the
+width it no longer has. So the hand writes the width on the room, which is the one
+element a visit does not touch, and every page drawn afterwards is already wearing
+it. Each panel says only which of the room's four numbers is its own; the CSS does
+the sizing.
+
+**The room holds them, and holds them back.** A hand can widen a rail until the
+content is down to the least room a page can be read in, and not one pixel further
+— a library with nothing left to be a library *of* is not a thing anybody meant to
+drag. That has to go on being true afterwards, too: a window narrowed, or a second
+rail opened beside the first, takes the same room a hand would have. So a panel
+watches the content rather than waiting to be told, because a rail opening is not
+the panel's business to know about and the content is. What it may take back is
+what a hand added, and never what the app shipped: on a tablet with a rail open the
+content is *already* under that floor and has been since long before any of this,
+and a room allowed to take back whatever it liked would answer that by shrinking
+rails nobody had ever touched.
+
+**And the app holds the ends of the rope too, not only the browser.** A request is
+not a hand. There is no password here, and anybody on the LAN can send this app any
+number they like — so a width is held between its two ends where it is *written
+down*, and not only out there where it was dragged.
+
+The grips are 8px of nothing at a panel's edge, and where they can sit is decided
+by what is already there. The library's goes out into the gap beside it: nothing
+clips that rail, and its own right edge is where its scrollbar lives — a handle
+laid over that would have quietly stolen the scrollbar. The other three are clipped
+to their own rounded corners, so anything hanging outside them is simply cut off;
+theirs sit just inside their near edge, which is the one strip of a rail with
+nothing on it. On a phone there are none at all: a rail there does not stand beside
+the content, it comes over the top and takes the screen, and there is no seam
+between two things to take hold of.
 
 ## Nothing that isn't navigation navigates
 
