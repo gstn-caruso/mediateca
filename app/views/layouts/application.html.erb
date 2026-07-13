@@ -78,9 +78,27 @@
                 two rows and a scrubber tall. At pb-20 the last song on every
                 list sat under the glass — which is exactly the song you are
                 looking at when the pill says "End of playlist". %>
-            <main class="min-w-0 flex-1 animate-enter overflow-y-auto rounded-2xl glass pb-32">
-              <%= yield %>
-            </main>
+            <%# glass-deep, not glass. Liquid Glass is the material of the chrome —
+                the bar, the rail, the pill: things that float over the content and
+                let it through. This is the content. Apple says it in one line:
+                "Don't use Liquid Glass in the content layer [...] use Standard
+                materials." The reading surface was already written for exactly
+                this, sitting in the stylesheet, wired to nothing. %>
+            <div class="relative min-w-0 flex-1">
+              <main class="h-full animate-enter overflow-y-auto rounded-2xl glass-deep pb-32">
+                <%= yield %>
+              </main>
+
+              <%# The scroll edge effect. Songs used to scroll under the pill and
+                  stay perfectly readable through it — two lists at once, one on
+                  top of the other. Apple's answer is not a thicker pane, it is
+                  to take the content apart before it gets there: the last inch of
+                  the scroller dissolves, so a row is gone by the time the glass
+                  is over it. Sibling, not a mask on <main>: masking the scroller
+                  would eat its own glass along with the songs. %>
+              <div aria-hidden="true"
+                   class="scroll-edge pointer-events-none absolute inset-x-0 bottom-0 h-28 rounded-b-2xl"></div>
+            </div>
 
             <%= render "shared/lyrics" %>
             <%= render "shared/queue" %>

@@ -45,7 +45,7 @@
                class="flex size-11 cursor-pointer list-none items-center justify-center rounded-full text-xl leading-none
                       text-neutral-400 transition hover:bg-white/10 hover:text-white active:scale-90">⋯</summary>
 
-      <div class="absolute left-0 z-20 mt-1 w-64 rounded-2xl glass p-2">
+      <div class="absolute left-0 z-20 mt-1 w-64 rounded-2xl menu-panel p-2">
         <%= form_with model: @playlist, class: "flex items-center gap-1" do |form| %>
           <%= form.text_field :name, "aria-label": "Playlist name",
                               class: "min-w-0 flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-accent focus:outline-none" %>
