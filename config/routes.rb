@@ -3,7 +3,11 @@ Rails.application.routes.draw do
 
   # Picking a profile off the grid starts a session; switching profiles ends it.
   resources :profiles, only: [ :index, :create ]
-  resource  :session,  only: [ :create, :destroy ]
+
+  # And the one page that is about the listener rather than the music: what they
+  # have played, what it says about them, and what they have connected.
+  resource :profile, only: [ :show ]
+  resource :session,  only: [ :create, :destroy ]
 
   resource :search, only: [ :show ]
 
@@ -12,6 +16,45 @@ Rails.application.routes.draw do
   resources :likes, only: [ :index ]
 
   resources :plays, only: [ :create ]
+
+  # Everything this listener ever heard, in the order they heard it — theirs and
+  # whatever Last.fm was keeping for them. The most interesting table in the
+  # database, and until now nothing ever read it back.
+  resource :history, only: [ :show ]
+
+  # And what it adds up to: who you actually listen to, over a month, a year, a
+  # life.
+  resource :statistics, only: [ :show ], path: "stats"
+
+  # The whole of it, added up and said out loud — and the three lists a hundred
+  # thousand scrobbles are owed, which nobody could have made by hand.
+  resource :report, only: [ :show, :create ]
+
+  # What is on right now. A play is written down once the song has been listened
+  # to; this is told the moment it starts, because it is what puts the song on a
+  # listener's Last.fm page while it is still playing.
+  resource :now_playing, only: [ :create ]
+
+  # A listener's Last.fm. Connecting it is a journey out to Last.fm and back, and
+  # both legs are GETs: the way back is Last.fm's own redirect, not a form anybody
+  # posted. Singular, because nobody scrobbles to two accounts at once.
+  resource :scrobbler, only: [ :show, :destroy ] do
+    get :connect
+    get :callback
+
+    # The other direction, and the one that actually works: the years of listening
+    # Last.fm has been keeping since before this library existed.
+    post :import
+  end
+
+  # A listener's Spotify — for the two things Last.fm cannot give: the songs they
+  # hearted there and the lists they made. Not their history: Spotify has no
+  # endpoint for one, and never has had.
+  resource :spotify, only: [ :show, :destroy ], controller: "spotify" do
+    get :connect
+    get :callback
+    post :import
+  end
 
   resources :playlists, only: [ :show, :create, :update, :destroy ] do
     resources :entries, only: [ :create, :update, :destroy ], controller: "playlist_entries"

@@ -70,9 +70,16 @@ class LikingSongsTest < ApplicationSystemTestCase
   end
 
   # The play is recorded by a fetch nothing waits on, so the test has to.
+  #
+  # And it has to be sat through: a song only counts once half of it has been
+  # heard. So this is the short one — two seconds, of which one has to pass — and
+  # not "Desencuentro", whose halfway mark is a minute away.
   test "a song that played shows up under Recently played" do
+    Track.create!(title: "Un Tema Corto", track_no: 2, disc_no: 1, duration: 2.0,
+                  path: media("05 - Un tema corto.flac"), album: @album)
+
     visit album_path(@album)
-    find("button[data-player-track]", text: "Desencuentro").click
+    find("button[data-player-track]", text: "Un Tema Corto").click
     wait_for_a_play
 
     visit root_path
@@ -83,8 +90,14 @@ class LikingSongsTest < ApplicationSystemTestCase
 
   private
 
+  # Not Capybara's wait, which is sized for a DOM element that is either there or
+  # coming. This one waits on a second of music actually playing — and the suite
+  # runs ten browsers at once, so the second the song needs is not a second of
+  # anybody's wall clock.
+  A_SONG_AND_THEN_SOME = 15
+
   def wait_for_a_play
-    Timeout.timeout(Capybara.default_max_wait_time) { sleep 0.05 until Play.any? }
+    Timeout.timeout(A_SONG_AND_THEN_SOME) { sleep 0.05 until Play.any? }
   rescue Timeout::Error
     flunk "the player never recorded the play"
   end

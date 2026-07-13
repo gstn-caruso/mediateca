@@ -1,6 +1,71 @@
 <% content_for :title, "Your Library" %>
 
 <div class="px-4 pb-10 sm:px-8">
+  <%# Records on their way to the disk.
+      They are drawn here, above everything, because in the only sense that matters
+      they are already yours: somebody went and got them, and they are coming. Grey,
+      with a clock and a number that climbs — they cannot be played, and they do not
+      pretend they can.
+
+      It is the loop the rest of this app opened, closing. The gap in the shelf was
+      named; now it is being filled, and you can stand here and watch it. %>
+  <%# The disk is full, so the chase has stopped. A library that fills its own disk
+      stops being one — and an app that quietly stopped fetching, and let somebody
+      wonder why, would be worse than one that never fetched at all. %>
+  <% if @no_room && WantedRecord.still_missing.any? %>
+    <p class="mb-6 rounded-2xl bg-white/[0.03] px-5 py-4 text-sm leading-relaxed text-neutral-500 ring-1 ring-inset ring-white/10">
+      <span class="font-semibold text-neutral-300"><%= @no_room %></span>
+      There are <%= number_with_delimiter(WantedRecord.still_missing.count) %> records you play and don't own,
+      and they're still on the list — <%= link_to "the report", report_path, class: "text-neutral-300 underline hover:text-white" %>
+      names them. Make room and they'll start arriving.
+    </p>
+  <% end %>
+
+  <% if @coming.any? %>
+    <div class="mb-10 rounded-2xl bg-white/[0.03] p-5 ring-1 ring-inset ring-white/10">
+      <h2 class="flex items-center gap-2 text-sm font-semibold text-neutral-300">
+        <svg aria-hidden="true" class="size-4 animate-pulse text-neutral-500" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Z"/>
+          <path d="M8 3.75a.75.75 0 0 1 .75.75v3.06l2 1.16a.75.75 0 1 1-.75 1.3L7.62 8.9A.75.75 0 0 1 7.25 8.25V4.5A.75.75 0 0 1 8 3.75Z"/>
+        </svg>
+        On the way
+      </h2>
+      <p class="mt-1 text-xs text-neutral-600">
+        You play these and don't have them. They're being fetched — the scan will make them real.
+      </p>
+
+      <ul class="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        <% @coming.each do |record| %>
+          <li>
+            <div class="relative aspect-square overflow-hidden rounded bg-white/[0.03] ring-1 ring-inset ring-white/5">
+              <span aria-hidden="true" class="flex size-full items-center justify-center">
+                <svg class="size-8 text-neutral-800" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Z"/>
+                  <path d="M8 3.75a.75.75 0 0 1 .75.75v3.06l2 1.16a.75.75 0 1 1-.75 1.3L7.62 8.9A.75.75 0 0 1 7.25 8.25V4.5A.75.75 0 0 1 8 3.75Z"/>
+                </svg>
+              </span>
+
+              <%# The number that climbs. Without the client to ask, there is no
+                  number — and the record is still coming, so it still shows. %>
+              <% if record.progress %>
+                <span class="absolute inset-x-0 bottom-0 h-1 bg-black/40">
+                  <span class="block h-full bg-neutral-500" style="width: <%= record.progress %>%"></span>
+                </span>
+              <% end %>
+            </div>
+
+            <p class="mt-3 truncate text-sm font-semibold text-neutral-500"><%= record.title %></p>
+            <p class="truncate text-xs text-neutral-700"><%= record.artist %></p>
+            <p class="mt-1 text-xs tabular-nums text-neutral-700">
+              <%= record.progress ? "#{record.progress}%" : "Queued" %>
+              · <%= number_with_delimiter(record.plays) %> plays
+            </p>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
   <% if @recently_played.any? %>
     <h1 class="mb-4 mt-4 text-2xl font-bold tracking-tight text-white sm:text-3xl">Recently played</h1>
 
@@ -115,4 +180,39 @@
       </div>
     <% end %>
   </div>
+
+  <%# Everybody this library does *not* have.
+      Mediateca is a shelf of the records you own, and until now it could say
+      nothing at all about the ones you do not: an import counted them, reported a
+      number, and threw the names away. So it knew about a thousand songs somebody
+      loves and could not name one of them.
+
+      They are drawn the way they are because of what they are: no photograph,
+      because nobody here has a record with their face on it; grey, because there
+      is nothing to play; not clickable, because there is nowhere to go. This is a
+      shopping list, and the only honest thing it can do is be legible. %>
+  <% missing = Current.profile.absent_artists %>
+  <% if missing.any? %>
+    <div class="mt-14 border-t border-white/5 pt-8">
+      <h2 class="text-xl font-bold tracking-tight text-neutral-400 sm:text-2xl">Not here yet</h2>
+      <p class="mt-1 text-sm text-neutral-600">
+        You listen to these on Spotify. There isn't a record by them on the disk.
+      </p>
+
+      <ul class="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        <% missing.each do |stranger| %>
+          <li class="rounded-lg p-4">
+            <div aria-hidden="true"
+                 class="flex aspect-square items-center justify-center rounded-full bg-white/[0.03] text-5xl font-bold text-neutral-800 ring-1 ring-inset ring-white/5">
+              <%= stranger.name.first&.upcase %>
+            </div>
+            <p class="mt-4 truncate text-center text-base font-semibold text-neutral-500"><%= stranger.name %></p>
+            <p class="mt-1 truncate text-center text-sm text-neutral-700">
+              <%= pluralize(stranger.songs, "song") %> you don't have
+            </p>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
 </div>

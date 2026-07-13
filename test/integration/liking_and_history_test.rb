@@ -57,6 +57,27 @@ class LikingAndHistoryTest < ActionDispatch::IntegrationTest
     assert_equal [ @album ], @gaston.recently_played_albums
   end
 
+  # The player waits until the song is half over before saying anything, so by
+  # the time this arrives the music has been running for minutes. It says when it
+  # started, and that is what gets written down.
+  test "the history is written with the moment the music started" do
+    started = 3.minutes.ago
+
+    post plays_path, params: { track_id: @track.id, started_at: started.to_i }
+
+    assert_in_delta started, Play.last.played_at, 1.second
+  end
+
+  # The clock that timed it is the listener's browser, and a browser's clock can
+  # be wrong. A song cannot have started after it was heard, so a start time in
+  # the future is not one — and a history that believes it would sort the future
+  # first, forever.
+  test "a song cannot have started after it was heard" do
+    post plays_path, params: { track_id: @track.id, started_at: 1.hour.from_now.to_i }
+
+    assert_in_delta Time.current, Play.last.played_at, 1.second
+  end
+
   test "the front page shows what was recently played" do
     @gaston.played(@track)
 

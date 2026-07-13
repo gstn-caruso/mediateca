@@ -4,7 +4,23 @@ class Profile < ApplicationRecord
   has_many :playlists, dependent: :destroy
   has_many :likes, dependent: :destroy
   has_many :plays, dependent: :destroy
+  has_many :spins, dependent: :destroy
   has_many :standings, dependent: :destroy
+
+  # Not the scrobbler's: revoking a Last.fm must not throw away what was waiting
+  # to go to it. It waits for whenever it is connected again.
+  has_many :scrobbles, dependent: :destroy
+  has_many :absences, dependent: :destroy
+
+  # Named out loud, because Rails reads "loves" the way it reads "knives" and goes
+  # looking for a model called Lofe.
+  has_many :loves, class_name: "Love", dependent: :destroy
+
+  # Nobody holds two Last.fm accounts at once, and a listener without one is the
+  # ordinary case: the app is whole without Last.fm in it. The same goes for the
+  # Spotify a listener may connect so that what they kept there can be brought home.
+  has_one :scrobbler, dependent: :destroy
+  has_one :spotify_account, dependent: :destroy
 
   normalizes :name, with: ->(name) { name.strip }
 
@@ -20,12 +36,16 @@ class Profile < ApplicationRecord
   # (it holds a unique index), and create_or_find_by lets it have it, rather than
   # raising in the listener's face over a heart they already gave.
   def like(thing)
-    likes.create_or_find_by!(likeable: thing).tap { forget_hearts }
+    likes.create_or_find_by!(likeable: thing).tap do
+      forget_hearts
+      scrobbler&.love(thing)
+    end
   end
 
   def unlike(thing)
     likes.where(likeable: thing).destroy_all
     forget_hearts
+    scrobbler&.unlove(thing)
   end
 
   def likes?(thing)
@@ -87,8 +107,122 @@ class Profile < ApplicationRecord
     @highlighted_artist_ids ||= artist_ids_standing("highlighted")
   end
 
-  def played(track)
-    plays.create!(track:)
+  # Written down once the listener has heard enough of the song to have listened
+  # to it — which is a while after the music started. The player is the only one
+  # who was there when it did, so it is the player who says when.
+  #
+  # A song is also the last song of some record, and hearing it may be the moment
+  # that record came full circle.
+  def played(track, at: Time.current)
+    plays.create!(track:, played_at: at, source: Play::HERE).tap do |play|
+      came_full_circle(play)
+      forget_tally
+      scrobbler&.scrobble(play)
+    end
+  end
+
+  # Listening that happened somewhere else and was told to us — by Last.fm, which
+  # hands over a whole life of it. It is history and nothing more: it is not told
+  # back to anybody, and no record comes full circle on the strength of a scrobble
+  # somebody else wrote down.
+  def heard_elsewhere(at:, from:, track: nil, absence: nil)
+    plays.create!(track:, absence:, played_at: at, source: from).tap { forget_tally }
+  end
+
+  # Connecting a Last.fm — again, or to a different account — replaces whatever
+  # was there. Coming back from Last.fm twice is a double click, not two accounts.
+  #
+  # And it hands over the listening this library already has: everything heard
+  # here before Last.fm was ever mentioned to it.
+  def scrobbles_to(username:, session_key:)
+    (scrobbler || build_scrobbler).tap do |connected|
+      connected.update!(username:, session_key:)
+      CatchUpOnLastfmJob.perform_later(self)
+    end
+  end
+
+  def stops_scrobbling
+    scrobbler&.destroy
+    reload_scrobbler
+  end
+
+  def scrobbles?
+    scrobbler.present?
+  end
+
+  def connects_spotify(username:, access_token:, refresh_token:, expires_in:)
+    (spotify_account || build_spotify_account).tap do |connected|
+      connected.update!(username:, access_token:, refresh_token:, expires_at: expires_in.seconds.from_now)
+    end
+  end
+
+  def forgets_spotify
+    spotify_account&.destroy
+    reload_spotify_account
+  end
+
+  def spotify?
+    spotify_account.present?
+  end
+
+  # A song they listen to somewhere else and do not own a copy of. One gap, however
+  # many times it turns up: hearted on Spotify and sitting in three playlists is
+  # one song you do not have.
+  def misses(artist:, title:)
+    absences.create_or_find_by!(artist:, title:)
+  end
+
+  # The shopping list, by the only unit a library is drawn in: people. Whoever the
+  # house owns nothing at all by, heaviest want first — a song of somebody's you
+  # have not got is a song that is short, and it would be a strange library that
+  # listed Elliott Smith under both what it has and what it wants.
+  def absent_artists
+    absences.by_strangers
+            .group(:artist).count
+            .map { |name, songs| Absence::Stranger.new(name:, songs:) }
+            .sort_by { [ -it.songs, it.name ] }
+  end
+
+  # Everything they ever heard, newest first — theirs and whatever Last.fm was
+  # keeping for them, the songs they own and the ones they do not.
+  #
+  # Read by the clock rather than by an offset: a life is a hundred thousand rows,
+  # and asking the database to count past ninety-nine thousand of them to show the
+  # next hundred gets slower every page. The clock is what it is ordered by anyway.
+  def history(before: Time.current, limit: 100)
+    plays.where(played_at: ...before)
+         .includes(:absence, track: { album: :artist })
+         .order(played_at: :desc, id: :desc)
+         .limit(limit)
+  end
+
+  # The listener, in numbers. One query each and none of them per row: this is the
+  # page about somebody, and a page about somebody should not be the slowest one in
+  # the app.
+  def in_numbers
+    {
+      "Songs played" => plays.count,
+      "Records spun" => spins.count,
+      "Hearts given" => likes.count,
+      "Not on the disk" => absences.count
+    }
+  end
+
+  # The day the history starts. For somebody who brought a decade home from
+  # Last.fm, that is a decade ago — and it is the most quietly impressive thing
+  # this app can tell them.
+  def listening_since
+    plays.minimum(:played_at)
+  end
+
+  # How many times this listener has heard the whole record.
+  def spins_of(album)
+    spins.where(album:).count
+  end
+
+  # How many times this listener has heard this song.
+  def times_played(track)
+    tally.fetch(track.id, 0)
   end
 
   # Reloading is going back to the database to ask again, so what was remembered
@@ -99,6 +233,7 @@ class Profile < ApplicationRecord
   def reload(...)
     forget_hearts
     forget_standings
+    forget_tally
     super
   end
 
@@ -121,12 +256,58 @@ class Profile < ApplicationRecord
 
   private
 
+  # A song heard may be the one that was still missing off some record. Every
+  # song on it, heard since the run began, means the record came full circle.
+  def came_full_circle(play)
+    return unless play.ours?
+
+    album = play.track.album
+
+    spins.create!(album:, play:) if heard_since_the_run_began(album) == album.tracks.ids.to_set
+  end
+
+  # A turn of the record is uninterrupted, so the run begins after the last thing
+  # that broke it: something else put on, or the turn this record already made —
+  # whose songs are finished business, and whose successor starts from there.
+  #
+  # Measured by when the music was *heard*, never by the order the rows were
+  # written. Importing a history from Last.fm files old plays today: they get the
+  # newest row numbers in the table and the oldest hours on the clock, and a rule
+  # that counted rows would think a record had been interrupted by music heard
+  # years after it.
+  def heard_since_the_run_began(album)
+    began = [ last_put_on_something_else(album), last_turn_of(album) ].compact.max
+
+    heard = plays.joins(:track).where(tracks: { album_id: album.id })
+    heard = heard.where(plays: { played_at: began.. }).where.not(plays: { played_at: began }) if began
+
+    heard.distinct.pluck(:track_id).to_set
+  end
+
+  def last_put_on_something_else(album)
+    plays.joins(:track).where.not(tracks: { album_id: album.id }).maximum(:played_at)
+  end
+
+  def last_turn_of(album)
+    spins.where(album:).joins(:play).maximum("plays.played_at")
+  end
+
   # A page full of songs asks about every one of them, and asking the database
   # each time is a query per row. A listener's hearts are a handful of rows, so
   # they come back once and the page reads them off memory. Current.profile is
   # this request's, so the memo cannot outlive the answer it holds.
   def hearts
     @hearts ||= likes.pluck(:likeable_type, :likeable_id).to_set
+  end
+
+  # The same bargain, for how many times each song was heard: a record's page
+  # asks about every song on it, and one query answers for all of them.
+  def tally
+    @tally ||= plays.group(:track_id).count
+  end
+
+  def forget_tally
+    @tally = nil
   end
 
   def forget_hearts

@@ -26,6 +26,15 @@ module ActiveSupport
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
+    # Last.fm and Spotify are each one object the whole app shares, so a test that
+    # hands one a fake has handed it to every test after this one. Put them back.
+    teardown do
+      Lastfm.api = nil
+      Spotify.api = nil
+      Qbittorrent.api = nil
+      Disk.holding_the_music = nil
+    end
+
     # Add more helper methods to be used by all tests here...
   end
 end

@@ -12,6 +12,13 @@ const REMEMBERED = "mediateca:player"
 // actually changes is written at once; this is only the clock ticking.
 const REMEMBER_EVERY = 5000
 
+// What it takes for a song to count as listened to: half of it, or four minutes
+// of it, whichever comes first. Putting a song on is not listening to it, and
+// the history used to think it was — a song skipped after three seconds counted
+// as much as one sat through. This is Last.fm's rule, and it holds whether or
+// not anybody's Last.fm is connected, because it is simply what listening means.
+const ENOUGH = 4 * 60
+
 // Whether the queue rail was left open, remembered the way the library rail's
 // state is. The class the CSS reads to know it is.
 const QUEUE = "mediateca:queue"
@@ -30,7 +37,10 @@ const FOLLOW = "mediateca:lyrics-follow"
 // #player, which is data-turbo-permanent. So the queue rides on the audio
 // element rather than on the controller, and playback survives navigation.
 export default class extends Controller {
-  static values = { profile: String }
+  // Whether this listener has a Last.fm. Without one there is nobody to tell what
+  // is on, and telling the server anyway would be a request per song that ends in
+  // a shrug.
+  static values = { profile: String, scrobbles: Boolean }
 
   static targets = [
     "audio", "title", "titleText", "idle", "subtitle", "subtitleText", "cover", "tail", "broken",
@@ -227,8 +237,12 @@ export default class extends Controller {
   // The first press restarts the track; only a second one goes back. Every
   // music player does this, and it is the only reason `previous` is not `next`
   // with a minus sign.
+  //
+  // Starting the song over is starting it over: what was heard of the last pass
+  // is abandoned, and sitting through this one is a listen of its own.
   previous() {
     if (this.audioTarget.currentTime > 3) {
+      this.listenAfresh()
       this.audioTarget.currentTime = 0
       return
     }
@@ -240,8 +254,13 @@ export default class extends Controller {
 
   // A track that ended on its own obeys repeat-one; a listener pressing next
   // means next.
+  //
+  // Repeat-one takes the song back to the top itself rather than going through
+  // start(), so it has to say that a fresh listen has begun — otherwise a song
+  // on loop all afternoon would be a single play.
   advance() {
     if (this.repeating === ONE) {
+      this.listenAfresh()
       this.audioTarget.currentTime = 0
       this.audioTarget.play()
       return
@@ -345,6 +364,7 @@ export default class extends Controller {
     this.progressTarget.value = Number.isFinite(duration) && duration > 0 ? (currentTime / duration) * 1000 : 0
     this.paint(this.progressTarget)
     this.followLyrics()
+    this.keepListening()
     this.savePosition()
   }
 
@@ -395,6 +415,25 @@ export default class extends Controller {
   get cursor() { return this.audioTarget.cursor ?? -1 }
   set cursor(at) { this.audioTarget.cursor = at }
 
+  // The tally of what has actually been heard rides on the <audio> for the same
+  // reason the queue does: Turbo throws this controller away on every visit, and
+  // walking to another page in the middle of a song is not leaving the song.
+  get listened() { return this.audioTarget.listened ?? 0 }
+  set listened(seconds) { this.audioTarget.listened = seconds }
+
+  // Where the music had got to when we last looked, so the next look knows how
+  // much of it ran in between.
+  get heardAt() { return this.audioTarget.heardAt ?? 0 }
+  set heardAt(seconds) { this.audioTarget.heardAt = seconds }
+
+  // When the music started, in the seconds Last.fm counts in.
+  get startedAt() { return this.audioTarget.startedAt ?? 0 }
+  set startedAt(unix) { this.audioTarget.startedAt = unix }
+
+  // Said once. The tick that crosses the halfway mark is one of four a second.
+  get counted() { return this.audioTarget.counted ?? false }
+  set counted(yes) { this.audioTarget.counted = yes }
+
   get shuffled() { return this.audioTarget.shuffled ?? false }
   set shuffled(on) { this.audioTarget.shuffled = on }
 
@@ -430,9 +469,62 @@ export default class extends Controller {
     this.brokenTarget.hidden = true
     this.audioTarget.src = track.src
     this.audioTarget.play().catch(() => {})
-    this.remember(track)
+    this.listenAfresh()
     this.announce(track)
+    this.announceToLastfm(track)
     this.render()
+  }
+
+  // Told at the first note, not at the halfway mark: what it is for is to put the
+  // song on the listener's Last.fm page *while it is playing*. Nothing waits on
+  // it and nothing retries it — a now-playing that arrived late would be a lie.
+  announceToLastfm({ trackId }) {
+    if (!this.scrobblesValue || !trackId) return
+
+    fetch("/now_playing", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": document.querySelector("meta[name='csrf-token']")?.content
+      },
+      body: JSON.stringify({ track_id: trackId })
+    }).catch(() => {})
+  }
+
+  // A song begins unheard. The clock stamped here is the wall clock, because it
+  // is when the music started that a history is ordered by and that Last.fm will
+  // take — and by the time we have heard enough to say so, it is minutes late.
+  listenAfresh() {
+    this.listened = 0
+    this.heardAt = 0
+    this.counted = false
+    this.startedAt = Math.floor(Date.now() / 1000)
+  }
+
+  // Listening is the time the music ran, not where the thumb ended up. A thumb
+  // can be dragged to the end of a song in an instant, having played none of it,
+  // and a player that watched the thumb would call that a listen. So only the
+  // ground the song covers under its own steam is counted.
+  keepListening() {
+    const { currentTime, duration } = this.audioTarget
+    const ran = currentTime - this.heardAt
+
+    if (ran > 0) this.listened += ran
+    this.heardAt = currentTime
+
+    if (this.counted || !Number.isFinite(duration)) return
+    if (this.listened < Math.min(duration / 2, ENOUGH)) return
+
+    this.counted = true
+    this.remember(this.current)
+  }
+
+  // A seek covers no ground: the song is suddenly somewhere else, having played
+  // none of the way there. This arrives before the tick that would see the leap,
+  // so moving the mark to where the song now is means the skipped stretch is
+  // never counted as heard.
+  jumped() {
+    this.heardAt = this.audioTarget.currentTime
   }
 
   // What the machine itself shows about what is playing: the lock screen, the
@@ -455,10 +547,12 @@ export default class extends Controller {
     navigator.mediaSession.setActionHandler("previoustrack", () => this.previous())
   }
 
-  // History is written when a track starts, not when its file is fetched:
-  // preload asks for the file before anybody presses play, and every seek asks
-  // for it again. Nothing waits on this — a lost play is not worth a stutter,
-  // and a NAS that blinked is not worth an error in the console.
+  // History is written once the song has been listened to, and it carries the
+  // moment the music started — which by now is minutes ago, and which is the only
+  // timestamp a history can be ordered by or a scrobble sent with.
+  //
+  // Nothing waits on this: a lost play is not worth a stutter, and a NAS that
+  // blinked is not worth an error in the console.
   remember({ trackId }) {
     if (!trackId) return
 
@@ -468,7 +562,7 @@ export default class extends Controller {
         "Content-Type": "application/json",
         "X-CSRF-Token": document.querySelector("meta[name='csrf-token']")?.content
       },
-      body: JSON.stringify({ track_id: trackId })
+      body: JSON.stringify({ track_id: trackId, started_at: this.startedAt })
     }).catch(() => {})
   }
 
@@ -635,7 +729,8 @@ export default class extends Controller {
         queue: this.queue, order: this.order, cursor: this.cursor,
         shuffled: this.shuffled, repeating: this.repeating,
         src: this.audioTarget.src || "", time: this.audioTarget.currentTime || 0,
-        paused: this.audioTarget.paused
+        paused: this.audioTarget.paused,
+        listened: this.listened, heardAt: this.heardAt, startedAt: this.startedAt, counted: this.counted
       }))
     } catch { /* private windows and full disks just forget; the tab still plays */ }
   }
@@ -664,6 +759,14 @@ export default class extends Controller {
     this.cursor = saved.cursor
     this.shuffled = saved.shuffled
     this.repeating = saved.repeating
+
+    // A reload in the middle of a song is not leaving the song, so what was
+    // heard of it before the reload is still heard. Without this, refreshing the
+    // page would quietly abandon a play the listener was most of the way through.
+    this.listened = saved.listened ?? 0
+    this.heardAt = saved.heardAt ?? 0
+    this.startedAt = saved.startedAt || Math.floor(Date.now() / 1000)
+    this.counted = saved.counted ?? false
 
     this.audioTarget.src = saved.src
     this.audioTarget.addEventListener("loadedmetadata", () => { this.audioTarget.currentTime = saved.time }, { once: true })

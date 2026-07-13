@@ -1,0 +1,67 @@
+<% content_for :title, "Spotify — Mediateca" %>
+
+<div class="mx-auto max-w-2xl px-4 pb-10 pt-10 sm:px-8 sm:pt-16">
+  <header class="flex items-center gap-4">
+    <span aria-hidden="true" class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#1DB954] text-black">
+      <svg class="size-7" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.586 14.424a.623.623 0 0 1-.857.207c-2.348-1.435-5.304-1.76-8.785-.964a.623.623 0 1 1-.277-1.215c3.809-.871 7.077-.496 9.713 1.115.293.18.386.563.206.857Zm1.223-2.722a.78.78 0 0 1-1.072.257c-2.687-1.652-6.785-2.131-9.965-1.166a.78.78 0 1 1-.452-1.493c3.632-1.102 8.147-.568 11.232 1.33a.78.78 0 0 1 .257 1.072Zm.105-2.835c-3.223-1.914-8.54-2.09-11.617-1.156a.935.935 0 1 1-.543-1.79c3.532-1.072 9.404-.865 13.115 1.338a.935.935 0 1 1-.955 1.608Z"/>
+      </svg>
+    </span>
+    <div class="min-w-0">
+      <h1 class="text-3xl font-bold tracking-tight text-white">Spotify</h1>
+      <p class="mt-1 text-sm text-neutral-400">Connected as <span class="font-semibold text-white"><%= @account.username %></span></p>
+    </div>
+  </header>
+
+  <%# The thing worth saying out loud, because everybody assumes otherwise — and
+      because assuming otherwise is how somebody waits a week for a history that
+      was never coming. %>
+  <p class="mt-8 rounded-2xl bg-white/5 p-4 text-sm leading-relaxed text-neutral-300 ring-1 ring-inset ring-white/10">
+    Spotify will hand over <strong class="font-semibold text-white">the songs you hearted, the records you
+    saved and the lists you made</strong> — and nothing else. It has no way to give you your listening
+    history: there is no endpoint for one, there never has been, and the most it will ever tell anybody is
+    the last fifty songs you played. Your history is on
+    <%= link_to "Last.fm", scrobbler_path, class: "font-semibold text-white hover:underline" %>,
+    and that is where Mediateca goes for it.
+  </p>
+
+  <% if @account.imported? %>
+    <dl class="mt-6 grid grid-cols-3 gap-3">
+      <% { "Hearts" => @account.imported_hearts, "Lists" => @account.imported_lists,
+           "Not here" => @account.strangers }.each do |label, count| %>
+        <div class="rounded-2xl bg-white/5 px-4 py-3 ring-1 ring-inset ring-white/10">
+          <dt class="text-xs uppercase tracking-widest text-neutral-500"><%= label %></dt>
+          <dd class="mt-1 text-2xl font-semibold tabular-nums text-white"><%= number_with_delimiter(count) %></dd>
+        </div>
+      <% end %>
+    </dl>
+
+    <% if @account.strangers.positive? %>
+      <p class="mt-4 text-sm leading-relaxed text-neutral-400">
+        <%= number_with_delimiter(@account.strangers) %> of them were songs you do not own a copy of.
+        There is nothing here to heart them onto.
+      </p>
+    <% end %>
+
+    <%# Spotify will not hand over every list it names, and it is entitled not to.
+        Said out loud rather than quietly coming home short. %>
+    <% if @account.refused_lists.positive? %>
+      <p class="mt-4 text-sm leading-relaxed text-neutral-400">
+        Spotify would not hand over <strong class="font-semibold text-neutral-200"><%= @account.refused_lists %></strong>
+        of your lists — the ones somebody else made, and the ones it has decided this app may not read.
+        Nothing to be done about those.
+      </p>
+    <% end %>
+  <% end %>
+
+  <div class="mt-8 flex items-center gap-3">
+    <%= button_to @account.imported? ? "Bring it home again" : "Bring my hearts and lists home",
+                  import_spotify_path, method: :post,
+                  class: "cursor-pointer rounded-full bg-accent gel px-5 py-2.5 text-sm font-semibold
+                          text-on-accent transition hover:scale-105 hover:bg-accent-bright" %>
+
+    <%= button_to "Disconnect", spotify_path, method: :delete,
+                  class: "cursor-pointer rounded-full bg-white/10 px-5 py-2.5 text-sm font-semibold text-white
+                          ring-1 ring-inset ring-white/15 transition hover:bg-white/15" %>
+  </div>
+</div>

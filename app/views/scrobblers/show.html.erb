@@ -1,0 +1,113 @@
+<% content_for :title, "Last.fm — Mediateca" %>
+<%
+  waiting  = @scrobbles.waiting.count
+  taken    = @scrobbles.taken.count
+  too_old  = @scrobbles.too_old.count
+  refused  = @scrobbles.turned_away.count - too_old
+%>
+
+<div class="mx-auto max-w-2xl px-4 pb-10 pt-10 sm:px-8 sm:pt-16">
+  <header class="flex items-center gap-4">
+    <%= render "shared/lastfm_mark" %>
+    <div class="min-w-0">
+      <h1 class="text-3xl font-bold tracking-tight text-white">Last.fm</h1>
+      <p class="mt-1 text-sm text-neutral-400">
+        Scrobbling as
+        <%= link_to @scrobbler.username, @scrobbler.url, target: "_blank", rel: "noopener",
+                    class: "font-semibold text-white hover:underline" %>
+      </p>
+    </div>
+  </header>
+
+  <%# The numbers, and the one that matters is not the first. %>
+  <dl class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <% {
+         "Scrobbled" => [ taken, "Songs Last.fm took and kept." ],
+         "Waiting"   => [ waiting, "Queued here. Last.fm takes them late, so an evening without internet loses nothing." ],
+         "Too old"   => [ too_old, "Last.fm refused these as too far in the past. It does not say how far is too far — it just quietly drops them, inside a response that otherwise looks like success." ],
+         "Refused"   => [ refused, "Turned away for some other reason of Last.fm's own." ]
+       }.each do |label, (count, why)| %>
+      <div title="<%= why %>"
+           class="rounded-2xl bg-white/5 px-4 py-3 ring-1 ring-inset ring-white/10
+                  <%= "ring-red-400/30" if label == "Too old" && count.positive? %>">
+        <dt class="text-xs uppercase tracking-widest text-neutral-500"><%= label %></dt>
+        <dd class="mt-1 text-2xl font-semibold tabular-nums text-white"><%= number_with_delimiter(count) %></dd>
+      </div>
+    <% end %>
+  </dl>
+
+  <%# The thing a quieter app would have hidden. If a year of listening went into
+      a hole, the page that sent it there is the page that has to say so. %>
+  <% if too_old.positive? %>
+    <p class="mt-6 rounded-2xl bg-white/5 p-4 text-sm leading-relaxed text-neutral-300 ring-1 ring-inset ring-white/10">
+      Last.fm threw away <strong class="font-semibold text-white"><%= number_with_delimiter(too_old) %></strong>
+      of the songs it was handed, because they were played too long ago for it to accept —
+      and it did that inside a response that looked like success. Nothing was lost here:
+      those plays are still in your history, still in your counts, still yours.
+      They just never made it onto Last.fm, and nothing Mediateca can do will change that.
+    </p>
+  <% end %>
+
+  <% if waiting.positive? %>
+    <p class="mt-4 text-sm text-neutral-400">
+      <%= number_with_delimiter(waiting) %> still to go. They go out on their own, oldest first —
+      and they keep until they can.
+    </p>
+  <% end %>
+
+  <%# The other direction, and the one that actually works. Last.fm will hand over
+      a whole history — every scrobble back to the day the account was opened —
+      and the songs of it this house happens to own become plays here, with the
+      hours they really happened. It is what makes a play count mean anything: a
+      record you have worn out for a decade should not say you have heard it three
+      times. %>
+  <section class="mt-10 rounded-2xl bg-white/5 p-5 ring-1 ring-inset ring-white/10">
+    <h2 class="text-sm font-semibold uppercase tracking-widest text-neutral-400">Bring it home</h2>
+
+    <% if @scrobbler.imported? %>
+      <p class="mt-3 text-sm leading-relaxed text-neutral-300">
+        Last.fm handed over its history <%= time_ago_in_words(@scrobbler.imported_at) %> ago.
+        <strong class="font-semibold text-white"><%= number_with_delimiter(@scrobbler.imported_plays) %></strong>
+        of the songs in it are songs this house owns, and they are in your counts now.
+        <%= number_with_delimiter(@scrobbler.imported_hearts) %> hearts came with them.
+      </p>
+
+      <%# The honest number. A history of everything you ever played anywhere,
+          matched against the records you actually own, is mostly going to miss —
+          and an import that found a tenth of a history and said "done" is worse
+          than one that never ran. %>
+      <% if @scrobbler.strangers.positive? %>
+        <p class="mt-3 text-sm leading-relaxed text-neutral-400">
+          <strong class="font-semibold text-neutral-200"><%= number_with_delimiter(@scrobbler.strangers) %></strong>
+          were songs Last.fm knows and this house does not have — heard somewhere else, on something
+          you do not own a copy of. They were not imported, because there is nothing here to import them onto.
+        </p>
+      <% end %>
+    <% else %>
+      <p class="mt-3 text-sm leading-relaxed text-neutral-300">
+        Last.fm has been keeping your listening since long before this library existed, and it will hand
+        the whole thing back. The songs of it you own become plays here, dated when they really happened —
+        which is what makes a play count worth reading.
+      </p>
+    <% end %>
+
+    <%= button_to @scrobbler.imported? ? "Bring it home again" : "Bring my listening home",
+                  import_scrobbler_path, method: :post,
+                  class: "mt-4 cursor-pointer rounded-full bg-accent gel px-5 py-2.5 text-sm font-semibold
+                          text-on-accent transition hover:scale-105 hover:bg-accent-bright" %>
+
+    <p class="mt-3 text-xs text-neutral-500">
+      Asked for one page a second, so nobody's API account gets suspended. A long history takes a while,
+      and nothing waits on it.
+    </p>
+  </section>
+
+  <div class="mt-8 flex items-center gap-3">
+    <%= button_to "Disconnect Last.fm", scrobbler_path, method: :delete,
+                  class: "cursor-pointer rounded-full bg-white/10 px-5 py-2.5 text-sm font-semibold text-white
+                          ring-1 ring-inset ring-white/15 transition hover:bg-white/15" %>
+
+    <%= link_to "Powered by AudioScrobbler", "https://www.last.fm", target: "_blank", rel: "noopener",
+                class: "text-xs text-neutral-500 transition hover:text-neutral-300" %>
+  </div>
+</div>

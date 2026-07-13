@@ -17,8 +17,10 @@ class Playlist < ApplicationRecord
   #
   # Sifted in Ruby, off the entries already in hand, so a list costs no more to
   # draw than it did.
+  # A gap has no artist to hide behind: it is a name, not a record by somebody the
+  # library knows. Nothing to hide it by, so it stays.
   def entries_visible_to(profile)
-    entries.reject { |entry| profile.hidden_artist_ids.include?(entry.track.album.artist_id) }
+    entries.reject { |entry| entry.playable? && profile.hidden_artist_ids.include?(entry.track.album.artist_id) }
   end
 
   # A playlist is a list, not a set: the same song may appear twice.

@@ -38,6 +38,18 @@
           <% end %>
           <span><%= pluralize(@album.tracks.size, "song") %><%= ", #{length}" if length %></span>
 
+          <%# How many times this listener has heard the whole thing — every song on
+              it, with nothing else put on in between. It is the number people mean
+              when they say they have listened to a record a hundred times, and no
+              shop can tell you it. Yours, not the house's. %>
+          <% spins = Current.profile.spins_of(@album) %>
+          <% if spins.positive? %>
+            <span aria-hidden="true" class="text-neutral-500">•</span>
+            <span title="You have heard this record all the way through <%= pluralize(spins, "time") %>">
+              Spun <%= spins == 1 ? "once" : "#{spins} times" %>
+            </span>
+          <% end %>
+
           <%# What the whole record is, as files — when the whole record is one
               thing. The rows still say it song by song; this answers the question
               without making anybody read twenty of them. %>
@@ -110,6 +122,15 @@
             </span>
 
             <span class="flex items-center justify-end gap-3">
+              <%# How many times you have heard this one. A song you never got to
+                  says nothing rather than nought: a column of zeroes is noise,
+                  and the ones worth seeing are the ones with a number. %>
+              <% times = Current.profile.times_played(track) %>
+              <% if times.positive? %>
+                <span title="<%= pluralize(times, "play") %>"
+                      class="hidden shrink-0 tabular-nums text-xs text-neutral-400 sm:inline"><%= pluralize(times, "play") %></span>
+              <% end %>
+
               <%# How the file is encoded, said as briefly as it can be said: a
                   lossless track wears its format and nothing else, a compressed
                   one adds the bits it was given and an icon for how it spent

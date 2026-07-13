@@ -1,0 +1,136 @@
+# The Last.fm a listener has connected: who they are there, the key that lets this
+# app act as them, and the thing that does the acting.
+#
+# The key is encrypted, and it is worth saying why in a house with no passwords.
+# The bargain in SECURITY.md is about a music library on a home LAN — anybody who
+# can reach it can be anybody. It was never a bargain about somebody's Last.fm
+# account, and a session key Last.fm never expires is not a thing to leave lying
+# in a database file that gets backed up.
+class Scrobbler < ApplicationRecord
+  belongs_to :profile
+
+  encrypts :session_key
+
+  validates :username, presence: true
+  validates :session_key, presence: true
+
+  # Last.fm's rule, and it is theirs to make: "The track must be longer than 30
+  # seconds." A jingle still counts as a play here — you heard it — but it is not
+  # a thing Last.fm will take, so it is not a thing we queue.
+  BRIEFEST = 30
+
+  # All Last.fm will take in one breath.
+  BREATH = 50
+
+  # Last.fm's own page for this listener. Its terms ask that a profile we show
+  # links back to the profile it came from.
+  def url
+    "https://www.last.fm/user/#{CGI.escape(username)}"
+  end
+
+  def imported?
+    imported_at.present?
+  end
+
+  def imported(plays:, hearts:, strangers:)
+    update!(imported_at: Time.current, imported_plays: plays, imported_hearts: hearts, strangers:)
+  end
+
+  # Queued, not sent: the sending is somebody else's afternoon, and a listener
+  # pressing play should never wait on a website.
+  def scrobble(play)
+    return unless play.ours? && play.track.duration.to_f > BRIEFEST
+
+    profile.scrobbles.create_or_find_by!(track: play.track, played_at: play.played_at)
+    ScrobbleJob.perform_later(profile)
+  end
+
+  # Told as the song starts rather than when it counts, because it is what puts
+  # the song on a listener's Last.fm page *while it is playing*. Last.fm asks that
+  # a failed one never be retried: by the time a retry landed it would be a lie.
+  def now_playing(track)
+    Lastfm.api.now_playing(what(track), as: session_key)
+  end
+
+  # You listened to this library for a year before you ever told it about Last.fm.
+  # That year is sitting right there, and keeping it was the point.
+  #
+  # So all of it is queued. Last.fm takes a scrobble late — but not *any* late: it
+  # throws away anything "too far in the past", it never says how far in its
+  # documentation, and it throws it away inside a 200 OK. Sending them and reading
+  # what comes back is the only honest way to find out, and the Last.fm page says
+  # plainly what became of them.
+  def catch_up_on_the_history
+    now = Time.current
+    already_heard = profile.plays.heard_here.joins(:track).where("tracks.duration > ?", BRIEFEST).pluck(:track_id, :played_at)
+    return if already_heard.empty?
+
+    Scrobble.insert_all(
+      already_heard.map { |track_id, played_at| { profile_id: profile.id, track_id:, played_at:, created_at: now, updated_at: now } },
+      unique_by: %i[profile_id track_id played_at]
+    )
+  end
+
+  # A heart given here is a heart given there — Last.fm calls it loving a track,
+  # and it is the same gesture. A record hearted is a real thing and it is not a
+  # thing Last.fm has ever heard of: it deals in songs.
+  def love(thing)
+    told_about(thing, loved: true)
+  end
+
+  def unlove(thing)
+    told_about(thing, loved: false)
+  end
+
+  # Everything waiting, until there is nothing left. Anything that fails raises,
+  # and the job that called this tries again — which is the whole reason all of it
+  # is rows before it is requests.
+  def send_what_is_waiting
+    send_the_songs
+    send_the_hearts
+  rescue Lastfm::Api::Revoked
+    # They took the privilege back on Last.fm's own settings page. There is
+    # nothing to retry and nothing to keep — but what was queued stays queued, for
+    # whenever they connect again.
+    destroy
+  end
+
+  private
+
+  # Oldest first, and fifty at a time, which is all Last.fm will take in one
+  # breath.
+  def send_the_songs
+    while (breath = profile.scrobbles.waiting.limit(BREATH).to_a).any?
+      told = Lastfm.api.scrobble(breath.map(&:as_told_to_lastfm), as: session_key)
+
+      breath.zip(told).each { |scrobble, ignored_as| scrobble.sent(ignored_as:) }
+    end
+  end
+
+  # One at a time: Last.fm has no batch for these, and there are never many.
+  def send_the_hearts
+    profile.loves.waiting.each do |heart|
+      Lastfm.api.public_send(heart.loved? ? :love : :unlove, heart.as_told_to_lastfm, as: session_key)
+      heart.sent
+    end
+  end
+
+  # What is kept is the intent, not the gesture: heart a song and unheart it
+  # before the queue drains, and Last.fm is told once, correctly. It does not need
+  # to watch somebody change their mind.
+  def told_about(thing, loved:)
+    return unless thing.is_a?(Track)
+
+    profile.loves.create_or_find_by!(track: thing) { it.loved = loved }.update!(loved:, sent_at: nil)
+    ScrobbleJob.perform_later(profile)
+  end
+
+  def what(track)
+    {
+      artist: track.artist_name,
+      track: track.title,
+      album: track.album.title,
+      albumArtist: track.album.artist.name
+    }
+  end
+end

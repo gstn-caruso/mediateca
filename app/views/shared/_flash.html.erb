@@ -1,0 +1,20 @@
+<%# The app had nowhere to say anything, because until now it never had to: a
+    heart fills in place, a playlist says where the song went, and everything
+    else is just the music. Last.fm is the first thing that happens somewhere
+    else and can go wrong somewhere else, and a listener who was sent to another
+    website and back deserves to be told how it went.
+
+    Nothing dismisses this and nothing needs to: a flash lives for one request,
+    and the next thing the listener clicks is a Turbo visit that draws the page
+    without it. %>
+<% if flash.any? %>
+  <div class="pointer-events-none absolute inset-x-0 top-16 z-50 flex justify-center px-4">
+    <% flash.each do |kind, said| %>
+      <p role="status"
+         class="max-w-md rounded-2xl glass px-4 py-2.5 text-center text-sm shadow-2xl shadow-black/50 animate-enter
+                <%= kind == "alert" ? "text-red-300 ring-1 ring-inset ring-red-400/30" : "text-neutral-100" %>">
+        <%= said %>
+      </p>
+    <% end %>
+  </div>
+<% end %>

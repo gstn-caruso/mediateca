@@ -48,6 +48,45 @@ class PlayTest < ActiveSupport::TestCase
     assert_empty Profile.create!(name: "Ana").recently_played_albums
   end
 
+  # A play is written down once you have heard enough of the song — halfway
+  # through it, or four minutes in. By then the song has been running a while,
+  # so the moment the row is inserted is not the moment the music started. Only
+  # the second one is any use: it is what a history is ordered by, and it is the
+  # only timestamp Last.fm will take.
+  test "a play remembers when the song started, not when it was written down" do
+    started = 3.minutes.ago
+
+    play = @gaston.played(track_of(@mundo), at: started)
+
+    assert_in_delta started, play.played_at, 1.second
+    assert_in_delta Time.current, play.created_at, 1.second
+  end
+
+  # Nothing else in the app knows the start time — the player is the only one who
+  # was there — so a play made without one is made now.
+  test "a play nobody timed happened just now" do
+    assert_in_delta Time.current, @gaston.played(track_of(@mundo)).played_at, 1.second
+  end
+
+  test "a song nobody played has been played no times" do
+    assert_equal 0, @gaston.times_played(track_of(@mundo))
+  end
+
+  test "a song counts every time it was heard" do
+    song = track_of(@mundo)
+
+    3.times { @gaston.played(song) }
+
+    assert_equal 3, @gaston.times_played(song)
+  end
+
+  test "what one profile played, another has not heard once" do
+    song = track_of(@mundo)
+    @gaston.played(song)
+
+    assert_equal 0, Profile.create!(name: "Ana").times_played(song)
+  end
+
   private
 
   def album(title, directory)

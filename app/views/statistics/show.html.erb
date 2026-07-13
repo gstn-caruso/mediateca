@@ -1,0 +1,83 @@
+<% content_for :title, "Stats" %>
+
+<div class="px-4 pb-10 pt-10 sm:px-8 sm:pt-16">
+  <header class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl">Stats</h1>
+      <p class="mt-3 text-sm text-neutral-400">
+        What <%= link_to "your history", history_path, class: "font-semibold text-white hover:underline" %> adds up to.
+        Everything you played, whether or not you own a copy of it.
+      </p>
+    </div>
+
+    <%# A month, a year, a life. Plain links: it is a different question, and a
+        different question is a different page. %>
+    <nav class="flex shrink-0 items-center gap-1 rounded-full bg-white/5 p-1 ring-1 ring-inset ring-white/10">
+      <% Statistics::SPANS.each do |span, (name, _)| %>
+        <%= link_to name, statistics_path(span:),
+                    class: "rounded-full px-4 py-1.5 text-xs font-semibold transition
+                            #{span == @stats.span ? 'bg-accent text-on-accent' : 'text-neutral-400 hover:text-white'}" %>
+      <% end %>
+    </nav>
+  </header>
+
+  <% if @stats.any? %>
+    <div class="mt-10 grid gap-10 lg:grid-cols-3">
+      <%# Artists first: it is the unit a library is drawn in, and the only chart
+          where the songs you do not own really belong beside the ones you do. %>
+      <section>
+        <h2 class="mb-4 text-xs font-semibold uppercase tracking-widest text-neutral-500">Artists</h2>
+        <ol class="space-y-1">
+          <% @stats.artists.each_with_index do |standing, at| %>
+            <li class="flex items-center gap-3 rounded-lg px-2 py-1.5">
+              <span class="w-5 shrink-0 text-right text-xs tabular-nums text-neutral-600"><%= at + 1 %></span>
+              <span class="min-w-0 flex-1 truncate text-sm text-neutral-200"><%= standing.name %></span>
+              <span class="shrink-0 text-xs tabular-nums text-neutral-500"><%= number_with_delimiter(standing.plays) %></span>
+            </li>
+          <% end %>
+        </ol>
+      </section>
+
+      <section>
+        <h2 class="mb-4 text-xs font-semibold uppercase tracking-widest text-neutral-500">Songs</h2>
+        <ol class="space-y-1">
+          <% @stats.songs.each_with_index do |standing, at| %>
+            <li class="flex items-center gap-3 rounded-lg px-2 py-1.5">
+              <span class="w-5 shrink-0 text-right text-xs tabular-nums text-neutral-600"><%= at + 1 %></span>
+              <span class="min-w-0 flex-1">
+                <span class="block truncate text-sm text-neutral-200"><%= standing.name %></span>
+                <span class="block truncate text-xs text-neutral-500"><%= standing.under %></span>
+              </span>
+              <span class="shrink-0 text-xs tabular-nums text-neutral-500"><%= number_with_delimiter(standing.plays) %></span>
+            </li>
+          <% end %>
+        </ol>
+      </section>
+
+      <%# Records, and only the ones on the disk: a song you do not own is off no
+          record this house has ever seen, and a chart of sleeves you cannot put on
+          is not a chart anybody wants. %>
+      <section>
+        <h2 class="mb-4 text-xs font-semibold uppercase tracking-widest text-neutral-500">Records</h2>
+        <ol class="space-y-1">
+          <% @stats.records.each_with_index do |standing, at| %>
+            <li>
+              <%= link_to album_path(standing.album), class: "flex items-center gap-3 rounded-lg px-2 py-1.5 transition hover:bg-white/5" do %>
+                <span class="w-5 shrink-0 text-right text-xs tabular-nums text-neutral-600"><%= at + 1 %></span>
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate text-sm text-neutral-200"><%= standing.name %></span>
+                  <span class="block truncate text-xs text-neutral-500"><%= standing.under %></span>
+                </span>
+                <span class="shrink-0 text-xs tabular-nums text-neutral-500"><%= number_with_delimiter(standing.plays) %></span>
+              <% end %>
+            </li>
+          <% end %>
+        </ol>
+      </section>
+    </div>
+  <% else %>
+    <p class="py-16 text-center text-sm text-neutral-500">
+      Nothing yet, <%= @stats.title.downcase %>. Put a record on, or bring your Last.fm home.
+    </p>
+  <% end %>
+</div>
