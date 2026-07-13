@@ -38,4 +38,10 @@ jobs:
           RAILS_ENV: test
           REQUIRE_NETWORK: "1"
           REQUIRE_FFPROBE: "1"
+          # Last.fm no contesta las lecturas sobre las que está construido el import
+          # sin una key, y sin ella los tests que la piden flunkean —que es el trato
+          # que REQUIRE_NETWORK vino a hacer—. Nada acá firma ni escribe: la key es
+          # para preguntar, no para hablar en nombre de nadie.
+          LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
+          LASTFM_API_SECRET: ${{ secrets.LASTFM_API_SECRET }}
         run: bin/rails db:test:prepare test:contracts
