@@ -1,0 +1,43 @@
+name: Install ffmpeg
+description: Pone ffmpeg y ffprobe en el runner, bajando los paquetes una sola vez.
+
+# Los runners de Ubuntu no traen ffmpeg, y `apt-get update && apt-get install`
+# tardaba 31s en el job de tests, que corre en 9s. Lo que tarda es bajar: los
+# .deb se guardan en la caché y las corridas siguientes solo los desempaquetan.
+#
+# La clave lleva la versión del runner adentro: un .deb bajado para una Ubuntu
+# no es el que instala en la siguiente, y una caché que sobrevive al cambio de
+# imagen instala paquetes viejos sin decir nada.
+
+runs:
+  using: composite
+
+  steps:
+    - name: Look for the packages we already downloaded
+      id: cached
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ffmpeg-debs
+        key: ffmpeg-debs-${{ runner.os }}-${{ runner.arch }}-${{ env.ImageOS }}-v1
+
+    - name: Download them, the first time
+      if: steps.cached.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        mkdir -p ~/.cache/ffmpeg-debs/partial
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends --download-only \
+          -o Dir::Cache::archives="$HOME/.cache/ffmpeg-debs" ffmpeg
+        sudo chown -R "$USER" ~/.cache/ffmpeg-debs
+        rm -rf ~/.cache/ffmpeg-debs/partial
+
+    # dpkg no resuelve dependencias, y los .deb no vienen en orden topológico:
+    # instalar de a uno falla a mitad de camino. Se le pasan todos juntos, que es
+    # el caso que sí sabe resolver. El -f es la red: si algo quedó a medias, apt
+    # lo termina en vez de dejar el runner con medio ffmpeg y un verde mentiroso.
+    - name: Unpack them
+      shell: bash
+      run: |
+        sudo dpkg --install ~/.cache/ffmpeg-debs/*.deb || sudo apt-get --fix-broken install -y
+        ffprobe -version | head -1
+        ffmpeg -version | head -1

@@ -81,12 +81,12 @@ jobs:
         with:
           bundler-cache: true
 
-      # Solo los tests de contrato corren ffprobe (viene en el paquete ffmpeg);
-      # el resto de la suite anda sin él. Los runners de Ubuntu no lo traen, y
-      # acá sí lo queremos: es el único lugar donde se verifica que ffprobe siga
-      # describiendo los FLACs como el scanner espera.
-      - name: Install ffprobe
-        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends ffmpeg
+      # Los tests de contrato corren ffprobe, y ffmpeg decodifica las tapas para
+      # sacarles el color. Los runners de Ubuntu no traen el paquete, y bajarlo
+      # tardaba más que correr la suite entera: 31s de apt para 9s de tests. Se
+      # baja una vez y se guarda; después es descomprimir.
+      - name: Install ffmpeg
+        uses: ./.github/actions/ffmpeg
 
       # Los tests nunca tocan el NAS: Beets::Library corre contra fixtures de
       # SQLite que se arman en el momento, y MEDIA_ROOT apunta a un puñado de
@@ -99,9 +99,19 @@ jobs:
           REQUIRE_FFPROBE: "1"
         run: bin/rails db:test:prepare test
 
+  # Un browser por test es lo más caro que hace esta suite, y no se puede hacer
+  # más barato: se puede hacer en paralelo. Los archivos se reparten entre tres
+  # runners de mayor a menor, así los dos grandes —el visualizador y el player—
+  # caen en máquinas distintas en vez de hacer cola en la misma.
   system_test:
-    name: Tests de sistema
+    name: Tests de sistema (${{ matrix.shard }}/3)
     runs-on: ubuntu-latest
+
+    strategy:
+      # Un shard que falla no dice nada de los otros dos, y querés ver los tres.
+      fail-fast: false
+      matrix:
+        shard: [ 1, 2, 3 ]
 
     steps:
       - name: Checkout code
@@ -115,18 +125,28 @@ jobs:
       # Los system tests recorren la cadena entera del color: la tapa se decodifica
       # con ffmpeg en el server y el browser solo aplica lo que recibe.
       - name: Install ffmpeg
-        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends ffmpeg
+        uses: ./.github/actions/ffmpeg
 
+      # `test:system` corre el directorio entero, así que el shard se arma a mano.
+      # tailwindcss:build va explícito: sin la hoja de estilos el browser no
+      # aplica ningún text-transform, y los tests que leen el texto de la pantalla
+      # fallan por mayúsculas — un rojo que no tiene nada que ver con el código.
       - name: Run system tests
         env:
           RAILS_ENV: test
-        run: bin/rails db:test:prepare test:system
+        run: |
+          files=$(wc -l test/system/*_test.rb | grep -v ' total$' | sort -rn |
+                    awk '{ print $2 }' | awk "NR % 3 == ${{ matrix.shard }} % 3")
+          echo "$files"
+          bin/rails tailwindcss:build
+          bin/rails db:test:prepare
+          bin/rails test $files
 
       - name: Keep screenshots from failed system tests
         uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: screenshots
+          name: screenshots-${{ matrix.shard }}
           path: ${{ github.workspace }}/tmp/screenshots
           if-no-files-found: ignore
 
