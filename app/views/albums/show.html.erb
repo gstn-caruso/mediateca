@@ -1,5 +1,4 @@
 <% content_for :title, "#{@album.title} — #{@album.artist.name}" %>
-<% cover = cover_url(@album) %>
 <% length = album_length(@album.tracks.sum { |track| track.duration.to_f }) %>
 
 <%# No sleeve-blur here anymore: the playing cover already washes the whole floor
@@ -11,8 +10,9 @@
     the container, it fits whatever column it lands in. %>
 <header class="@container px-4 pb-6 pt-10 sm:px-8 sm:pt-20">
   <div class="flex flex-col gap-6 @2xl:flex-row @2xl:items-end @2xl:gap-8">
-    <img src="<%= cover %>" alt=""
-         class="size-44 shrink-0 rounded-xl object-cover shadow-2xl shadow-black/50 ring-1 ring-white/10 @2xl:size-60">
+    <%# The one image on the page anybody came to see: it is not lazy-loaded. %>
+    <%= render "shared/sleeve", album: @album, loading: "eager",
+               class: "size-44 shrink-0 rounded-xl object-cover shadow-2xl shadow-black/50 ring-1 ring-white/10 @2xl:size-60" %>
 
     <div class="min-w-0 pb-2">
       <h1 class="text-[clamp(1.75rem,7cqi,4.5rem)] font-bold leading-[1.05] tracking-tight text-balance break-words hyphens-auto text-white"><%= @album.title %></h1>

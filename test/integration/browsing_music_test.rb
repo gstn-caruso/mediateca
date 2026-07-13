@@ -64,6 +64,28 @@ class BrowsingMusicTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  # 3 of the NAS's 75 records have no sleeve on disk, and the pages that show them
+  # put up an <img> for one anyway — so the cover came back 404 and the browser
+  # drew its broken-image icon, which says the app is broken when what is missing
+  # is a JPEG. A record with no sleeve is still a record: it gets a plate.
+  test "a record with no sleeve is never shown as a broken image" do
+    @album.update!(cover_path: nil)
+
+    get album_path(@album)
+
+    assert_response :success
+    assert_no_cover_image
+  end
+
+  test "a sleeveless record on a shelf is not a broken image either" do
+    @album.update!(cover_path: nil)
+
+    get artist_path(@artist)
+
+    assert_response :success
+    assert_no_cover_image
+  end
+
   test "a track is served as audio" do
     get track_stream_path(@track)
 
@@ -120,6 +142,13 @@ class BrowsingMusicTest < ActionDispatch::IntegrationTest
   end
 
   private
+
+  # Nothing on the page hangs an <img> off a sleeve that is not there. What the
+  # player is handed is a different matter: it is a background, and it already
+  # knows to leave the floor alone when there is no cover to wash it with.
+  def assert_no_cover_image
+    assert_select %(img[src^="#{album_cover_path(@album)}"]), count: 0
+  end
 
   def media(name)
     File.join(Rails.configuration.x.media_root, ALBUM_DIR, name)

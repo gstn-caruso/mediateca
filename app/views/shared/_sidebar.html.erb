@@ -44,7 +44,7 @@
         <% library_albums.each do |album| %>
           <%= link_to album_path(album), class: "#{row} #{"bg-white/10" if current_page?(album_path(album))}" do %>
             <span class="size-11 shrink-0 overflow-hidden rounded bg-neutral-800 shadow-lg ring-1 ring-inset ring-white/10">
-              <%= image_tag cover_url(album), alt: "", loading: "lazy", class: "size-full object-cover" %>
+              <%= render "shared/sleeve", album: album %>
             </span>
             <span class="min-w-0">
               <span class="block truncate text-sm font-medium text-neutral-100"><%= album.title %></span>
