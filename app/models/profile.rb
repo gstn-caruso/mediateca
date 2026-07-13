@@ -7,9 +7,13 @@ class Profile < ApplicationRecord
   has_many :spins, dependent: :destroy
   has_many :standings, dependent: :destroy
 
-  # Not the scrobbler's: revoking a Last.fm must not throw away the songs waiting
-  # to go to it. They wait for whenever it is connected again.
+  # Not the scrobbler's: revoking a Last.fm must not throw away what was waiting
+  # to go to it. It waits for whenever it is connected again.
   has_many :scrobbles, dependent: :destroy
+
+  # Named out loud, because Rails reads "loves" the way it reads "knives" and goes
+  # looking for a model called Lofe.
+  has_many :loves, class_name: "Love", dependent: :destroy
 
   # Nobody holds two Last.fm accounts at once, and a listener without one is the
   # ordinary case: the app is whole without Last.fm in it.
@@ -29,12 +33,16 @@ class Profile < ApplicationRecord
   # (it holds a unique index), and create_or_find_by lets it have it, rather than
   # raising in the listener's face over a heart they already gave.
   def like(thing)
-    likes.create_or_find_by!(likeable: thing).tap { forget_hearts }
+    likes.create_or_find_by!(likeable: thing).tap do
+      forget_hearts
+      scrobbler&.love(thing)
+    end
   end
 
   def unlike(thing)
     likes.where(likeable: thing).destroy_all
     forget_hearts
+    scrobbler&.unlove(thing)
   end
 
   def likes?(thing)

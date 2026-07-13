@@ -70,6 +70,16 @@ module Lastfm
       ignored_codes(signed_post("track.scrobble", **numbered(songs), sk: as))
     end
 
+    # A heart, and taking one back. Last.fm has no batch for either, and there are
+    # never many.
+    def love(song, as:)
+      signed_post("track.love", **song, sk: as)
+    end
+
+    def unlove(song, as:)
+      signed_post("track.unlove", **song, sk: as)
+    end
+
     private
 
     # artist[0], track[0], timestamp[0], artist[1]… The signature sorts these by

@@ -63,23 +63,59 @@ class Scrobbler < ApplicationRecord
     )
   end
 
-  # Everything waiting, oldest first and fifty at a time, until there is nothing
-  # left. A batch that fails raises, and the job that called this tries again —
-  # which is the whole reason the songs are rows and not requests.
-  def send_what_is_waiting
-    while (breath = profile.scrobbles.waiting.limit(BREATH).to_a).any?
-      told = Lastfm.api.scrobble(breath.map(&:as_told_to_lastfm), as: session_key)
+  # A heart given here is a heart given there — Last.fm calls it loving a track,
+  # and it is the same gesture. A record hearted is a real thing and it is not a
+  # thing Last.fm has ever heard of: it deals in songs.
+  def love(thing)
+    told_about(thing, loved: true)
+  end
 
-      breath.zip(told).each { |scrobble, ignored_as| scrobble.sent(ignored_as:) }
-    end
+  def unlove(thing)
+    told_about(thing, loved: false)
+  end
+
+  # Everything waiting, until there is nothing left. Anything that fails raises,
+  # and the job that called this tries again — which is the whole reason all of it
+  # is rows before it is requests.
+  def send_what_is_waiting
+    send_the_songs
+    send_the_hearts
   rescue Lastfm::Api::Revoked
     # They took the privilege back on Last.fm's own settings page. There is
-    # nothing to retry and nothing to keep — but the songs stay queued, for
+    # nothing to retry and nothing to keep — but what was queued stays queued, for
     # whenever they connect again.
     destroy
   end
 
   private
+
+  # Oldest first, and fifty at a time, which is all Last.fm will take in one
+  # breath.
+  def send_the_songs
+    while (breath = profile.scrobbles.waiting.limit(BREATH).to_a).any?
+      told = Lastfm.api.scrobble(breath.map(&:as_told_to_lastfm), as: session_key)
+
+      breath.zip(told).each { |scrobble, ignored_as| scrobble.sent(ignored_as:) }
+    end
+  end
+
+  # One at a time: Last.fm has no batch for these, and there are never many.
+  def send_the_hearts
+    profile.loves.waiting.each do |heart|
+      Lastfm.api.public_send(heart.loved? ? :love : :unlove, heart.as_told_to_lastfm, as: session_key)
+      heart.sent
+    end
+  end
+
+  # What is kept is the intent, not the gesture: heart a song and unheart it
+  # before the queue drains, and Last.fm is told once, correctly. It does not need
+  # to watch somebody change their mind.
+  def told_about(thing, loved:)
+    return unless thing.is_a?(Track)
+
+    profile.loves.create_or_find_by!(track: thing) { it.loved = loved }.update!(loved:, sent_at: nil)
+    ScrobbleJob.perform_later(profile)
+  end
 
   def what(track)
     {

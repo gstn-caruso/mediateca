@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_13_040000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_13_050000) do
   create_table "albums", force: :cascade do |t|
     t.string "album_type"
     t.integer "artist_id", null: false
@@ -43,6 +43,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_040000) do
     t.index ["likeable_type", "likeable_id"], name: "index_likes_on_likeable"
     t.index ["profile_id", "likeable_type", "likeable_id"], name: "index_likes_on_profile_and_likeable", unique: true
     t.index ["profile_id"], name: "index_likes_on_profile_id"
+  end
+
+  create_table "loves", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.boolean "loved", null: false
+    t.integer "profile_id", null: false
+    t.datetime "sent_at"
+    t.integer "track_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["profile_id", "sent_at"], name: "index_loves_on_profile_id_and_sent_at"
+    t.index ["profile_id", "track_id"], name: "index_loves_on_profile_id_and_track_id", unique: true
+    t.index ["profile_id"], name: "index_loves_on_profile_id"
+    t.index ["track_id"], name: "index_loves_on_track_id"
   end
 
   create_table "playlist_entries", force: :cascade do |t|
@@ -151,6 +164,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_040000) do
 
   add_foreign_key "albums", "artists"
   add_foreign_key "likes", "profiles"
+  add_foreign_key "loves", "profiles"
+  add_foreign_key "loves", "tracks"
   add_foreign_key "playlist_entries", "playlists"
   add_foreign_key "playlist_entries", "tracks"
   add_foreign_key "playlists", "profiles"
