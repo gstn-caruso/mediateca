@@ -512,3 +512,32 @@ html[data-playing="true"] .eq > i {
 html[data-transparency="off"] .glass,
 html[data-transparency="off"] .glass-deep { @apply solid-glass; }
 html[data-transparency="off"] .scroll-edge { display: none; }
+
+/* The listener's avatar, which is a record.
+
+   It costs two gradients and it is the truest thing the profile page could have
+   put at the top of itself: a black disc, its grooves catching the light off to
+   one side, and the listener's own colour where the label goes. The library is
+   made of these; so is the person who keeps it. */
+.vinyl {
+  background-image:
+    repeating-radial-gradient(circle at 50% 50%,
+      rgba(255, 255, 255, 0.055) 0 1px,
+      rgba(255, 255, 255, 0) 1px 4px),
+    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0) 55%);
+}
+
+/* A record stands on a shelf edge-on, and its name reads up the spine. So does
+   this one — bottom to top, the way you tilt your head in front of somebody's
+   collection.
+
+   Clipped rather than wrapped: a spine is as wide as a spine, and a band with a
+   long name gets the same sliver of room on a real shelf as it does here. */
+.spine-text {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  min-height: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

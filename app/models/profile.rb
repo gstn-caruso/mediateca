@@ -196,6 +196,25 @@ class Profile < ApplicationRecord
          .limit(limit)
   end
 
+  # The listener, in numbers. One query each and none of them per row: this is the
+  # page about somebody, and a page about somebody should not be the slowest one in
+  # the app.
+  def in_numbers
+    {
+      "Songs played" => plays.count,
+      "Records spun" => spins.count,
+      "Hearts given" => likes.count,
+      "Not on the disk" => absences.count
+    }
+  end
+
+  # The day the history starts. For somebody who brought a decade home from
+  # Last.fm, that is a decade ago — and it is the most quietly impressive thing
+  # this app can tell them.
+  def listening_since
+    plays.minimum(:played_at)
+  end
+
   # How many times this listener has heard the whole record.
   def spins_of(album)
     spins.where(album:).count

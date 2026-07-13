@@ -1,0 +1,198 @@
+<% content_for :title, Current.profile.name %>
+<% since = Current.profile.listening_since %>
+<% loudest = @shelf.first&.first&.plays.to_f %>
+
+<div class="mx-auto max-w-5xl px-4 pb-20 pt-10 sm:px-8 sm:pt-16">
+  <%# The avatar is a record. It costs two gradients and it is the truest thing
+      this page could have put at the top of it: a label in the middle, grooves
+      around it, and the listener's own colour where the label goes. %>
+  <header class="flex flex-col gap-7 sm:flex-row sm:items-end sm:gap-9">
+    <div aria-hidden="true"
+         class="relative flex size-36 shrink-0 items-center justify-center rounded-full bg-neutral-950
+                shadow-2xl shadow-black/60 ring-1 ring-inset ring-white/10 sm:size-40 vinyl">
+      <span class="flex size-14 items-center justify-center rounded-full text-2xl font-bold text-black
+                   shadow-inner sm:size-16 sm:text-3xl <%= avatar_colour(Current.profile) %>">
+        <%= avatar_initial(Current.profile) %>
+      </span>
+      <span class="absolute size-2 rounded-full bg-neutral-950 ring-1 ring-inset ring-black/50"></span>
+    </div>
+
+    <div class="min-w-0 pb-1">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">Listener</p>
+      <h1 class="mt-2 text-5xl font-bold leading-[0.95] tracking-tight text-white sm:text-7xl">
+        <%= Current.profile.name %>
+      </h1>
+      <% if since %>
+        <p class="mt-4 text-sm text-neutral-400">
+          Listening since <%= l(since.to_date, format: :long) %>
+        </p>
+      <% end %>
+    </div>
+  </header>
+
+  <%# The numbers, kept quiet on purpose — the shelf below is where the boldness
+      is spent. The last of them is the one no shop would ever show you. %>
+  <dl class="mt-12 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-white/10 ring-1 ring-inset ring-white/10 sm:grid-cols-4">
+    <% Current.profile.in_numbers.each do |label, count| %>
+      <div class="bg-neutral-950/60 px-5 py-4">
+        <dt class="text-[11px] uppercase tracking-widest text-neutral-500"><%= label %></dt>
+        <dd class="mt-1.5 text-3xl font-semibold tabular-nums leading-none text-white">
+          <%= number_with_delimiter(count) %>
+        </dd>
+      </div>
+    <% end %>
+  </dl>
+
+  <%# THE SHELF.
+      Records stand on a shelf edge-on, and that is what these are: a spine each,
+      as tall as you play them, with the name reading up the side the way it does
+      on a real one.
+
+      The hollow ones are the whole idea. They are the artists you play and own no
+      record by — and on any other music app they simply would not be here, because
+      any other music app is a shop and has nothing to gain by telling you what it
+      is missing. This one is a library. The gaps are the most honest thing in it. %>
+  <% if @shelf.any? %>
+    <section class="mt-16">
+      <div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+        <h2 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">Your shelf</h2>
+        <p class="text-sm text-neutral-500">
+          <%= link_to "The whole history", history_path, class: "font-semibold text-neutral-300 transition hover:text-white" %>
+          <span class="text-neutral-700">·</span>
+          <%= link_to "All the stats", statistics_path(span: "ever"), class: "font-semibold text-neutral-300 transition hover:text-white" %>
+        </p>
+      </div>
+
+      <p class="mt-2 max-w-xl text-sm leading-relaxed text-neutral-500">
+        Taller is more played. The hollow ones are artists you listen to and don't own a record by —
+        the shape of the gap between what you play and what is on the disk.
+      </p>
+
+      <div class="mt-8 -mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
+        <ol class="flex h-72 min-w-max items-end gap-1.5 sm:gap-2">
+          <% @shelf.each do |standing, artist| %>
+            <%
+              # By the square root of the plays, not the plays. Listening has a long
+              # tail — the artist you play most may have five times the artist in
+              # fifth place — and drawn straight, everybody but the first two is a
+              # sliver with no room for their name. The order is the truth here, and
+              # the order survives; what the root buys is a shelf you can read.
+              tall = [ (Math.sqrt(standing.plays / loudest) * 100).round, 34 ].max
+              spine = "group relative flex w-12 shrink-0 flex-col items-center justify-between rounded-t-md
+                       px-1 pb-3 pt-3.5 transition sm:w-[3.25rem]"
+            %>
+            <li style="height: <%= tall %>%">
+              <% if artist %>
+                <%# A record you have is a record you can go and put on. %>
+                <%= link_to artist_path(artist),
+                            title: "#{artist.name} — #{pluralize(standing.plays, "play")}",
+                            class: "#{spine} bg-gradient-to-t from-white/[0.14] to-white/[0.04] ring-1 ring-inset
+                                    ring-white/15 hover:from-accent/30 hover:to-accent/10 hover:ring-accent/40",
+                            style: "height: 100%" do %>
+                  <span class="spine-text text-[11px] font-semibold tracking-wide text-neutral-100">
+                    <%= artist.name %>
+                  </span>
+                  <span class="mt-2 shrink-0 text-[10px] tabular-nums text-neutral-500 group-hover:text-accent">
+                    <%= number_to_human(standing.plays, units: { thousand: "k" }, precision: 2, significant: true) %>
+                  </span>
+                <% end %>
+              <% else %>
+                <%# And one you have not is a gap you can only look at. %>
+                <div title="<%= standing.name %> — <%= pluralize(standing.plays, "play") %>, and not a record of theirs on the disk"
+                     class="<%= spine %> border border-dashed border-white/15 bg-transparent"
+                     style="height: 100%">
+                  <span class="spine-text text-[11px] font-medium tracking-wide text-neutral-600">
+                    <%= standing.name %>
+                  </span>
+                  <span class="mt-2 shrink-0 text-[10px] tabular-nums text-neutral-700">
+                    <%= number_to_human(standing.plays, units: { thousand: "k" }, precision: 2, significant: true) %>
+                  </span>
+                </div>
+              <% end %>
+            </li>
+          <% end %>
+        </ol>
+      </div>
+    </section>
+  <% end %>
+
+  <%# What is connected — and what each of them is actually for, which is the thing
+      nobody says out loud, and the reason people wait a week for a Spotify history
+      that was never coming. %>
+  <section class="mt-16">
+    <h2 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">Connected</h2>
+
+    <div class="mt-6 grid gap-4 sm:grid-cols-2">
+      <% if Lastfm.api.configured? %>
+        <div class="rounded-2xl bg-white/[0.04] p-5 ring-1 ring-inset ring-white/10">
+          <div class="flex items-center gap-3">
+            <%= render "shared/lastfm_mark" %>
+            <h3 class="flex-1 text-base font-semibold text-white">Last.fm</h3>
+            <% if Current.profile.scrobbles? %>
+              <span class="size-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px] shadow-emerald-400/60"></span>
+            <% end %>
+          </div>
+
+          <% if Current.profile.scrobbles? %>
+            <p class="mt-3 text-sm leading-relaxed text-neutral-400">
+              Scrobbling as
+              <%= link_to Current.profile.scrobbler.username, Current.profile.scrobbler.url,
+                          target: "_blank", rel: "noopener", class: "font-semibold text-white hover:underline" %>.
+              It kept your listening from long before this library existed, and it takes the rest as it happens.
+            </p>
+            <%= link_to "Manage", scrobbler_path,
+                        class: "mt-4 inline-block rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white
+                                ring-1 ring-inset ring-white/15 transition hover:bg-white/15" %>
+          <% else %>
+            <p class="mt-3 text-sm leading-relaxed text-neutral-400">
+              The only place that will hand a whole listening history back — including the years before you had this.
+            </p>
+            <%= link_to "Connect Last.fm", connect_scrobbler_path,
+                        class: "mt-4 inline-block rounded-full bg-accent gel px-4 py-2 text-xs font-semibold
+                                text-on-accent transition hover:scale-105 hover:bg-accent-bright" %>
+          <% end %>
+        </div>
+      <% end %>
+
+      <% if Spotify.api.signed_in? %>
+        <div class="rounded-2xl bg-white/[0.04] p-5 ring-1 ring-inset ring-white/10">
+          <div class="flex items-center gap-3">
+            <span aria-hidden="true" class="flex size-6 shrink-0 items-center justify-center rounded-md bg-[#1DB954] text-black">
+              <svg class="size-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.586 14.424a.623.623 0 0 1-.857.207c-2.348-1.435-5.304-1.76-8.785-.964a.623.623 0 1 1-.277-1.215c3.809-.871 7.077-.496 9.713 1.115.293.18.386.563.206.857Zm1.223-2.722a.78.78 0 0 1-1.072.257c-2.687-1.652-6.785-2.131-9.965-1.166a.78.78 0 1 1-.452-1.493c3.632-1.102 8.147-.568 11.232 1.33a.78.78 0 0 1 .257 1.072Zm.105-2.835c-3.223-1.914-8.54-2.09-11.617-1.156a.935.935 0 1 1-.543-1.79c3.532-1.072 9.404-.865 13.115 1.338a.935.935 0 1 1-.955 1.608Z"/>
+              </svg>
+            </span>
+            <h3 class="flex-1 text-base font-semibold text-white">Spotify</h3>
+            <% if Current.profile.spotify? %>
+              <span class="size-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px] shadow-emerald-400/60"></span>
+            <% end %>
+          </div>
+
+          <% if Current.profile.spotify? %>
+            <p class="mt-3 text-sm leading-relaxed text-neutral-400">
+              Connected as <span class="font-semibold text-white"><%= Current.profile.spotify_account.username %></span>.
+              Your hearts and your lists — not your history. Spotify has no endpoint for one, and never has had.
+            </p>
+            <%= link_to "Manage", spotify_path,
+                        class: "mt-4 inline-block rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white
+                                ring-1 ring-inset ring-white/15 transition hover:bg-white/15" %>
+          <% else %>
+            <p class="mt-3 text-sm leading-relaxed text-neutral-400">
+              The songs you hearted there and the lists you made. Not your history — Spotify will not give that to
+              anybody.
+            </p>
+            <%= link_to "Connect Spotify", connect_spotify_path,
+                        class: "mt-4 inline-block rounded-full bg-accent gel px-4 py-2 text-xs font-semibold
+                                text-on-accent transition hover:scale-105 hover:bg-accent-bright" %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </section>
+
+  <div class="mt-14">
+    <%= button_to "Switch profile", session_path, method: :delete,
+                  class: "cursor-pointer rounded-full bg-accent/12 px-5 py-2.5 text-sm font-semibold text-accent
+                          ring-1 ring-inset ring-accent/25 transition hover:bg-accent/20" %>
+  </div>
+</div>

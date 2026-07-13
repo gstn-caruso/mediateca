@@ -66,16 +66,18 @@
     </summary>
 
     <div class="absolute right-0 z-30 mt-2 w-60 rounded-2xl menu-panel p-1.5">
-      <div class="flex items-center gap-3 px-2.5 py-2">
+      <%# The name is the way in. Everything the app knows about somebody lives on
+          one page now, and this is the door to it. %>
+      <%= link_to profile_path, class: "flex items-center gap-3 rounded-xl px-2.5 py-2 transition hover:bg-white/10" do %>
         <span aria-hidden="true"
               class="flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-black <%= avatar_colour(Current.profile) %>">
           <%= avatar_initial(Current.profile) %>
         </span>
         <span class="min-w-0">
           <span class="block truncate text-sm font-semibold text-white"><%= Current.profile.name %></span>
-          <span class="block text-xs text-neutral-400">Listening</span>
+          <span class="block text-xs text-neutral-400">Your listening</span>
         </span>
-      </div>
+      <% end %>
 
       <div class="mx-1 my-1 h-px bg-white/10"></div>
 

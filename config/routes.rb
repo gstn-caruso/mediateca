@@ -3,7 +3,11 @@ Rails.application.routes.draw do
 
   # Picking a profile off the grid starts a session; switching profiles ends it.
   resources :profiles, only: [ :index, :create ]
-  resource  :session,  only: [ :create, :destroy ]
+
+  # And the one page that is about the listener rather than the music: what they
+  # have played, what it says about them, and what they have connected.
+  resource :profile, only: [ :show ]
+  resource :session,  only: [ :create, :destroy ]
 
   resource :search, only: [ :show ]
 
