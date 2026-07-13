@@ -47,7 +47,15 @@ class TheReportTest < ApplicationSystemTestCase
 
     click_button "Make them"
 
-    assert_text "Made"
+    # The flash, not the bare word: this page's own prose already says "Made out
+    # of the history", so waiting on "Made" is waiting on something that was
+    # already there — which is to say waiting for nothing. The lists are not made
+    # yet, the visit is still in flight, and the rail gets turned to the lists in
+    # the middle of the swap: the turn lands on a body that is about to be thrown
+    # away, and the one that replaces it comes back on the turn it was left on.
+    # The links are there, written and hidden, which is exactly what the failure
+    # said — a link found, and no text to it.
+    assert_selector "[role=status]", text: "Made"
     in_the_library("Playlists") do
       assert_link "Not on the disk"
       assert_link "On repeat"
