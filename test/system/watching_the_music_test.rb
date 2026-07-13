@@ -1,5 +1,13 @@
 require "application_system_test_case"
 
+# Only the tests that are about the sound put a song on. The others — the rail,
+# the presets, the screen, the visit — are answered by a picture standing still,
+# and a picture standing still is one frame.
+#
+# A moving one is sixty a second, drawn on the CPU here because the runner has no
+# card to draw them with, and it drowns the browser it is drawn in: Selenium's own
+# questions started timing out, in a different test each run. The machine this is
+# looked at on has a card and never notices. The runner does, so it is not asked to.
 class WatchingTheMusicTest < ApplicationSystemTestCase
   ALBUM_DIR = "Almafuerte/1995 - Mundo guanaco".freeze
 
@@ -36,7 +44,7 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
   end
 
   test "the rail shuts the way it opened" do
-    play "Desencuentro"
+    visit root_path
     click_button "Visualizer"
     assert_selector "#visualizer-panel"
 
@@ -48,7 +56,7 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
   # Milkdrop is not one picture, it is thousands of them, and each one is
   # somebody's. So the rail says whose you are looking at.
   test "the picture on the wall says which one it is" do
-    play "Desencuentro"
+    visit root_path
 
     click_button "Visualizer"
 
@@ -58,7 +66,7 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
   # Twenty years of presets, and the only way through them anybody ever wanted:
   # the arrow keys.
   test "the arrows walk through the presets" do
-    play "Desencuentro"
+    visit root_path
     click_button "Visualizer"
     assert_selector PRESET, text: /\S/
     first = find(PRESET).text
@@ -77,7 +85,7 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
   # Arrows are for the presets, but only once the picture is up: typing a search
   # is the same keyboard, and a caret has to be able to move through a word.
   test "the arrows are the search box's while you are typing in it" do
-    play "Desencuentro"
+    visit root_path
     click_button "Visualizer"
     first = find(PRESET).text
 
@@ -91,7 +99,7 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
   # header goes with it, and Escape is the way back, as it is out of every full
   # screen there ever was.
   test "the picture can take the whole screen, and nothing else goes with it" do
-    play "Desencuentro"
+    visit root_path
     click_button "Visualizer"
     assert_selector ".visualizer-chrome"
 
@@ -155,19 +163,16 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
   # does not take the picture down and put a new one up: behind that canvas is a
   # live WebGL context and a graph tapped off the music, and neither is a thing to
   # build again because somebody clicked on a record. The preset it was already
-  # wearing is how you can tell it is the same picture and not a new one.
+  # wearing is how you can tell it is the same picture and not a new one — a rebuilt
+  # one would have reached into the thousands and come back wearing something else.
   test "the picture rides through a visit" do
-    play "Desencuentro"
+    visit album_path(@album)
     click_button "Visualizer"
     assert_selector PRESET, text: /\S/
     was = find(PRESET).text
 
-    # A visit while the picture is up is the slowest thing this app ever does here.
-    # The runner has no GPU: Milkdrop is drawn on the CPU, a frame at a time, and
-    # it is drawing them the whole way across. On the machine this is looked at on
-    # the card does it and nobody waits. So the test does.
     click_link "Home"
-    using_wait_time(15) { assert_text "Your Library" }
+    assert_text "Your Library"
 
     assert_selector "#visualizer-panel canvas"
     assert_selector PRESET, exact_text: was
