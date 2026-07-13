@@ -1,30 +1,43 @@
 <% content_for :title, "#{@album.title} — #{@album.artist.name}" %>
 <% length = album_length(@album.tracks.sum { |track| track.duration.to_f }) %>
 
-<%# No sleeve-blur here anymore: the playing cover already washes the whole floor
-    behind the glass, and a second one boxed into the header only doubled up. %>
+<%# The sleeve stands behind its own record, blown up and blurred, and the colour
+    the app read off it lights the header from above. Both of those are the record
+    you are LOOKING AT — which is not what the #backdrop underneath the whole
+    building is about, and not what the Play button is painted in. That is the
+    record that is PLAYING, and it keeps its colour while you browse: what you
+    open dresses its own header, and nothing else in the app changes hands. %>
 <%# @container, not a breakpoint: the title's room depends on the sidebar and the
     queue, not on the window. At iPad width with the rail open, `sm:text-7xl` fired
     on the viewport while the column it had to fit in was 186px wide — and the
     record's name, the one thing the page is about, got cut in half. Sized against
     the container, it fits whatever column it lands in. %>
-<header class="@container px-4 pb-6 pt-10 sm:px-8 sm:pt-20">
-  <div class="flex flex-col gap-6 @2xl:flex-row @2xl:items-end @2xl:gap-8">
-    <%# The one image on the page anybody came to see: it is not lazy-loaded. %>
-    <%= render "shared/sleeve", album: @album, loading: "eager",
-               class: "size-44 shrink-0 rounded-xl object-cover shadow-2xl shadow-black/50 ring-1 ring-white/10 @2xl:size-60" %>
+<header class="@container relative" style="<%= @album.palette.to_style %>">
+  <%= render "shared/hero_wash", picture: (cover_url(@album) if @album.cover_path.present?) %>
 
-    <div class="min-w-0 pb-2">
-      <h1 class="text-[clamp(1.75rem,7cqi,4.5rem)] font-bold leading-[1.05] tracking-tight text-balance break-words hyphens-auto text-white"><%= @album.title %></h1>
-      <p class="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-neutral-300">
-        <%= link_to @album.artist.name, artist_path(@album.artist), class: "font-semibold text-white hover:underline" %>
-        <span aria-hidden="true" class="text-neutral-600">•</span>
-        <% if @album.year %>
-          <span><%= @album.year %></span>
-          <span aria-hidden="true" class="text-neutral-600">•</span>
-        <% end %>
-        <span><%= pluralize(@album.tracks.size, "song") %><%= ", #{length}" if length %></span>
-      </p>
+  <div class="relative px-4 pb-10 pt-12 sm:px-8 sm:pt-24">
+    <div class="flex flex-col gap-6 @2xl:flex-row @2xl:items-end @2xl:gap-8">
+      <%# The one image on the page anybody came to see: it is not lazy-loaded. %>
+      <%= render "shared/sleeve", album: @album, loading: "eager",
+                 class: "size-44 shrink-0 rounded-xl object-cover shadow-2xl shadow-black/60 ring-1 ring-white/10 @2xl:size-60" %>
+
+      <div class="min-w-0 pb-2">
+        <%# What kind of record this is, in its own colour: an EP is not an album,
+            and a compilation is neither. The file says which, when it knows. %>
+        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-accent">
+          <%= @album.album_type.presence || "Album" %>
+        </p>
+        <h1 class="mt-3 text-[clamp(1.75rem,7cqi,4.5rem)] font-bold leading-[1.05] tracking-tight text-balance break-words hyphens-auto text-white drop-shadow-lg"><%= @album.title %></h1>
+        <p class="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-neutral-200">
+          <%= link_to @album.artist.name, artist_path(@album.artist), class: "font-semibold text-white hover:underline" %>
+          <span aria-hidden="true" class="text-neutral-500">•</span>
+          <% if @album.year %>
+            <span><%= @album.year %></span>
+            <span aria-hidden="true" class="text-neutral-500">•</span>
+          <% end %>
+          <span><%= pluralize(@album.tracks.size, "song") %><%= ", #{length}" if length %></span>
+        </p>
+      </div>
     </div>
   </div>
 </header>

@@ -1,0 +1,18 @@
+<%# What stands behind the name at the head of a page: the picture of the thing
+    the page is about, blown up until it is only light. The stylesheet says why
+    this is allowed to exist next to the playing record's backdrop, and what the
+    blur and the mask are for.
+
+    It is the same file, at the same URL, as the sharp one in front of it — so
+    the browser fetches one image and draws it twice. %>
+<% if picture %>
+  <div aria-hidden="true" class="hero-wash absolute inset-0 overflow-hidden rounded-t-2xl">
+    <img src="<%= picture %>" alt="" loading="eager">
+  </div>
+<% else %>
+  <%# Nothing to blow up: a record nobody scanned, an artist nobody photographed.
+      The header keeps the quiet gradient it always had rather than inventing a
+      colour for somebody who never gave us one. %>
+  <div aria-hidden="true"
+       class="absolute inset-0 rounded-t-2xl bg-gradient-to-b from-neutral-700/50 via-neutral-900/30 to-transparent"></div>
+<% end %>

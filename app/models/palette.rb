@@ -77,6 +77,13 @@ class Palette
     }
   end
 
+  # The same handover, said in CSS rather than in JSON — for the record you are
+  # looking at, which is dressed by the server on its way out, and not by the
+  # player once you press something.
+  def to_style
+    to_h.map { |property, value| "#{property}: #{value}" }.join("; ")
+  end
+
   private
 
   def legible

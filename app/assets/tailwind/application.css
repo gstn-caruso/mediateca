@@ -157,6 +157,74 @@
     0 10px 24px -8px var(--gel-glow);
 }
 
+/* The head of a record's page, and of an artist's: their own picture, blown up
+   until it is nothing but light, and let go before the songs begin.
+
+   This is not the #backdrop, and the difference is the whole reason it is allowed
+   to exist. The backdrop is the record that is PLAYING, burning under the entire
+   building — it belongs to the music and it stays put while you browse. This is
+   the record you have OPENED. It lives inside the page, it is about what you are
+   looking at rather than what you are hearing, and it ends where the track list
+   starts. A blurred sleeve was pulled out of this header once for doubling up
+   with the backdrop; it doubles up no longer, because now the two of them are
+   answering different questions.
+
+   It is let go, not cut off: the wash is masked out on its way down, so the
+   header dissolves into the reading surface instead of ending on a line. A line
+   across the page is a seam, and the one thing a hero cannot look like is a
+   banner somebody pasted on top.
+
+   The picture is scaled up before it is blurred, because a blur reaches further
+   than the edge of its own box and would pull the emptiness beyond it back in as
+   a dark rim around everything.
+
+   The numbers are the whole difference between a hero and a smudge, and they were
+   wrong once already. At blur(56px) and brightness(0.4) the wash was invisible:
+   the header is a wide band a few hundred pixels tall, a square sleeve stretched
+   across it is already only its middle stripe, and a blur that big over a strip
+   that short leaves a flat field — which was then dimmed until the field was the
+   panel's own black. Half the library's sleeves are black and white, and those
+   heroes came out with no head at all. So: blurred enough that no one reads the
+   sleeve twice, bright enough that the header is lit by it, and let go slowly. */
+.hero-wash {
+  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
+  mask-image: linear-gradient(to bottom, #000 55%, transparent);
+}
+.hero-wash img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.18);
+  filter: blur(44px) saturate(1.9) brightness(0.62);
+}
+
+/* And under the words, a shade. The wash is bright enough to be a wash now, which
+   is exactly bright enough to swallow a title printed on it — a white sleeve gave
+   white type a white bed to lie on. The type gets its own ground, darkest where
+   the type is and gone by the top, so the picture is still the picture. */
+.hero-wash::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background-image: linear-gradient(to top, rgb(10 10 12 / 0.85), rgb(10 10 12 / 0.35) 55%, transparent);
+}
+
+/* And the record's own colour, lighting its header from above. The blurred
+   sleeve carries that colour already, but only as much of it as the sleeve
+   happened to be — a photograph of a band in a grey street has their colour in
+   it somewhere and shows none of it. This is the colour the app read off the
+   picture, said out loud, and it is the same one the eyebrow above the title is
+   printed in. Mixed in oklab so it stays the hue it was told, whatever the
+   sleeve is. */
+.hero-wash::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(70rem 22rem at 50% -18%,
+    color-mix(in oklab, var(--color-accent) 24%, transparent), transparent 70%);
+}
+
 /* The mini-player is the one pane that floats free of the layout, so it earns
    the full glass read: a diagonal gloss raked across it and screened over the
    pane, the way light catches the near edge of a lens. */
@@ -496,6 +564,7 @@ html[data-playing="true"] .eq > i {
 @media (prefers-contrast: more) {
   .glass, .glass-deep { @apply solid-glass; }
   .scroll-edge { display: none; }
+  .hero-wash { display: none; }
 }
 
 /* Chrome and Firefox honour this. Safari does not — it parses the query and then
@@ -507,6 +576,7 @@ html[data-playing="true"] .eq > i {
 @media (prefers-reduced-transparency: reduce) {
   .glass, .glass-deep { @apply solid-glass; }
   .scroll-edge { display: none; }
+  .hero-wash { display: none; }
 }
 
 /* The switch. Set from the profile menu, kept in localStorage, applied to <html>
@@ -514,3 +584,4 @@ html[data-playing="true"] .eq > i {
 html[data-transparency="off"] .glass,
 html[data-transparency="off"] .glass-deep { @apply solid-glass; }
 html[data-transparency="off"] .scroll-edge { display: none; }
+html[data-transparency="off"] .hero-wash { display: none; }
