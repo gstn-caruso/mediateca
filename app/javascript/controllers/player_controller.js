@@ -460,6 +460,12 @@ export default class extends Controller {
     this.playIconTarget.classList.toggle("hidden", playing)
     this.pauseIconTarget.classList.toggle("hidden", !playing)
     document.documentElement.dataset.playing = String(playing)
+
+    // The equalizer in the queue has always danced to this, out of the stylesheet.
+    // The picture cannot: it is drawn a frame at a time, and a frame is only worth
+    // drawing while there is music to draw it from. So it is told, in words.
+    this.dispatch("playing")
+
     this.save()
   }
 

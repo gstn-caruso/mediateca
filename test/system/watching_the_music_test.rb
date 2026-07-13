@@ -106,14 +106,43 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
   # aims at them, and draws. A canvas nobody has sized is 300×150 — that is simply
   # what a canvas is — and the picture came out drawn through a letterbox and
   # stretched over the rail. Nothing in the page said so; it just looked wrong.
-  test "the picture is drawn at the size of the rail, not the size of a bare canvas" do
+  #
+  # And then, on a retina screen only, it looked wrong a second way: the canvas was
+  # the right size and Milkdrop was aiming at a quarter of it, so the picture sat
+  # in the bottom corner of its own rail. Two numbers have to agree, and a screen
+  # that draws two pixels where it says one is the whole reason they can differ —
+  # so this asks on such a screen, which is the screen this is looked at on.
+  test "the picture is drawn at the size of the rail, and fills it" do
+    retina
     play "Desencuentro"
     click_button "Visualizer"
     assert_selector PRESET, text: /\S/
 
-    drawn = eventually { canvas_size[:drawn] if canvas_size[:drawn] != BARE_CANVAS }
+    aim = eventually { canvas_aim if canvas_aim[:canvas] != BARE_CANVAS }
 
-    assert_equal canvas_size[:laid_out], drawn
+    assert_equal [ aim[:rail][0] * 2, aim[:rail][1] * 2 ], aim[:canvas], "the canvas is not the size of the rail"
+    assert_equal aim[:canvas], aim[:aimed_at], "Milkdrop is not aiming at the whole canvas"
+  end
+
+  # A picture of the music, drawn while there is no music, is a picture of nothing
+  # — and it was still churning away at sixty frames a second over a song that had
+  # been paused for ten minutes. Stopped, it holds the last frame it drew, which is
+  # what a paused thing looks like.
+  test "the picture stops when the song stops, and picks up when it starts" do
+    play "Desencuentro"
+    click_button "Visualizer"
+    assert_selector PRESET, text: /\S/
+    count_the_frames
+
+    assert_operator frames_drawn, :>, 0, "the picture never moved while the song played"
+
+    pause
+
+    assert_equal 0, frames_drawn, "the picture kept moving after the song stopped"
+
+    unpause
+
+    assert_operator frames_drawn, :>, 0, "the picture did not pick the song back up"
   end
 
   # The rail is permanent, like the <audio> under it. Browsing to somewhere else
@@ -127,8 +156,12 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
     assert_selector PRESET, text: /\S/
     was = find(PRESET).text
 
+    # A visit while the picture is up is the slowest thing this app ever does here.
+    # The runner has no GPU: Milkdrop is drawn on the CPU, a frame at a time, and
+    # it is drawing them the whole way across. On the machine this is looked at on
+    # the card does it and nobody waits. So the test does.
     click_link "Home"
-    assert_text "Your Library"
+    using_wait_time(15) { assert_text "Your Library" }
 
     assert_selector "#visualizer-panel canvas"
     assert_selector PRESET, exact_text: was
@@ -200,18 +233,61 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
     eventually { page.evaluate_script("window.wiring").presence }
   end
 
-  # What Milkdrop is drawing, and what the rail actually gave it to draw on.
-  def canvas_size
+  # The screen this is actually looked at on: two pixels for every one it admits to.
+  def retina
+    page.driver.browser.execute_cdp("Emulation.setDeviceMetricsOverride",
+      width: DESKTOP[0], height: DESKTOP[1], deviceScaleFactor: 2, mobile: false)
+  end
+
+  # The rail, the canvas the rail was given, and the corner of it Milkdrop is
+  # actually aiming at. All three have to be the same picture.
+  def canvas_aim
     page.evaluate_script(<<~JS).symbolize_keys
       (() => {
         const canvas = document.querySelector("#visualizer-panel canvas")
-        const sharpness = Math.min(window.devicePixelRatio || 1, 2)
+        const gl = canvas.getContext("webgl2")
+        const viewport = gl.getParameter(gl.VIEWPORT)
         return {
-          drawn: [ canvas.width, canvas.height ],
-          laid_out: [ Math.round(canvas.clientWidth * sharpness), Math.round(canvas.clientHeight * sharpness) ]
+          rail: [ canvas.clientWidth, canvas.clientHeight ],
+          canvas: [ canvas.width, canvas.height ],
+          aimed_at: [ viewport[2], viewport[3] ]
         }
       })()
     JS
+  end
+
+  # Milkdrop draws by asking WebGL to draw, so WebGL is where you count. Every
+  # frame is many of these; none at all is a picture that has stopped.
+  def count_the_frames
+    page.execute_script(<<~JS)
+      window.drawn = 0
+      const draw = WebGL2RenderingContext.prototype.drawArrays
+      WebGL2RenderingContext.prototype.drawArrays = function (...call) {
+        window.drawn++
+        return draw.apply(this, call)
+      }
+    JS
+  end
+
+  def frames_drawn
+    before = page.evaluate_script("window.drawn")
+    sleep 0.75
+    page.evaluate_script("window.drawn") - before
+  end
+
+  # Pressing the button is not the same as the song hearing it, and the frames of
+  # the gap between the two belong to the song that was still playing. The player
+  # turns the button over when the <audio> tells it the music has stopped, and the
+  # picture is told in the same breath — so the icon is the news, and counting
+  # starts after it.
+  def pause
+    click_button "Play or pause"
+    assert_selector "[data-player-target='playIcon']", visible: true
+  end
+
+  def unpause
+    click_button "Play or pause"
+    assert_selector "[data-player-target='pauseIcon']", visible: true
   end
 
   # The finders wait; evaluate_script does not, and the picture is raised on a

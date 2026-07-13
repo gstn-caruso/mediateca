@@ -2,6 +2,10 @@ import { Controller } from "@hotwired/stimulus"
 
 const OPEN = "is-open"
 
+// The one <audio> in the app. The player owns it; this borrows its sound and
+// watches whether it is running.
+const AUDIO = "[data-player-target='audio']"
+
 // How long one preset takes to melt into the next. Milkdrop never cut between
 // them and neither does this: two seconds of the old picture becoming the new one.
 const MELT = 2.0
@@ -32,9 +36,9 @@ class Show {
 
   // Along the wall, and round the end of it: the presets are a ring, because
   // there is no reason for the last one to be a dead end.
-  wear(step) {
+  wear(step, melt) {
     this.at = (this.at + step + this.names.length) % this.names.length
-    this.visualizer.loadPreset(this.presets[this.name], step === 0 ? 0 : MELT)
+    this.visualizer.loadPreset(this.presets[this.name], melt)
 
     return this.name
   }
@@ -44,11 +48,16 @@ class Show {
   }
 
   // Milkdrop does not own the canvas it draws on. It sizes its own framebuffers,
-  // points the viewport at them, and draws — and if nobody ever told the canvas
-  // how big it is, a canvas is 300×150 by definition, and the picture is drawn
-  // through a letterbox and stretched over the rail. So the backing store is set
-  // here, and set to exactly what Milkdrop is about to draw: it works in CSS
-  // pixels and multiplies by the ratio itself, so this multiplies by the same one.
+  // aims the viewport at them, and draws — and a canvas nobody has sized is
+  // 300×150, which is simply what a canvas is. Left that way the picture came out
+  // drawn through a letterbox and stretched over the rail.
+  //
+  // So the canvas is sized here. In DEVICE pixels, and Milkdrop is told the same
+  // number with a ratio of one — because the number it is handed is the number it
+  // aims its viewport at, while the ratio only decides how big its textures are.
+  // Handed CSS pixels and a ratio of two, it sizes lovely retina textures and then
+  // paints them into a quarter of the canvas: the picture sat in the bottom corner
+  // of its own rail, on a retina screen and nowhere else. One number, one meaning.
   //
   // Sized twice with the same numbers, the assignment alone would blank the
   // buffer. Nothing to do is nothing to do.
@@ -59,7 +68,7 @@ class Show {
 
     this.canvas.width = across
     this.canvas.height = down
-    this.visualizer.setRendererSize(width, height)
+    this.visualizer.setRendererSize(across, down)
   }
 }
 
@@ -109,13 +118,32 @@ export default class extends Controller {
     this.sizes ||= new ResizeObserver(() => this.fit())
     this.sizes.observe(this.canvasTarget)
 
-    this.paint(show)
+    if (this.playing) this.paint(show)
+    else this.still(show)
   }
 
   hold() {
     cancelAnimationFrame(this.frame)
     this.frame = null
     this.sizes?.disconnect()
+  }
+
+  // A picture of the music, drawn while there is no music, is a picture of
+  // nothing — and it churned away at sixty frames a second over a song that had
+  // been paused for ten minutes. Stopping is simply not asking for another frame:
+  // the last one drawn stays on the glass, which is what a paused thing looks
+  // like. The music says when, because the music is the only one who knows.
+  follow() {
+    if (!this.open) return
+
+    if (this.playing) this.raise()
+    else this.hold()
+  }
+
+  get playing() {
+    const audio = document.querySelector(AUDIO)
+
+    return Boolean(audio && audio.src && !audio.paused)
   }
 
   paint(show) {
@@ -126,6 +154,17 @@ export default class extends Controller {
 
     cancelAnimationFrame(this.frame)
     this.frame = requestAnimationFrame(draw)
+  }
+
+  // One frame, and then nothing. A rail opened over a song that is not playing
+  // would otherwise be a black rectangle: there is a picture to show, it simply
+  // is not moving.
+  still(show) {
+    cancelAnimationFrame(this.frame)
+    this.frame = requestAnimationFrame(() => {
+      show.render()
+      this.frame = null
+    })
   }
 
   // The one Show there is. Opening the rail twice while the libraries are still
@@ -145,23 +184,25 @@ export default class extends Controller {
 
     const { context, source } = this.tap()
     const sharpness = Math.min(window.devicePixelRatio || 1, SHARPNESS)
-    const width = canvas.clientWidth || 1
-    const height = canvas.clientHeight || 1
 
     // Before the visualiser is built, not after: it sizes its framebuffers and
     // aims the viewport at them the moment it is made, and a canvas that learns
-    // its size afterwards has already been drawn on wrong once.
-    canvas.width = Math.round(width * sharpness)
-    canvas.height = Math.round(height * sharpness)
+    // its size afterwards has already been drawn on wrong once. Device pixels and
+    // a ratio of one, for the reason spelled out over Show#fit.
+    const across = Math.round((canvas.clientWidth || 1) * sharpness)
+    const down = Math.round((canvas.clientHeight || 1) * sharpness)
+
+    canvas.width = across
+    canvas.height = down
 
     const visualizer = butterchurn.createVisualizer(context, canvas, {
-      width, height, pixelRatio: sharpness
+      width: across, height: down, pixelRatio: 1
     })
     visualizer.connectAudio(source)
 
     const show = new Show(visualizer, presets.getPresets(), canvas, sharpness)
     canvas.show = show
-    this.wear(0)
+    this.presetTarget.textContent = show.wear(0, 0)
 
     return show
   }
@@ -176,7 +217,7 @@ export default class extends Controller {
   // again. So the tap is made on first use and kept on the <audio>, which is the
   // one thing in this app that outlives everything.
   tap() {
-    const audio = document.querySelector("[data-player-target='audio']")
+    const audio = document.querySelector(AUDIO)
 
     audio.tap ||= (() => {
       const context = new AudioContext()
@@ -216,11 +257,15 @@ export default class extends Controller {
     this.wear(step)
   }
 
+  // A preset melts into the next over two seconds, and a melt is frames. Stopped,
+  // there are none coming — so a preset changed over a paused song is simply put
+  // up, and the one frame that shows it is drawn by hand.
   wear(step) {
     const show = this.canvasTarget.show
     if (!show) return
 
-    this.presetTarget.textContent = show.wear(step)
+    this.presetTarget.textContent = show.wear(step, this.playing ? MELT : 0)
+    if (!this.playing) this.still(show)
   }
 
   // Full screen is where Milkdrop was always going. The rail asks for it whole,

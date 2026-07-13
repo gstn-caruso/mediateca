@@ -15,6 +15,7 @@
 <aside id="visualizer-panel" data-turbo-permanent data-player-target="visualizerPanel"
        data-controller="visualizer"
        data-action="player:visualizer@window->visualizer#settle
+                    player:playing@window->visualizer#follow
                     keydown@window->visualizer#hotkey
                     fullscreenchange@document->visualizer#refit"
        class="w-72 shrink-0 flex-col overflow-hidden rounded-2xl glass-deep">
