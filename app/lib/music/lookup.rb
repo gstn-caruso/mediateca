@@ -1,6 +1,9 @@
-module Lastfm
+module Music
+  # Somebody else's idea of a song, found on this disk.
+  #
   # Last.fm knows a song as two strings, and so, near enough, does a disk. This is
-  # what stands between them.
+  # what stands between them — and it belongs to neither of them, which is why it
+  # lives here rather than in either one's namespace.
   #
   # It asks the library under both names a song can go by: the sleeve it belongs
   # to, and the credit written on the file. A duet is scrobbled under whoever sang
@@ -11,7 +14,7 @@ module Lastfm
   # ampersand, a dash and a comma are all just a gap. "Café Tacvba" and "cafe
   # tacvba" are one band, and being right about that matters more than being
   # clever about anything else.
-  class Library
+  class Lookup
     def find(artist:, track:)
       songs[key(artist, track)]
     end

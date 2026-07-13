@@ -17,7 +17,7 @@ module Lastfm
     def initialize(profile, pause: A_DECENT_PAUSE)
       @profile = profile
       @pause = pause
-      @library = Library.new
+      @library = Music::Lookup.new
       @found = 0
       @hearts = 0
       @strangers = 0
