@@ -48,6 +48,24 @@ class SuggestingWhatToPlayNextTest < ActionDispatch::IntegrationTest
     assert_redirected_to profiles_path
   end
 
+  # The rail is answered for *whoever is asking*. A hiding is one listener's, and
+  # so is the rail that honours it — the house does not agree about music, and
+  # nobody has to.
+  test "the rail is answered for the listener holding the cookie" do
+    gaston = listening_as
+    gaston.hide(@piazzolla)
+
+    get track_suggestions_path(@playing)
+
+    assert_response :success
+    assert_empty body["tracks"]
+
+    listening_as("Ana")
+    get track_suggestions_path(@playing)
+
+    assert_equal [ @libertango.id ], body["tracks"].map { it["trackId"] }
+  end
+
   private
 
   def body
