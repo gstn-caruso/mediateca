@@ -30,6 +30,9 @@
   music_root = optional_env("MEDIATECA_MUSIC_ROOT") || media_root
   beets      = optional_env("MEDIATECA_BEETS_DATABASE")
   registry   = optional_env("MEDIATECA_REGISTRY") || "#{host}:5555"
+  # The name on the certificate, when there is one — and the whole switch for
+  # HTTPS. See the proxy block below, and "Install it as an app" in the README.
+  tls_host   = optional_env("MEDIATECA_TLS_HOST")
 %>
 service: mediateca
 image: <%= optional_env("MEDIATECA_IMAGE") || "mediateca" %>
@@ -39,9 +42,34 @@ servers:
     - <%= host %>
 
 proxy:
+<% if tls_host %>
+  # A certificate was handed in, so this deploy speaks HTTPS. Not for secrecy —
+  # there is nobody to hide the music from on your own LAN, and no password to
+  # steal — but because a browser hands out the things an *app* is made of, the
+  # service worker above all, only to a page it considers secure. Without a
+  # certificate Mediateca can still be added to the Dock; with one, it can be
+  # installed, and can answer for itself when the server is gone.
+  #
+  # The certificate is issued by a CA of your own that this machine's browsers
+  # trust — see the README. Let's Encrypt is not in play: there is no public name
+  # here to prove, and no proving it from the outside.
+  #
+  # kamal-proxy now claims :443 as well as :80, redirects one to the other, and
+  # routes by name: after this the app answers to <%= tls_host %>, and no longer to
+  # a bare IP — which is the point. The name is what the certificate is for.
+  host: <%= tls_host %>
+  ssl:
+    certificate_pem: MEDIATECA_TLS_CERT
+    private_key_pem: MEDIATECA_TLS_KEY
+<% else %>
   # Reached by address on the LAN, with no public name: there is no certificate
   # to terminate. kamal-proxy claims the host's :80, so nothing else may hold it.
+  #
+  # Mediateca works perfectly well like this, and Safari will still put it in the
+  # Dock. What plain HTTP cannot have is a service worker: a browser refuses one
+  # to any page it doesn't consider secure. Set MEDIATECA_TLS_HOST to change that.
   ssl: false
+<% end %>
   # Thruster listens on 80 inside the container.
   app_port: 80
   healthcheck:
@@ -88,6 +116,13 @@ env:
     # Where the scan goes looking for music — often a subdirectory of the media
     # root, when the same disk also holds things that are not music.
     MUSIC_ROOT: <%= music_root %>
+<% if tls_host %>
+    # TLS ends at the proxy, so what reaches Rails is plain HTTP and Rails would
+    # write plain-HTTP URLs into an HTTPS page — the <audio> src among them, which
+    # the browser would then refuse as mixed content, and the music would simply
+    # not play. This is how it knows better. See config/environments/production.rb.
+    TLS_HOST: <%= tls_host %>
+<% end %>
 <% if beets %>
     # beets is an optional guest. Without it the library is still the library.
     BEETS_DATABASE: <%= beets %>

@@ -128,13 +128,41 @@ module Music
       end
     end
 
-    test "whatever isn't a flac is ignored" do
+    test "whatever isn't audio is ignored" do
       within_root do |root|
         create(root, "A/1990 - B/01.flac")
         touch("#{root}/A/1990 - B/notas.txt")
-        touch("#{root}/A/1990 - B/01.mp3")
+        touch("#{root}/A/1990 - B/cover.jpg")
 
         assert_equal 1, source(root).albums.sole.tracks.size
+      end
+    end
+
+    # Not every album exists in FLAC. Two of the NAS's — Tokischa and Neutro
+    # Shorty — were never released to a tracker at all, and the only copy there
+    # is came off YouTube as Opus. A lossy album is still an album; wrapping it
+    # in FLAC to get it counted would only be a lie about its fidelity.
+    test "an album the library only has in a lossy format is still an album" do
+      within_root do |root|
+        create(root, "Neutro Shorty/2026 - El disco de salsa/01 - Yo soy.opus",
+          album: "El disco de salsa", album_artist: "Neutro Shorty", year: 2026, title: "Yo soy")
+
+        album = source(root).albums.sole
+
+        assert_equal "El disco de salsa", album.title
+        assert_equal "Yo soy", album.tracks.sole.title
+      end
+    end
+
+    # Nothing says an album is of one format. A FLAC rip missing a bonus track
+    # that only YouTube has ends up holding both.
+    test "an album mixing formats counts every one of them" do
+      within_root do |root|
+        create(root, "A/1990 - B/01.flac", track_no: 1)
+        create(root, "A/1990 - B/02.opus", track_no: 2)
+        create(root, "A/1990 - B/03.mp3", track_no: 3)
+
+        assert_equal 3, source(root).albums.sole.tracks.size
       end
     end
 

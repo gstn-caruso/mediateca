@@ -71,6 +71,20 @@ class BrowsingMusicTest < ActionDispatch::IntegrationTest
     assert_equal "audio/flac", response.media_type
   end
 
+  # A browser decides whether it can play a file by what we call it, so an Opus
+  # track announced as FLAC is a track that never plays.
+  test "a lossy track is served as the audio it actually is" do
+    opus = Track.create!(
+      title: "Como los bueyes", track_no: 4, disc_no: 1,
+      path: media("04 - Como los bueyes.opus"), album: @album
+    )
+
+    get track_stream_path(opus)
+
+    assert_response :success
+    assert_equal "audio/ogg", response.media_type
+  end
+
   # Without Range there's no seek: dragging the player's progress bar becomes
   # impossible and the browser has to download the whole FLAC to start.
   # (Rack 3 normalizes headers to lowercase.)

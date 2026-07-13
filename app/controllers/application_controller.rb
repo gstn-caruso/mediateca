@@ -7,7 +7,7 @@ class ApplicationController < ActionController::Base
 
   before_action :require_profile
 
-  helper_method :library_artists, :library_albums, :playlists
+  helper_method :library_artists, :library_albums, :playlists, :playlist_song_counts
 
   private
 
@@ -31,14 +31,14 @@ class ApplicationController < ActionController::Base
   # they arrive together: a home library's worth of albums is one small query,
   # and counting them in Ruby costs nothing anybody can feel.
   def library_artists
-    @library_artists ||= Artist.ordered.includes(:albums).to_a
+    @library_artists ||= Artist.ordered.visible_to(Current.profile).includes(:albums).to_a
   end
 
   # The same library, seen as the records rather than as the people who made
   # them. Each row names its artist, so they come along rather than being asked
   # for one row at a time.
   def library_albums
-    @library_albums ||= Album.shelved.includes(:artist).to_a
+    @library_albums ||= Album.shelved.visible_to(Current.profile).includes(:artist).to_a
   end
 
   # The listener's own playlists, in the sidebar of every page they see — and in
@@ -46,6 +46,21 @@ class ApplicationController < ActionController::Base
   # remembered *query* would run that question again for every song on the page;
   # remembering the answer asks it once.
   def playlists
-    @playlists ||= Current.profile.playlists.ordered.includes(:entries).to_a
+    @playlists ||= Current.profile.playlists.ordered.to_a
+  end
+
+  # How many songs each list holds — as this listener will see it, so a song by
+  # somebody they have hidden is not counted, because it will not be drawn
+  # either. A rail promising a number the list does not keep is worse than no
+  # number at all.
+  #
+  # Counted in the database, all the lists at once. The entries themselves are
+  # never loaded: the rail wants a number, and a number is what it asks for.
+  def playlist_song_counts
+    @playlist_song_counts ||= PlaylistEntry.joins(track: :album)
+                                           .where(playlist: playlists)
+                                           .where.not(albums: { artist_id: Current.profile.hidden_artist_ids })
+                                           .group(:playlist_id)
+                                           .count
   end
 end

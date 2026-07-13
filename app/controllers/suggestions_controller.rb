@@ -4,7 +4,7 @@
 class SuggestionsController < ApplicationController
   def show
     track = Track.find(params[:track_id])
-    suggestions = Suggestions.new(track:, queued: params[:queued].to_s.split(","))
+    suggestions = Suggestions.new(track:, profile: Current.profile, queued: params[:queued].to_s.split(","))
 
     render json: { heading: suggestions.heading, tracks: suggestions.tracks.map { queueable(it) } }
   end

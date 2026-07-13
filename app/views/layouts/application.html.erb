@@ -3,9 +3,23 @@
   <head>
     <title><%= content_for(:title) || "Mediateca" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="application-name" content="Mediateca">
+
+    <%# Installed, Mediateca is a window of its own: no address bar, no tabs. The
+        manifest is what says so — Safari reads it when you say Add to Dock, and
+        Chrome reads it before it offers to install. The apple- tags are the older
+        way of asking for the same thing, and the phones still read them. %>
+    <link rel="manifest" href="<%= pwa_manifest_path %>">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Mediateca">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+    <%# What an installed window's title bar is tinted with: the same black the app
+        itself stands on, so the chrome reads as part of the app rather than as a
+        lid somebody put on top of it. %>
+    <meta name="theme-color" content="#000000">
+
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
@@ -13,7 +27,7 @@
 
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
@@ -86,6 +100,7 @@
                    class="scroll-edge pointer-events-none absolute inset-x-0 bottom-0 h-28 rounded-b-2xl"></div>
             </div>
 
+            <%= render "shared/lyrics" %>
             <%= render "shared/queue" %>
           </div>
         </div>

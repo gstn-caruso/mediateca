@@ -37,8 +37,8 @@ class TrackTest < ActiveSupport::TestCase
     assert_equal [ numbered, unnumbered ], @album.tracks.to_a
   end
 
-  # The scan writes the file's encoding into four columns, and a track hands
-  # back the one thing they were.
+  # The scan writes the file's encoding into columns, and a track hands back the
+  # one thing they were.
   test "a track reconstitutes the audio it was scanned with" do
     track = Track.create!(
       title: "Rap del exilio", path: "/music/piano/03.flac", album: @album,
@@ -48,7 +48,38 @@ class TrackTest < ActiveSupport::TestCase
     assert_equal Music::Audio.new(codec: "flac", bit_depth: 16, sample_rate: 44100, bit_rate: 1006840), track.audio
   end
 
+  test "a lossy track reconstitutes how it spent its bits" do
+    track = Track.create!(
+      title: "Ji ji ji", path: "/music/oktubre/09.mp3", album: @album,
+      codec: "mp3", bit_rate: 320000, bit_rate_mode: "constant"
+    )
+
+    assert_equal "constant", track.audio.bit_rate_mode
+  end
+
+  # The words live beside the song, as an .lrc — the file the whole world has
+  # written lyrics into since Winamp. A track is asked for them and goes looking
+  # where they would be, rather than anybody keeping a second copy in the table.
+  test "a track finds the words written beside it" do
+    track = Track.create!(title: "Desencuentro", path: fixture_track, album: @album)
+
+    assert track.lyrics.synced?
+    assert_equal "La primera línea", track.lyrics.lines.first.text
+  end
+
+  # Most of the record has none, and that is not an error — it is a panel with
+  # nothing to show.
+  test "a track nobody wrote the words for has none" do
+    track = Track.create!(title: "El pibe tigre", path: fixture_track("03 - El pibe tigre.flac"), album: @album)
+
+    assert track.lyrics.empty?
+  end
+
   private
+
+  def fixture_track(name = "01 - Desencuentro.flac")
+    File.join(Rails.configuration.x.media_root, "Almafuerte/1995 - Mundo guanaco", name)
+  end
 
   def track_credited_to(artist)
     Track.create!(title: "Peluca telefónica", artist:, path: "/music/piano/05.flac", album: @album)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_12_145847) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_13_003855) do
   create_table "albums", force: :cascade do |t|
     t.string "album_type"
     t.integer "artist_id", null: false
@@ -81,11 +81,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_12_145847) do
     t.index ["name"], name: "index_profiles_on_name", unique: true
   end
 
+  create_table "standings", force: :cascade do |t|
+    t.integer "artist_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "profile_id", null: false
+    t.string "standing", null: false
+    t.datetime "updated_at", null: false
+    t.index ["artist_id"], name: "index_standings_on_artist_id"
+    t.index ["profile_id", "artist_id"], name: "index_standings_on_profile_id_and_artist_id", unique: true
+    t.index ["profile_id"], name: "index_standings_on_profile_id"
+  end
+
   create_table "tracks", force: :cascade do |t|
     t.integer "album_id", null: false
     t.string "artist"
     t.integer "bit_depth"
     t.integer "bit_rate"
+    t.string "bit_rate_mode"
     t.string "codec"
     t.datetime "created_at", null: false
     t.integer "disc_no", default: 1, null: false
@@ -107,5 +119,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_12_145847) do
   add_foreign_key "playlists", "profiles"
   add_foreign_key "plays", "profiles"
   add_foreign_key "plays", "tracks"
+  add_foreign_key "standings", "artists"
+  add_foreign_key "standings", "profiles"
   add_foreign_key "tracks", "albums"
 end

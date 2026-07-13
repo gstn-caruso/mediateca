@@ -83,6 +83,17 @@ module Music
       assert_equal 2500000, track.bit_rate
     end
 
+    # How a compressed file spends its bits is measured once, by the scan, and
+    # kept: the badge must not have to open the file to draw itself.
+    test "how a lossy track spends its bits is stored with the rest" do
+      audio = Music::Audio.new(codec: "mp3", bit_rate: 320000, bit_rate_mode: "variable")
+      Importer.new.import(source(albums: [ source_album(
+        tracks: [ source_track(audio: audio) ]
+      ) ]))
+
+      assert_equal "variable", Track.sole.bit_rate_mode
+    end
+
     # Old rows scanned before we knew to look, and a source that never measured
     # (beets), both arrive without audio. That is not an error; the columns stay
     # empty until the next scan.

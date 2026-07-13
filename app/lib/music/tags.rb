@@ -32,7 +32,7 @@ module Music
         track_no: number(tags, TRACK),
         disc_no: number(tags, DISC) || 1,
         duration: format["duration"]&.to_f,
-        audio: audio_of(described, format)
+        audio: audio_of(described, format, path)
       )
     end
 
@@ -42,16 +42,23 @@ module Music
 
     # The physical encoding, read off the first audio stream. A file with no
     # audio stream — a stray image, a corrupt download — simply has none.
-    def audio_of(described, format)
+    #
+    # Only a compressed file is asked how it spends its bits, and it is asked
+    # last: the answer costs a second walk through the file, and a lossless one
+    # would have nothing to say for it.
+    def audio_of(described, format, path)
       stream = (described["streams"] || []).find { |each| each["codec_type"] == "audio" }
       return unless stream
 
-      Audio.new(
+      audio = Audio.new(
         codec: stream["codec_name"],
         bit_depth: bit_depth(stream),
         sample_rate: stream["sample_rate"]&.to_i,
         bit_rate: (stream["bit_rate"] || format["bit_rate"])&.to_i
       )
+      return audio unless audio.lossy?
+
+      audio.with(bit_rate_mode: BitRateMode.of(ffprobe.frame_sizes(path)))
     end
 
     # Lossless codecs report a real depth; lossy ones report 0, which means "not

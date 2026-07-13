@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="#000000">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Mediateca can't reach the music</title>
+
+    <!--
+      This is the page the service worker keeps for the day the server is gone,
+      so everything it needs is in this file. A stylesheet, a script, a font, an
+      icon — anything it had to go and fetch would be exactly the thing it cannot
+      have. The record below is drawn here, not linked; the colours are Mediateca's,
+      written out rather than themed.
+    -->
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+      * { margin: 0; }
+
+      body {
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: 2rem;
+        text-align: center;
+        color: #e5e5e5;
+        background-color: #000000;
+        background-image:
+          radial-gradient(55rem 28rem at 12% -6%, rgba(250, 45, 72, 0.14), transparent 60%),
+          radial-gradient(50rem 32rem at 106% 6%, rgba(124, 58, 237, 0.10), transparent 55%);
+        background-attachment: fixed;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        line-height: 1.5;
+      }
+
+      main { display: grid; gap: 1.5rem; justify-items: center; max-width: 30rem; }
+
+      /* The record, stopped: the app's icon with the light taken out of it. */
+      svg { width: 7rem; height: 7rem; opacity: 0.55; }
+
+      h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; color: #fafafa; }
+
+      p { color: #a3a3a3; text-wrap: pretty; }
+
+      button {
+        font: inherit;
+        font-weight: 600;
+        color: #ffffff;
+        background: #fa2d48;
+        border: 0;
+        border-radius: 999px;
+        padding: 0.6rem 1.5rem;
+        cursor: pointer;
+        box-shadow: 0 8px 30px rgba(250, 45, 72, 0.35);
+      }
+
+      button:hover { background: #ff5468; }
+      button:focus-visible { outline: 2px solid #ff5468; outline-offset: 3px; }
+    </style>
+  </head>
+
+  <body>
+    <main>
+      <svg viewBox="0 0 512 512" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="256" cy="256" r="196" fill="#fa2d48"/>
+        <g fill="none" stroke="#000000" stroke-opacity="0.13" stroke-width="2">
+          <circle cx="256" cy="256" r="178"/>
+          <circle cx="256" cy="256" r="163"/>
+          <circle cx="256" cy="256" r="148"/>
+          <circle cx="256" cy="256" r="133"/>
+          <circle cx="256" cy="256" r="118"/>
+          <circle cx="256" cy="256" r="103"/>
+        </g>
+        <circle cx="256" cy="256" r="74" fill="#000000" fill-opacity="0.14"/>
+        <circle cx="256" cy="256" r="46" fill="#000000"/>
+      </svg>
+
+      <h1>Mediateca isn&rsquo;t answering</h1>
+
+      <p>
+        The music is where you left it. It is the machine holding it that this
+        window can&rsquo;t reach right now &mdash; a NAS coming back up, a cable out,
+        a network that has gone quiet. Nothing has been lost.
+      </p>
+
+      <button onclick="location.reload()">Try again</button>
+    </main>
+  </body>
+</html>

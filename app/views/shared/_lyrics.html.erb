@@ -1,0 +1,41 @@
+<%# The words, a rail that stands where the queue stands and opens the same way:
+    beside the content on a desktop, over it on a phone. data-turbo-permanent,
+    so what it is showing — and how far the song has got through it — survives a
+    visit, the way the music itself does.
+
+    The player controller fills it: it holds the <audio>, so it is the only thing
+    that knows both what is playing and where in it we are. Nothing here knows a
+    word of any song; the words come off the disk, from the .lrc beside the file. %>
+<aside id="lyrics-panel" data-turbo-permanent data-player-target="lyricsPanel"
+       class="w-72 shrink-0 flex-col overflow-hidden rounded-2xl glass-deep">
+  <div class="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 py-3 pl-2 pr-3">
+    <div class="flex min-w-0 items-center gap-1">
+      <button type="button" data-action="player#toggleLyrics" aria-label="Collapse lyrics"
+              class="shrink-0 rounded-full p-1.5 text-neutral-400 transition hover:bg-white/10 hover:text-white">
+        <svg class="size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M10.28 3.22a.75.75 0 0 0-1.06 0L4.94 7.47a.75.75 0 0 0 0 1.06l4.28 4.25a.75.75 0 1 0 1.06-1.06L6.56 8l3.72-3.72a.75.75 0 0 0 0-1.06Z"/>
+        </svg>
+      </button>
+      <h2 class="truncate text-sm font-semibold text-white">Lyrics</h2>
+    </div>
+
+    <%# Following is a choice: on, the line being sung lights up and the rail
+        scrolls itself; off, the words stand still and you read them at your own
+        pace. A file nobody timed cannot be followed at all, and then the button
+        says so by going dead rather than lying about what it would do. %>
+    <button type="button" data-action="player#toggleSyncing" data-player-target="syncToggle"
+            aria-label="Follow the song" aria-pressed="true"
+            class="shrink-0 rounded-full p-1.5 text-neutral-500 transition hover:bg-white/10 hover:text-white
+                   aria-pressed:text-accent disabled:cursor-default disabled:text-neutral-700 disabled:hover:bg-transparent">
+      <svg class="size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M8 1.5A6.5 6.5 0 1 0 14.5 8 6.507 6.507 0 0 0 8 1.5Zm0 11.5A5 5 0 1 1 13 8a5.006 5.006 0 0 1-5 5Z"/>
+        <path d="M8 5.25A2.75 2.75 0 1 0 10.75 8 2.753 2.753 0 0 0 8 5.25Z"/>
+      </svg>
+    </button>
+  </div>
+
+  <%# Where the words land. Everything in here is written by the controller —
+      the lines, and the reasons there are none. %>
+  <div data-player-target="lyrics"
+       class="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-4 text-sm leading-relaxed"></div>
+</aside>

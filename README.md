@@ -56,10 +56,21 @@ anybody. See [SECURITY.md](SECURITY.md).
   history.
 - **Playlists, likes, play history**, and a "recently played" shelf that fills
   itself.
+- **Hide an artist, or highlight one** — and it is yours, not the house's. A
+  hidden artist leaves your library and is never offered again; they are not
+  deleted, and searching the name by hand still finds them. A highlighted one
+  gets the opposite: a couple of the "what's next" slots are theirs whatever
+  else is playing, filled with the songs of theirs you actually go back to, and
+  they come up heavier when the library is drawn from.
 - **The music doesn't stop when you navigate.** The player lives outside the page
   Turbo replaces.
 - **Your media keys work.** The OS is told what's playing, so the lock screen and
   Control Center drive it.
+- **It installs.** Safari puts it in the Dock and Chrome installs it: a window of
+  its own, its own icon, no address bar. Hand the deploy a certificate and it gets
+  a service worker too — so a NAS that is rebooting says so in Mediateca's voice,
+  instead of leaving you on the browser's error page. See
+  [Installing it as an app](#installing-it-as-an-app).
 - **It scans itself.** Every night at 4am, and on demand.
 - **Artist portraits** it goes and finds — a photo you left beside the records
   first, then Deezer, then Wikimedia, then Spotify if you hand it credentials.
@@ -119,6 +130,7 @@ Everything arrives from the environment.
 | `PORTRAITS_ROOT` | Where the portraits it fetches are kept. | `storage/portraits` |
 | `FFPROBE` | The ffprobe binary the scan reads tags with. | `ffprobe` |
 | `SOLID_QUEUE_IN_PUMA` | Run the nightly scan inside the web process. | — |
+| `TLS_HOST` | Set by the deploy when there is a certificate in front. It tells Rails the page is HTTPS, so it stops writing `http://` URLs into it. | `mediateca.lan` |
 
 ## Deploying it
 
@@ -146,6 +158,62 @@ bin/kamal console
 ```
 
 The scan also runs on its own, every night at 4am.
+
+### Installing it as an app
+
+Mediateca ships a manifest and an icon, so Safari's **File ▸ Add to Dock** works
+over plain HTTP, as deployed: a window of its own, no address bar, its own icon
+in the Dock, and the media keys still driving it.
+
+Two things need more than that, because a browser hands them only to a page it
+considers *secure* — and on a LAN that means HTTPS, `localhost` being the one
+exception:
+
+- **Chrome's Install.**
+- **The service worker.** It is what answers when the server doesn't: a NAS coming
+  back up, a cable out. Without it, an installed window with no address bar and no
+  reload button just shows the browser's error page — which reads as though
+  Mediateca is what broke.
+
+There is no public name here for Let's Encrypt to prove, so the certificate is one
+you issue yourself, from a small authority your own machines trust.
+[mkcert](https://github.com/FiloSottile/mkcert) is three commands:
+
+```bash
+brew install mkcert                                                   # or your package manager
+mkcert -install                                                       # trust your own CA
+mkcert -cert-file .kamal/tls/cert.pem -key-file .kamal/tls/key.pem nas.local
+```
+
+The name has to be one your LAN already resolves — a NAS usually answers to
+`something.local` over Bonjour, which is free, or you can add a record on the
+router. Then name it in the deploy:
+
+```bash
+# .kamal/deploy.env
+MEDIATECA_TLS_HOST=nas.local
+```
+
+`.kamal/tls/` is gitignored, and `.kamal/secrets` reads the two files from there.
+It is a file and not a keychain for one reason: on this project the thing that
+deploys is a CI runner living on the NAS, and it has to read the key with nobody
+there to unlock anything. If yours deploys from the NAS too, the certificate goes
+next to its other coordinates (`~/mediateca-ci/tls/`), and the workflow copies it
+into the checkout.
+
+Then deploy. From there on the app answers to that name over HTTPS and **stops
+answering to a bare IP** — the name is the whole point of the certificate.
+
+Two things follow from that, and they are the price:
+
+- **Every machine that listens has to trust the CA**, not just the one that made
+  it: `mkcert -install` there too, or copy the root out of `mkcert -CAROOT`. A
+  machine that doesn't will call the page insecure, and you are back where you
+  started — no install, no worker. On a phone or a tablet that means installing
+  the root by hand.
+- **The old `http://192.168.x.x` bookmarks stop working**, and an installed app
+  is bound to its origin, so the one you install from the IP is a different app
+  from the one you install from the name. Pick the name and stay on it.
 
 ### Preparing the server
 

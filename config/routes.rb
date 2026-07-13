@@ -19,6 +19,9 @@ Rails.application.routes.draw do
 
   resources :artists, only: [ :index, :show ] do
     resource :portrait, only: [ :show ]
+    # Where the listener stands on them: out of sight, or out in front. Singular,
+    # because nobody holds two opinions of the same artist at once.
+    resource :standing, only: [ :create, :destroy ]
   end
 
   resources :albums, only: [ :show ] do
@@ -31,10 +34,18 @@ Rails.application.routes.draw do
     resource :like,   only: [ :create, :destroy ]
     # What to play when this one is the last thing in the queue.
     resource :suggestions, only: [ :show ]
+    # The words, and when each one is sung.
+    resource :lyrics, only: [ :show ]
   end
 
   # Which build is answering, for a tab coming back from a deploy.
   get "build" => "builds#show"
+
+  # Where a tab becomes an app. The worker is served from the root on purpose: a
+  # worker only speaks for the pages beneath the path it came from, and this one
+  # has to speak for all of them.
+  get "manifest.json"     => "pwa#manifest",       as: :pwa_manifest
+  get "service-worker.js" => "pwa#service_worker", as: :pwa_service_worker
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   get "up" => "rails/health#show", as: :rails_health_check
