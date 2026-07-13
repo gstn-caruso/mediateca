@@ -54,8 +54,16 @@ module Qbittorrent
       stop(job) if job
     end
 
-    def add(magnet, as:)
-      post("/torrents/add", urls: magnet, category: as, savepath: Rails.configuration.x.qbittorrent_into)
+    # Straight into the music tree, under a directory of its own — because the scan
+    # reads a record as "the directory two levels below the root", and a torrent
+    # dumped flat at the top would be read as an artist with no records. Given
+    # somewhere to land, it lands where the library already looks.
+    #
+    # It does not land there until it is finished: qBittorrent is set to write
+    # partial downloads somewhere else entirely, and a scan that met a half-written
+    # FLAC would file half a record.
+    def add(magnet, into:, as: "mediateca")
+      post("/torrents/add", urls: magnet, category: as, savepath: into)
     end
 
     # What is on the way, by infohash, so a record can say how far along it is.

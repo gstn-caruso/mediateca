@@ -30,10 +30,21 @@ class WantedRecord < ApplicationRecord
     update!(sought_at: Time.current, torrent_hash: hash, torrent_name: name, nothing_doing:)
   end
 
-  # What a search engine is given. The name of the record, whoever made it, and the
-  # word that separates a real copy from a transcode wearing its name.
+  # What a search engine is given. The name of the record and whoever made it.
   def as_a_search
     "#{artist} #{title}"
+  end
+
+  # Where on the disk it should land: the shelf it would have stood on all along.
+  # The scan reads a record as the directory two levels under the root, so that is
+  # the shape it is given — and a slash in somebody's name is a directory nobody
+  # meant to make.
+  def shelf_for
+    File.join(Rails.configuration.x.qbittorrent_into.to_s, safely(artist), safely(title))
+  end
+
+  def safely(name)
+    name.to_s.tr("/", "-").strip
   end
 
   # Everything on Last.fm that this listener plays and this house has not got,

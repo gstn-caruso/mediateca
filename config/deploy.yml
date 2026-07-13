@@ -135,6 +135,18 @@ env:
     # is PKCE, whose whole point is that a public client has no secret to keep —
     # and this one is handed to every browser that starts the journey anyway.
     SPOTIFY_CLIENT_ID: <%= ENV["SPOTIFY_CLIENT_ID"] %>
+
+    # The house's torrent client, which is on the NAS too — reached across the
+    # bridge the app itself is on, not over the LAN. It lets this network in
+    # without a password and asks everybody else for one, which is the same bargain
+    # the app strikes and is written down in SECURITY.md.
+    #
+    # What it finds goes straight onto the shelf it would have stood on: the scan
+    # reads a record as the directory two levels under the root, so that is the
+    # shape it is given. Partial downloads live somewhere else entirely — a scan
+    # that met a half-written FLAC would file half a record.
+    QBITTORRENT_URL: <%= ENV.fetch("QBITTORRENT_URL", "http://172.18.0.1:8080") %>
+    QBITTORRENT_INTO: <%= music_root %>
   secret:
     - RAILS_MASTER_KEY
     # Last.fm. Without these there is no Last.fm in the app at all: no menu item,

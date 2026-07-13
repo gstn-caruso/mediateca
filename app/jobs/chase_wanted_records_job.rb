@@ -34,7 +34,7 @@ class ChaseWantedRecordsJob < ApplicationJob
     return wanted.sought(nothing_doing: "#{found.size} editions, and no way to tell which one you meant.") unless one_of_them?(found)
 
     best = found.first
-    Qbittorrent.api.add(best.fetch(:magnet), as: "mediateca")
+    Qbittorrent.api.add(best.fetch(:magnet), into: wanted.shelf_for)
     wanted.sought(hash: best.fetch(:hash), name: best.fetch(:name))
   rescue Qbittorrent::Api::Unreachable => e
     # The client is off, or the NAS cannot reach it. Not the record's fault: it

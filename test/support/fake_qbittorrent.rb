@@ -28,8 +28,8 @@ class FakeQbittorrent
     @finds.fetch(query, []).sort_by { -it.fetch(:seeders) }
   end
 
-  def add(magnet, as:)
-    @added << magnet
+  def add(magnet, into:, as: "mediateca")
+    @added << { magnet:, into: }
   end
 
   def progress(hashes)

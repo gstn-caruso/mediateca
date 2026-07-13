@@ -9,13 +9,26 @@ class ChasingWantedRecordsTest < ActiveJob::TestCase
     @gaston.scrobbles_to(username: "ekvintroj", session_key: "k")
   end
 
+  # The scan reads a record as the directory two levels under the root, so that is
+  # where it is put — the shelf it would have stood on all along. A torrent dumped
+  # flat at the top would be read as an artist with no records.
+  test "a record lands on the shelf it would have stood on" do
+    Rails.configuration.x.qbittorrent_into = "/music"
+    want("Nirvana", "In Utero", plays: 793)
+    @qbit.seeding("Nirvana In Utero", edition("In Utero [FLAC]", seeders: 90))
+
+    ChaseWantedRecordsJob.perform_now
+
+    assert_equal "/music/Nirvana/In Utero", @qbit.added.sole.fetch(:into)
+  end
+
   test "the record you play most and do not own is fetched" do
     want("Nirvana", "In Utero", plays: 793)
     @qbit.seeding("Nirvana In Utero", edition("Nirvana - In Utero [FLAC]", seeders: 90))
 
     ChaseWantedRecordsJob.perform_now
 
-    assert_equal [ "magnet:Nirvana - In Utero [FLAC]" ], @qbit.added
+    assert_equal "magnet:Nirvana - In Utero [FLAC]", @qbit.added.sole.fetch(:magnet)
     assert_predicate WantedRecord.sole, :on_the_way?
   end
 
