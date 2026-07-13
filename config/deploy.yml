@@ -33,6 +33,14 @@
   # The name on the certificate, when there is one — and the whole switch for
   # HTTPS. See the proxy block below, and "Install it as an app" in the README.
   tls_host   = optional_env("MEDIATECA_TLS_HOST")
+
+  # The optional company the app keeps. Each of these is a feature that simply is
+  # not there without it — and a deploy must never fall over because somebody has
+  # not got round to Spotify yet. So a missing one is a line that is not written,
+  # rather than a key with nothing after it, which is what Kamal refuses.
+  spotify_id = optional_env("SPOTIFY_CLIENT_ID")
+  qbittorrent = optional_env("QBITTORRENT_URL")
+  lastfm     = optional_env("LASTFM_API_KEY")
 %>
 service: mediateca
 image: <%= optional_env("MEDIATECA_IMAGE") || "mediateca" %>
@@ -130,14 +138,16 @@ env:
     # Single process: there is no concurrency here worth spreading over more.
     SOLID_QUEUE_IN_PUMA: true
 
+<% if spotify_id %>
     # Spotify's client id, so a listener can bring home the songs they hearted
     # there and the lists they made. It sits in the clear on purpose: the sign-in
     # is PKCE, whose whole point is that a public client has no secret to keep —
     # and this one is handed to every browser that starts the journey anyway.
-    SPOTIFY_CLIENT_ID: <%= ENV["SPOTIFY_CLIENT_ID"] %>
-
+    SPOTIFY_CLIENT_ID: <%= spotify_id %>
+<% end %>
+<% if qbittorrent %>
     # The house's torrent client, which is on the NAS too — reached across the
-    # bridge the app itself is on, not over the LAN. It lets this network in
+    # bridge the app itself is on, not over the LAN. It lets that network in
     # without a password and asks everybody else for one, which is the same bargain
     # the app strikes and is written down in SECURITY.md.
     #
@@ -145,14 +155,17 @@ env:
     # reads a record as the directory two levels under the root, so that is the
     # shape it is given. Partial downloads live somewhere else entirely — a scan
     # that met a half-written FLAC would file half a record.
-    QBITTORRENT_URL: <%= ENV.fetch("QBITTORRENT_URL", "http://172.18.0.1:8080") %>
+    QBITTORRENT_URL: <%= qbittorrent %>
     QBITTORRENT_INTO: <%= music_root %>
+<% end %>
   secret:
     - RAILS_MASTER_KEY
+<% if lastfm %>
     # Last.fm. Without these there is no Last.fm in the app at all: no menu item,
     # no scrobbles, no import.
     - LASTFM_API_KEY
     - LASTFM_API_SECRET
+<% end %>
 
 # The music is mounted read-only, and under the SAME path as on the host, so a
 # path stored in the catalog means the same thing inside and outside the
