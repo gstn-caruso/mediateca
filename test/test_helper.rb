@@ -32,6 +32,7 @@ module ActiveSupport
       Lastfm.api = nil
       Spotify.api = nil
       Qbittorrent.api = nil
+      Disk.holding_the_music = nil
     end
 
     # Add more helper methods to be used by all tests here...

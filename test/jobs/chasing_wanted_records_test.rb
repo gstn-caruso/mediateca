@@ -5,6 +5,7 @@ class ChasingWantedRecordsTest < ActiveJob::TestCase
   setup do
     Lastfm.api = FakeLastfm.new
     Qbittorrent.api = @qbit = FakeQbittorrent.new
+    Disk.holding_the_music = FakeDisk.new(12)
     @gaston = Profile.create!(name: "Gastón")
     @gaston.scrobbles_to(username: "ekvintroj", session_key: "k")
   end
@@ -120,7 +121,35 @@ class ChasingWantedRecordsTest < ActiveJob::TestCase
     assert_equal 42, OnTheWay.new(@gaston).all.sole.progress
   end
 
+  # The line. A library that fills its own disk stops being one — so past it,
+  # nothing is fetched at all. The want list is still kept up to date: knowing what
+  # is missing is worth having whether or not there is anywhere to put it.
+  test "a full disk fetches nothing, and still knows what it is missing" do
+    want("Nirvana", "In Utero", plays: 793)
+    @qbit.seeding("Nirvana In Utero", edition("In Utero [FLAC]", seeders: 90))
+
+    Disk.holding_the_music = FakeDisk.new(96)
+    ChaseWantedRecordsJob.perform_now
+
+    assert_empty @qbit.added
+    assert_not_predicate WantedRecord.sole, :sought?
+  end
+
+  test "with room, it fetches" do
+    want("Nirvana", "In Utero", plays: 793)
+    @qbit.seeding("Nirvana In Utero", edition("In Utero [FLAC]", seeders: 90))
+
+    ChaseWantedRecordsJob.perform_now
+
+    assert_equal 1, @qbit.added.size
+  end
+
   private
+
+  FakeDisk = Struct.new(:used) do
+    def room? = used < Disk::FULL_ENOUGH
+    def why_not = "The disk is #{used}% full."
+  end
 
   def want(artist, title, plays:)
     WantedRecord.create!(artist:, title:, plays:)

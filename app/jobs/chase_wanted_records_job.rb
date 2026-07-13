@@ -20,7 +20,13 @@ class ChaseWantedRecordsJob < ApplicationJob
   def perform
     return unless Qbittorrent.api.configured?
 
+    # The want list is kept up to date whether or not anything is being fetched:
+    # knowing what is missing is worth having on its own, and it is what the report
+    # and the shelf are drawn from. It is only the *fetching* that the disk stops.
     Profile.joins(:scrobbler).find_each { WantedRecord.refresh_from(it) }
+
+    disk = Disk.holding_the_music
+    return Rails.logger.info(disk.why_not) unless disk.room?
 
     WantedRecord.unsought.limit(WantedRecord::A_FEW).each { chase(it) }
   end

@@ -8,6 +8,10 @@ class ArtistsController < ApplicationController
     # The records the house has gone and got, which are not on the disk yet and are
     # drawn as though they were: the gap in the shelf, filling itself, in front of you.
     @coming = OnTheWay.new(Current.profile).all
+
+    # And why nothing is coming, when nothing is. "Nothing is being fetched" is not
+    # a thing to say by saying nothing.
+    @no_room = Disk.holding_the_music.then { it.why_not unless it.room? } if Qbittorrent.api.configured?
   end
 
   def show

@@ -9,6 +9,18 @@
 
       It is the loop the rest of this app opened, closing. The gap in the shelf was
       named; now it is being filled, and you can stand here and watch it. %>
+  <%# The disk is full, so the chase has stopped. A library that fills its own disk
+      stops being one — and an app that quietly stopped fetching, and let somebody
+      wonder why, would be worse than one that never fetched at all. %>
+  <% if @no_room && WantedRecord.still_missing.any? %>
+    <p class="mb-6 rounded-2xl bg-white/[0.03] px-5 py-4 text-sm leading-relaxed text-neutral-500 ring-1 ring-inset ring-white/10">
+      <span class="font-semibold text-neutral-300"><%= @no_room %></span>
+      There are <%= number_with_delimiter(WantedRecord.still_missing.count) %> records you play and don't own,
+      and they're still on the list — <%= link_to "the report", report_path, class: "text-neutral-300 underline hover:text-white" %>
+      names them. Make room and they'll start arriving.
+    </p>
+  <% end %>
+
   <% if @coming.any? %>
     <div class="mb-10 rounded-2xl bg-white/[0.03] p-5 ring-1 ring-inset ring-white/10">
       <h2 class="flex items-center gap-2 text-sm font-semibold text-neutral-300">
