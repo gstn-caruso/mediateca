@@ -23,7 +23,7 @@ class SpotifyController < ApplicationController
     session[:spotify_handshake] = SecureRandom.urlsafe_base64
 
     redirect_to Spotify.api.authorize_url(
-      returning_to: callback_spotify_url,
+      returning_to: way_back,
       verifier: session[:spotify_verifier],
       state: session[:spotify_handshake]
     ), allow_other_host: true
@@ -60,9 +60,22 @@ class SpotifyController < ApplicationController
   private
 
   def tokens(code, verifier)
-    given = Spotify.api.tokens_for(code:, verifier:, returning_to: callback_spotify_url)
+    given = Spotify.api.tokens_for(code:, verifier:, returning_to: way_back)
 
     Spotify.api.me(token: given.fetch(:access_token)).merge(given)
+  end
+
+  # Spotify will not have the word `localhost` in a redirect, and says so by name:
+  # a loopback address is allowed and the word is not. But anybody developing this
+  # opens http://localhost:3000 without a thought, and the callback built from the
+  # host they typed is the one Spotify then refuses — with "Not matching
+  # configuration", and no hint as to which part of it was wrong.
+  #
+  # So the word is swapped for the address it means. Both legs of the journey use
+  # this one method, because Spotify checks the redirect again when the code is
+  # exchanged, and the two must match to the character.
+  def way_back
+    callback_spotify_url.sub(%r{\A(https?://)localhost\b}, '\1127.0.0.1')
   end
 
   def require_spotify

@@ -27,6 +27,33 @@ class ConnectingSpotifyTest < ActionDispatch::IntegrationTest
     assert_equal "rt", @gaston.spotify_account.refresh_token
   end
 
+  # Spotify will not have `localhost` as a redirect, and says so by name: a
+  # loopback address is allowed, and the word is not. Anybody developing this opens
+  # http://localhost:3000 without thinking about it — and the callback built from
+  # the host they typed is the one Spotify refuses, with "Not matching
+  # configuration" and no hint as to which part it disliked.
+  #
+  # So the word is swapped for the address it means. It has to be swapped in both
+  # legs of the journey: Spotify checks the redirect again when the code is
+  # exchanged, and the two must match to the character.
+  test "Spotify is never sent the word localhost, which it refuses" do
+    listening_from "localhost:3000"
+
+    get connect_spotify_path
+
+    assert_match CGI.escape("http://127.0.0.1:3000/spotify/callback"), response.location
+    assert_no_match(/localhost/, response.location)
+  end
+
+  test "a listener who came in by name is still sent back to it" do
+    listening_from "nas.local"
+
+    get connect_spotify_path
+
+    assert_match CGI.escape("/spotify/callback"), response.location
+    assert_match "nas.local", response.location
+  end
+
   # The reason for the handshake. The way back is a GET, and a GET is a link — so
   # without it, anybody could send this listener a link carrying *their* code and
   # quietly connect the house to a stranger's Spotify.
@@ -84,6 +111,13 @@ class ConnectingSpotifyTest < ActionDispatch::IntegrationTest
   end
 
   private
+
+  # The cookie was signed for the host the test started on, so arriving at another
+  # one is arriving as nobody.
+  def listening_from(host)
+    host! host
+    post session_path, params: { profile_id: @gaston.id }
+  end
 
   def handshake
     Rack::Utils.parse_query(URI.parse(response.location).query).fetch("state")
