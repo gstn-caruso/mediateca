@@ -8,7 +8,16 @@
     with the words covered. %>
 <% row = "flex items-center gap-3 rounded-md p-2 transition hover:bg-white/10" %>
 
-<nav data-sidebar-target="panel" class="hidden w-72 shrink-0 flex-col gap-2 md:flex">
+<%# The library is the one panel whose edge faces the content from the left, so a
+    hand moving right is a hand asking for more of it. Its grip sits out in the
+    gap: nothing clips this rail, and its own right edge is where its scrollbar
+    lives — a handle laid over that would have quietly stolen the scrollbar. %>
+<nav id="library-panel" data-sidebar-target="panel"
+     data-controller="panel" data-panel-name-value="library" data-panel-edge-value="right"
+     style="--panel: var(--library)"
+     class="panel hidden shrink-0 flex-col gap-2 md:flex">
+  <%= render "shared/grip", side: "-right-2" %>
+
   <div class="flex min-h-0 flex-1 flex-col rounded-2xl glass-deep"
        data-controller="tabs" data-tabs-showing-value="artists" data-tabs-remember-value="mediateca:library-rail">
     <%# The turn itself: three icons in a track, and the one you are on rides a

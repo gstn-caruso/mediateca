@@ -9,7 +9,11 @@
     below md, and the class it toggled had no effect there anyway, so on a phone
     the queue simply did not exist. %>
 <aside id="queue-panel" data-turbo-permanent data-player-target="panel"
-       class="rail w-72 shrink-0 flex-col overflow-hidden rounded-2xl glass-deep">
+       data-controller="panel" data-panel-name-value="queue" data-panel-edge-value="left"
+       style="--panel: var(--queue)"
+       class="panel rail shrink-0 flex-col overflow-hidden rounded-2xl glass-deep">
+  <%= render "shared/grip", side: "left-0" %>
+
   <div class="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 py-3 pl-2 pr-4">
     <div class="flex min-w-0 items-center gap-1">
       <button type="button" data-action="player#toggleQueue" aria-label="Collapse queue"

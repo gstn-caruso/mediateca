@@ -1,0 +1,13 @@
+<%# The edge a panel is taken by, and the only part of it that is a handle.
+    Everything else on a rail is a thing to press or a thing to read.
+
+    The hand keeps hold of it wherever it then goes — over the content, over the
+    next rail, past the window — because the pointer is captured on the way down.
+    Without that, a hand that outran the edge would drop it somewhere in the
+    middle of the room and the panel would stop following. %>
+<%# It is also the honest answer to "can this panel be widened at all": the CSS
+    takes it away on a phone, and a shut rail does not draw it. Where there is no
+    grip, there is nothing to hold — and nothing holding the panel to the room. %>
+<div class="grip <%= side %>" aria-hidden="true" data-panel-target="grip"
+     data-action="pointerdown->panel#grab pointermove->panel#drag
+                  pointerup->panel#drop pointercancel->panel#drop"></div>
