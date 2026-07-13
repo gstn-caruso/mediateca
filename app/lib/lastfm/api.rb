@@ -110,6 +110,18 @@ module Lastfm
       }
     end
 
+    # Who Last.fm says this band is like, and how alike — a score between nought
+    # and one. No session key, no listener: this is a fact about music, not about
+    # anybody. An artist Last.fm has never heard of is not an error; it is an
+    # answer, and the answer is nobody.
+    def similar_artists(name, limit: 100)
+      said = get("artist.getSimilar", artist: name, limit:).fetch("similarartists")
+
+      Array.wrap(said["artist"]).map { { name: it["name"], match: it["match"].to_f } }
+    rescue Refused
+      []
+    end
+
     private
 
     def heard(song)

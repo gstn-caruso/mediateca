@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_13_060000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_13_070000) do
   create_table "albums", force: :cascade do |t|
     t.string "album_type"
     t.integer "artist_id", null: false
@@ -32,6 +32,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_060000) do
     t.string "portrait_path"
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_artists_on_name", unique: true
+  end
+
+  create_table "kinships", force: :cascade do |t|
+    t.integer "artist_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "kin_id", null: false
+    t.float "match", null: false
+    t.datetime "updated_at", null: false
+    t.index ["artist_id", "kin_id"], name: "index_kinships_on_artist_id_and_kin_id", unique: true
+    t.index ["artist_id"], name: "index_kinships_on_artist_id"
+    t.index ["kin_id"], name: "index_kinships_on_kin_id"
   end
 
   create_table "likes", force: :cascade do |t|
@@ -168,6 +179,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_060000) do
   end
 
   add_foreign_key "albums", "artists"
+  add_foreign_key "kinships", "artists"
+  add_foreign_key "kinships", "artists", column: "kin_id"
   add_foreign_key "likes", "profiles"
   add_foreign_key "loves", "profiles"
   add_foreign_key "loves", "tracks"

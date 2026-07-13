@@ -34,13 +34,14 @@ class Suggestions
   end
 
   def tracks
-    @tracks ||= from_the_artist.any? ? with_the_highlighted(from_the_artist) : from_the_library
+    @tracks ||= from_the_artist.any? ? with_the_highlighted(from_the_artist) : from_elsewhere
   end
 
   def heading
     return "" if tracks.empty?
+    return "More from #{artist.name}" if from_the_artist.any?
 
-    from_the_artist.any? ? "More from #{artist.name}" : "From your library"
+    from_the_kin.any? ? "Like #{artist.name}" : "From your library"
   end
 
   private
@@ -96,18 +97,54 @@ class Suggestions
     )
   end
 
+  # Once the record you are on runs out, the best answer in the house is whoever
+  # is like them — and the random draw is what is left when nobody knows.
+  def from_elsewhere
+    from_the_kin.any? ? with_the_highlighted(from_the_kin) : from_the_library
+  end
+
+  # Who Last.fm says the artist playing is like, kept down to the ones whose
+  # records are actually on this disk: a band the rail cannot put on is not an
+  # offer. This is the one thing a home library cannot work out for itself — the
+  # disk knows what you own and the history knows what you play, and neither of
+  # them knows that Hermética is what comes after Almafuerte.
+  #
+  # It is the same hat and the same draw as the library fallback, weighted by how
+  # alike Last.fm says they are, so a close cousin comes up often and a distant one
+  # hardly ever.
+  def from_the_kin
+    @from_the_kin ||= begin
+      closeness = artist.kinships.pluck(:kin_id, :match).to_h
+
+      closeness.empty? ? [] : drawn_from(hat_of(closeness))
+    end
+  end
+
+  def hat_of(closeness)
+    unheard(Track.where(album: Album.where(artist_id: closeness.keys)))
+      .joins(:album)
+      .pluck(:id, "albums.artist_id")
+      .flat_map { |id, artist_id| [ id ] * as_close_as(closeness[artist_id]) }
+  end
+
+  # Last.fm scores a kinship between nought and one, and a hat is counted in whole
+  # songs — so the score becomes how many times the song goes in. Every kin goes in
+  # at least once: Last.fm calling them kin at all is worth a chance.
+  def as_close_as(match)
+    [ (match.to_f * 10).round, 1 ].max
+  end
+
   # The library in no particular order, because there is no particular order to
-  # put it in: nothing here is more like Piazzolla than anything else, and a
-  # fallback that always names the same song stops being a suggestion.
+  # put it in: nothing here is more like Piazzolla than anything else — and when
+  # nobody has told us otherwise, that is still true. A fallback that always names
+  # the same song stops being a suggestion.
   #
   # Drawn in Ruby rather than by RANDOM(), because the draw is weighted and a
   # weighted draw is the one thing SQL makes hard to say plainly. A thousand ids
   # is a small handful of numbers; the songs themselves are fetched only once the
   # five are known.
   def from_the_library
-    drawn = draw(hat)
-
-    Track.where(id: drawn).includes(album: :artist).sort_by { drawn.index(it.id) }
+    drawn_from(hat)
   end
 
   # Every song that could come up, with a highlighted artist's in it threefold.
@@ -116,6 +153,14 @@ class Suggestions
       .joins(:album)
       .pluck(:id, "albums.artist_id")
       .flat_map { |id, artist_id| [ id ] * weight_of(artist_id) }
+  end
+
+  # Shuffle, keep the first few, and fetch the songs only once it is known which
+  # few they are.
+  def drawn_from(hat)
+    drawn = draw(hat)
+
+    Track.where(id: drawn).includes(album: :artist).sort_by { drawn.index(it.id) }
   end
 
   def weight_of(artist_id)
