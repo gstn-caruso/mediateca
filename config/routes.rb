@@ -17,6 +17,12 @@ Rails.application.routes.draw do
 
   resources :plays, only: [ :create ]
 
+  # How wide this listener keeps a panel. Named, not numbered: there are four of
+  # them, they are the same four for everybody, and their names are the ones the
+  # layout already calls them by. Only ever updated — a panel is not created by
+  # a hand and cannot be got rid of by one.
+  resources :panels, only: [ :update ], param: :name
+
   # Everything this listener ever heard, in the order they heard it — theirs and
   # whatever Last.fm was keeping for them. The most interesting table in the
   # database, and until now nothing ever read it back.
