@@ -65,6 +65,21 @@ class WhatCountsAsListeningTest < ApplicationSystemTestCase
     assert_no_plays
   end
 
+  # The same hole, from the side it actually opens on. The player used to be told
+  # about a jump by `seeking` and trusted that news to arrive before the tick that
+  # would see the leap — but setting the position changes it at once, while
+  # `seeking` is delivered from a queued task. A tick that lands in between asks
+  # the song where it is and is told the end, having played none of the way there.
+  #
+  # So the player is asked in the losing order on purpose: the leap first, the
+  # news second. What it has heard cannot depend on which of the two won.
+  test "a jump is not listening even when the player hears of it late" do
+    play "Un Tema Corto"
+    scrub_to_the_end_before_the_seek_is_announced
+
+    assert_no_plays
+  end
+
   # The moment the music started, not the moment the news arrived — by then the
   # song is half over. It is what Last.fm is told, and what a history is ordered
   # by. Half of this song is a second, so the two timestamps must be a second
@@ -90,6 +105,19 @@ class WhatCountsAsListeningTest < ApplicationSystemTestCase
   # to: the song is suddenly somewhere else, having played none of the way there.
   def scrub_to_the_end
     page.execute_script("document.querySelector('audio').currentTime = 1.9")
+  end
+
+  # The same jump, with the tick that sees it forced to arrive before the seek is
+  # announced. Both happen in one turn of the browser's script, and a queued task
+  # cannot cut in on that — so `seeking` is still waiting its turn when the player
+  # is asked what it has heard. That is the order the browser is free to choose,
+  # and the one the bug needed.
+  def scrub_to_the_end_before_the_seek_is_announced
+    page.execute_script(<<~JS)
+      const audio = document.querySelector("audio")
+      audio.currentTime = 1.9
+      audio.dispatchEvent(new Event("timeupdate"))
+    JS
   end
 
   # The music plays in the browser and the row is written by the server, so there

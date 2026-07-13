@@ -116,9 +116,12 @@
     `error` matters as much as `ended`: a file the server no longer has used to
     leave the player sitting forever on a title that would never sound.
 
-    `seeking` is how the player is told the song jumped. It has to hear about it
-    before the tick that would see the leap and count it as time listened — a
-    thumb dragged to the end covers the whole song and plays none of it. %>
+    `seeking` is how the player is told the song jumped — a thumb dragged to the
+    end covers the whole song and plays none of it. It is not what keeps the leap
+    out of the history, though: this arrives from a queued task and the tick that
+    sees the leap can beat it, so what a jump is worth is settled by the clock, in
+    keepListening. This is here for the jump that clock cannot see: one made while
+    the song is paused. %>
 <audio data-player-target="audio"
        data-action="timeupdate->player#tick loadedmetadata->player#tick
                     play->player#refreshIcons pause->player#refreshIcons
