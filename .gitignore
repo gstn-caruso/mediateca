@@ -52,3 +52,7 @@ tmp/screenshots/
 
 # JetBrains IDEs.
 /.idea/
+
+# Claude Code keeps throwaway git worktrees here. They are repositories of their
+# own, and a `git add -A` will happily try to swallow one.
+/.claude/worktrees/
