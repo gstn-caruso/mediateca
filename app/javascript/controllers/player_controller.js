@@ -17,6 +17,12 @@ const REMEMBER_EVERY = 5000
 const QUEUE = "mediateca:queue"
 const OPEN = "is-open"
 
+// The same, for the lyrics rail — and, beside it, whether the words are to
+// follow the song at all. Following is the point of a timed .lrc, so it is on
+// unless a listener has said otherwise.
+const LYRICS = "mediateca:lyrics"
+const FOLLOW = "mediateca:lyrics-follow"
+
 // Drives the single <audio> element in the layout.
 //
 // Turbo Drive swaps the body on every navigation, so this controller is torn
@@ -30,8 +36,17 @@ export default class extends Controller {
     "audio", "title", "titleText", "idle", "subtitle", "subtitleText", "cover", "tail", "broken",
     "playIcon", "pauseIcon", "progress", "elapsed", "duration",
     "shuffle", "repeat", "repeatOne", "next", "queue", "queueEmpty", "queueToggle", "panel",
-    "repeatBadge", "repeatBadgeText", "backdrop", "row", "suggestions"
+    "repeatBadge", "repeatBadgeText", "backdrop", "row", "suggestions",
+    "lyrics", "lyricsPanel", "lyricsToggle", "syncToggle"
   ]
+
+  // Whether the words are to follow the song. A plain controller field, not
+  // state on the <audio>: the rail that holds the button is permanent, but this
+  // is read back on every visit, and one read of localStorage per navigation is
+  // nothing — one per `timeupdate`, four times a second forever, would not be.
+  connect() {
+    this.following = this.remembers(FOLLOW) !== "off"
+  }
 
   // Turbo builds the new body before it moves #player, the permanent element,
   // into it — so on navigation the controller connects to a body with no player
@@ -87,6 +102,29 @@ export default class extends Controller {
 
     const open = String(this.panelTarget.classList.contains(OPEN))
     this.queueToggleTargets.forEach((toggle) => toggle.setAttribute("aria-expanded", open))
+  }
+
+  // The lyrics rail keeps the same two-sided arrangement, and for the same
+  // reasons: the button that opens it is rebuilt on every visit, the rail itself
+  // is permanent and only lands on a full load — which is where the choice to
+  // have left it open is read back off storage.
+  lyricsToggleTargetConnected() {
+    this.syncLyricsToggles()
+  }
+
+  lyricsPanelTargetConnected() {
+    if (this.remembers(LYRICS) === "open") this.lyricsPanelTarget.classList.add(OPEN)
+
+    this.syncLyricsToggles()
+    this.showLyrics()
+  }
+
+  syncLyricsToggles() {
+    if (!this.hasLyricsPanelTarget) return
+
+    const open = String(this.lyricsPanelTarget.classList.contains(OPEN))
+    this.lyricsToggleTargets.forEach((toggle) => toggle.setAttribute("aria-expanded", open))
+    this.syncToggleTarget.setAttribute("aria-pressed", String(this.following))
   }
 
   remembers(key) {
@@ -221,6 +259,34 @@ export default class extends Controller {
     this.syncQueueToggles()
   }
 
+  // Open or shut, remembered, exactly as the queue is.
+  toggleLyrics() {
+    const open = this.lyricsPanelTarget.classList.toggle(OPEN)
+
+    try {
+      localStorage.setItem(LYRICS, open ? "open" : "shut")
+    } catch { /* a private window just forgets which way it was left */ }
+
+    this.syncLyricsToggles()
+    this.showLyrics()
+  }
+
+  // Following on or off. Turning it off leaves the words standing exactly where
+  // they are — so the line that was lit has to be put out, or it would sit there
+  // pointing at a moment the song has long since passed. Turning it back on
+  // catches up with wherever the song got to, rather than waiting for the next
+  // line to come round.
+  toggleSyncing() {
+    this.following = !this.following
+
+    try {
+      localStorage.setItem(FOLLOW, this.following ? "on" : "off")
+    } catch { /* a private window just forgets which way it was left */ }
+
+    this.syncToggleTarget.setAttribute("aria-pressed", String(this.following))
+    this.following ? this.followLyrics() : this.dimLyrics()
+  }
+
   // Dragging the scrubber fires `input` the whole way across. Seeking on each
   // one asks the NAS for a fresh range of a 34MB FLAC dozens of times, and
   // `timeupdate` keeps writing the thumb back where the song is — so it fights
@@ -254,6 +320,7 @@ export default class extends Controller {
     this.durationTarget.textContent = Number.isFinite(duration) ? this.clock(duration) : "–:––"
     this.progressTarget.value = Number.isFinite(duration) && duration > 0 ? (currentTime / duration) * 1000 : 0
     this.paint(this.progressTarget)
+    this.followLyrics()
     this.savePosition()
   }
 
@@ -311,6 +378,16 @@ export default class extends Controller {
   set repeating(mode) { this.audioTarget.repeating = mode }
 
   get current() { return this.queue[this.order[this.cursor]] }
+
+  // The words of what is playing, and whose they are. On the <audio> with the
+  // rest of the state: the rail is permanent, so after a visit the lines are
+  // still standing in it, and a controller that forgot whose they were would
+  // fetch and repaint the very words already on the screen, on every navigation.
+  get words() { return this.audioTarget.words ?? [] }
+  set words(lines) { this.audioTarget.words = lines }
+
+  get wordsFor() { return this.audioTarget.wordsFor }
+  set wordsFor(trackId) { this.audioTarget.wordsFor = trackId }
 
   // Which cover the accent was taken from. On the <audio> with the rest of the
   // state, because the controller is destroyed on every visit — and a memo that
@@ -397,7 +474,134 @@ export default class extends Controller {
     this.renderQueue()
     this.renderSuggestions()
     this.renderRows()
+    this.showLyrics()
     this.save()
+  }
+
+  // --- The words -------------------------------------------------------------
+  //
+  // Nothing here knows a word of any song. The words are an .lrc sitting on the
+  // disk beside the file, written by whoever ripped it; the server reads that
+  // file and hands the lines over with the moment each one is sung, and the rail
+  // shows what it is given.
+  //
+  // They are asked for only while the rail is open. A shut rail is a rail nobody
+  // is reading, and asking the library for the words of every song that plays,
+  // forever, to show them to nobody, is a request the disk does not need.
+
+  async showLyrics() {
+    if (!this.hasLyricsTarget || !this.hasAudioTarget || !this.lyricsOpen) return
+
+    const track = this.current
+    if (!track) return this.sayLyrics("Nothing playing")
+
+    // Already showing this song's words. render() runs on every press, and the
+    // words do not change under a song.
+    if (this.wordsFor === track.trackId) return
+
+    this.wordsFor = track.trackId
+    this.words = []
+    this.sayLyrics("Looking for the words…")
+
+    try {
+      const answer = await fetch(`/tracks/${track.trackId}/lyrics`, { headers: { Accept: "application/json" } })
+
+      // The song moved on while we were asking, and these are the last one's words.
+      if (this.wordsFor !== track.trackId) return
+
+      // 404 is the answer, not a failure: most of the record has no .lrc beside
+      // it, and a rail standing empty would read as one that had broken.
+      if (!answer.ok) return this.sayLyrics("No lyrics for this song")
+
+      const { synced, lines } = await answer.json()
+      if (this.wordsFor !== track.trackId) return
+
+      this.words = lines
+      this.paintLyrics(synced)
+    } catch {
+      // A NAS catching its breath is not a song without words, and saying it was
+      // would be a lie the listener cannot tell from the truth.
+      this.wordsFor = null
+      this.sayLyrics("Couldn't reach the words")
+    }
+  }
+
+  paintLyrics(synced) {
+    this.lyricsPanelTarget.dataset.synced = String(synced)
+    // A file nobody timed cannot be followed, so the button that would follow it
+    // goes dead rather than lying about what it would do.
+    this.syncToggleTarget.disabled = !synced
+
+    this.lyricsTarget.replaceChildren(...this.words.map((line) => this.lyricLine(line)))
+    this.lit = null
+    this.followLyrics()
+  }
+
+  // A line of the song, and when it is sung. A timed .lrc marks the gaps between
+  // the verses as lines with nothing in them — they are what tells the karaoke to
+  // stop pointing at the last thing sung, and they show as the rest they are.
+  lyricLine({ at, text }) {
+    const line = document.createElement("p")
+    line.className = "lyric"
+    if (at !== null) line.dataset.at = at
+    line.textContent = text || "♪"
+    if (!text) line.classList.add("opacity-40")
+
+    return line
+  }
+
+  // Which line the song is on now, lit, and carried to the middle of the rail.
+  // In the gap between two verses nothing is lit at all: the words have run out
+  // for a moment, and a karaoke that kept the last line lit through the silence
+  // would be pointing at something nobody is singing.
+  followLyrics() {
+    if (!this.hasLyricsTarget || !this.lyricsOpen || !this.following) return
+
+    const lines = this.lyricsTarget.children
+    const now = this.lineAt(this.audioTarget.currentTime)
+
+    if (now === this.lit) return
+    this.lit = now
+
+    for (const [ at, line ] of Array.from(lines).entries()) line.setAttribute("aria-current", String(at === now))
+
+    lines[now]?.scrollIntoView({ block: "center", behavior: "smooth" })
+  }
+
+  // The last line whose moment has come — and nothing at all if that line is one
+  // of the silences, or if the song has not reached the first word yet.
+  lineAt(time) {
+    let found = -1
+    this.words.forEach((line, at) => { if (line.at !== null && line.at <= time) found = at })
+
+    return found >= 0 && this.words[found].text ? found : -1
+  }
+
+  // Nothing is being followed, so nothing is lit — the words stand still and are
+  // read at whatever pace the reader likes.
+  dimLyrics() {
+    if (!this.hasLyricsTarget) return
+
+    this.lit = null
+    for (const line of this.lyricsTarget.children) line.setAttribute("aria-current", "false")
+  }
+
+  // Why there is nothing to sing: no song, no .lrc, or a disk that did not answer.
+  sayLyrics(reason) {
+    this.words = []
+    this.lit = null
+    this.lyricsPanelTarget.dataset.synced = "false"
+    this.syncToggleTarget.disabled = true
+
+    const said = document.createElement("p")
+    said.className = "py-6 text-center text-sm text-neutral-500"
+    said.textContent = reason
+
+    this.lyricsTarget.replaceChildren(said)
+  }
+
+  get lyricsOpen() {
+    return this.hasLyricsPanelTarget && this.lyricsPanelTarget.classList.contains(OPEN)
   }
 
   // The queue rides on the <audio>, which a full reload throws away. So it is

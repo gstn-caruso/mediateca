@@ -220,6 +220,54 @@ html[data-turbo-preview] .animate-enter {
   }
 }
 
+/* The lyrics rail, which opens and shuts exactly as the queue does — and on a
+   phone takes the screen the same way, for the same reason. */
+#lyrics-panel {
+  display: none;
+}
+#lyrics-panel.is-open {
+  display: flex;
+}
+@media (width < 48rem) {
+  #lyrics-panel.is-open {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    width: auto;
+  }
+}
+
+/* A line of the song. Dim until it is sung: the one being sung now is lit, a
+   little larger, and the rail carries it to the middle of itself — which is
+   what makes the panel a karaoke rather than a page of text.
+
+   The step up in size would shove every line below it down the rail as the song
+   ran, so the growth happens in the transform, which nothing else can see. */
+.lyric {
+  color: var(--color-neutral-500);
+  transform-origin: left center;
+  transition: color 220ms ease, transform 220ms ease, opacity 220ms ease;
+}
+.lyric[aria-current="true"] {
+  color: var(--color-accent-bright, var(--color-accent));
+  font-weight: 600;
+  transform: scale(1.06);
+}
+/* A song nobody timed cannot be followed, so no line is ever lit and the words
+   simply sit there, all of them equally readable. */
+#lyrics-panel[data-synced="false"] .lyric {
+  color: var(--color-neutral-300);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lyric {
+    transition: none;
+    transform: none;
+  }
+  .lyric[aria-current="true"] {
+    transform: none;
+  }
+}
+
 /* The library, turned: three icons in a sunken track, and a lit pill that slides
    under whichever one you are on — painted in the record playing, like every
    other lit thing here.
