@@ -120,7 +120,7 @@ class Profile < ApplicationRecord
 
     panels.create_or_find_by!(name: panel) { it.width = Panel.within_reach(to) }.tap do |widened|
       widened.update!(width: Panel.within_reach(to))
-      forget_widths
+      forget_panels
     end
   end
 
@@ -129,7 +129,7 @@ class Profile < ApplicationRecord
   def width_of(panel)
     raise ArgumentError, "no panel called #{panel}" unless Panel.known?(panel)
 
-    widths.fetch(panel, Panel::BORN)
+    kept[panel]&.width || Panel::BORN
   end
 
   # Written down once the listener has heard enough of the song to have listened
@@ -259,7 +259,7 @@ class Profile < ApplicationRecord
     forget_hearts
     forget_standings
     forget_tally
-    forget_widths
+    forget_panels
     super
   end
 
@@ -370,15 +370,19 @@ class Profile < ApplicationRecord
   end
 
   # The same bargain again, and this one is on every page in the app: the layout
-  # asks how wide all four panels are, every time it draws, and a listener's
-  # panels are at most four rows. They come back once, and the chrome reads them
-  # off memory rather than asking four times for what one question answers.
-  def widths
-    @widths ||= panels.pluck(:name, :width).to_h
+  # asks after all four panels, every time it draws, and a listener's panels are
+  # at most four rows. They come back once, and the chrome reads them off memory
+  # rather than asking four times for what one question answers.
+  #
+  # The rows themselves, and not a column off them: a panel is asked more than one
+  # thing about itself, and a hash of one answer can only be turned into a hash of
+  # two by asking twice.
+  def kept
+    @kept ||= panels.index_by(&:name)
   end
 
-  def forget_widths
-    @widths = nil
+  def forget_panels
+    @kept = nil
   end
 
   def forget_standings
