@@ -160,6 +160,17 @@ element a visit does not touch, and every page drawn afterwards is already weari
 it. Each panel says only which of the room's four numbers is its own; the CSS does
 the sizing.
 
+**A seam is a trade.** Every grip sits on the edge between two panels, and moving
+it moves both: what one takes, the room behind it gives — the panel across the
+seam first, then the one behind that, and the content last of all, once the rails
+have nothing left. It did not use to. The content was the leftovers, so the content
+paid for every drag in the room, wherever the seam was: two rails standing side by
+side had an edge between them that neither of them ever felt, and widening the
+queue narrowed a page that had nothing to do with it. What nobody behind the seam
+can pay, the panel does not take — which is the whole of why the room stays exactly
+as full as it was. The arithmetic is a trade, so there is never anything left over
+to lose. Both sides are written down, because both of them moved.
+
 **The room holds them, and holds them back.** A hand can widen a rail until the
 content is down to the least room a page can be read in, and not one pixel further
 — a library with nothing left to be a library *of* is not a thing anybody meant to
@@ -171,6 +182,28 @@ what a hand added, and never what the app shipped: on a tablet with a rail open 
 content is *already* under that floor and has been since long before any of this,
 and a room allowed to take back whatever it liked would answer that by shrinking
 rails nobody had ever touched.
+
+**With the content folded away, a panel stops having a width and starts having a
+share.** A width is in pixels and has two ends: under 240 a rail cannot say what it
+is for, and over 480 it has stopped standing beside the content and started being
+it. Neither is true of a panel with nothing to stand beside — it is not a rail then,
+it is half of an empty room, and half of an empty room is nowhere near 480 pixels.
+So the room you fold the content away to *get* is divided by shares, and a share
+says nothing on its own: it says only how this panel stands to the ones beside it,
+so 300 against 100 divides any room three to one, on a laptop or on a kitchen
+tablet where the whole room is 700 pixels. The room is always full, because a share
+of it is all any of them has. A share nobody set falls back to the width the panel
+is kept at, which for a listener who has touched nothing is panels of a size. The
+two numbers ride on one row and never touch: the width goes on waiting for the page
+to come home. For a while this room had its grips taken away outright, which made
+the one room in the app you could not lay a finger on.
+
+**A grip is there where there is a seam, and nowhere else.** The panel standing
+first in the room has only the wall on its far side: nobody to trade with, so no
+seam. A handle a hand could take hold of and pull on and move nothing with is a
+handle that is lying, so it is not drawn. That is one rule, and it covers a phone
+(where a rail comes over the content rather than standing beside it), a shut rail,
+and the picture standing alone at the head of an empty room.
 
 **And the app holds the ends of the rope too, not only the browser.** A request is
 not a hand. There is no password here, and anybody on the LAN can send this app any

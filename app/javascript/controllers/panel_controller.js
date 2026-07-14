@@ -52,9 +52,17 @@ export default class extends Controller {
   // window being dragged — a rail opening beside it takes as much room as a window
   // losing an inch, and the player docking takes a row — and none of those are
   // this panel's business to know about. The content is.
+  //
+  // And itself, because with the content folded away the content is 0 wide and
+  // stays 0 wide: the library shutting beside it in an empty room would not move
+  // the one thing this was watching. It moves this panel, though — the room is
+  // divided between whoever is standing, so one leaving widens everybody left.
   connect() {
     this.watching = new ResizeObserver(() => this.settle())
     this.watching.observe(this.content)
+    this.watching.observe(this.element)
+
+    this.seal()
   }
 
   disconnect() {
@@ -118,9 +126,19 @@ export default class extends Controller {
   // asking to be paid: the panels are the room, they are always exactly as wide as
   // it is, and a window narrowed takes the same slice out of all of them.
   settle() {
+    this.seal()
+
     if (this.folded || !this.adjustable) return
 
     this.hold(this.element, within(this.width, NARROWEST, this.most))
+  }
+
+  // A grip is the edge between two things. The panel standing first in the room has
+  // only the wall on its far side — nobody to trade with, so no seam — and a handle
+  // a hand could take hold of and pull on and move nothing with is a handle that is
+  // lying. It is there exactly when there is somebody behind it to give way.
+  seal() {
+    this.gripTarget.hidden = this.givers.length === 0
   }
 
   // The seam moves, and moving a seam is a trade: what this panel takes, the room
@@ -273,11 +291,13 @@ export default class extends Controller {
     return document.documentElement
   }
 
-  // Shut, or on a phone. Either way there is no edge standing between two things,
-  // so there is nothing to take hold of — and a shut rail measures zero, which is
-  // not a width anybody chose and must never be written down as one. The grip is
-  // the honest answer to both: it is there exactly when the panel is a thing you
-  // can widen.
+  // Shut, or on a phone, or standing first in the room with the wall behind it.
+  // None of the three has an edge between two things, so none of them has anything
+  // to take hold of — and a shut rail measures zero, which is not a width anybody
+  // chose and must never be written down as one. The grip is the honest answer to
+  // all three: the CSS takes it away on a phone, a shut rail does not draw it, and
+  // seal takes it off a panel with nobody behind it. It is there exactly when the
+  // panel is a thing you can widen.
   get adjustable() {
     return this.gripTarget.offsetParent !== null
   }

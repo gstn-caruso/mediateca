@@ -146,6 +146,23 @@ class FoldingTheContentAwayTest < ApplicationSystemTestCase
     flunk "how the room was divided was never written down"
   end
 
+  # A grip is the edge between two things, and the panel standing first in the room
+  # has only the wall on its far side. There is nobody there to trade with, so there
+  # is no seam — and a handle a hand could take hold of and pull on and move nothing
+  # with is a handle that is lying.
+  #
+  # This is the room in the picture: the library shut, the content folded, and the
+  # picture and the queue standing in what is left. One seam, between the two of
+  # them, and it is the queue's — the picture's far edge is where the app ends.
+  test "the panel standing first in the room has no edge to pull" do
+    two_rails_up
+    open_the "Library"
+    open_the "Content"
+
+    assert_no_selector "#visualizer-panel .grip", visible: true
+    assert_selector "#queue-panel .grip", visible: true
+  end
+
   # Folded is a choice, and a reload is not somebody changing their mind.
   test "folded is how it comes back" do
     open_the "Content"
