@@ -13,12 +13,22 @@ runs:
   using: composite
 
   steps:
+    # De dónde sale la versión: `env.ImageOS` no existe adentro de una composite
+    # action —queda vacío, y la clave pierde justo la parte que la protege—, así
+    # que se la pregunta al runner directamente.
+    - name: Ask the runner which Ubuntu it is
+      id: ubuntu
+      shell: bash
+      run: |
+        . /etc/os-release
+        echo "release=$ID-$VERSION_ID" >> "$GITHUB_OUTPUT"
+
     - name: Look for the packages we already downloaded
       id: cached
       uses: actions/cache@v4
       with:
         path: ~/.cache/ffmpeg-debs
-        key: ffmpeg-debs-${{ runner.os }}-${{ runner.arch }}-${{ env.ImageOS }}-v1
+        key: ffmpeg-debs-${{ runner.arch }}-${{ steps.ubuntu.outputs.release }}-v1
 
     - name: Download them, the first time
       if: steps.cached.outputs.cache-hit != 'true'
