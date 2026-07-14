@@ -62,6 +62,17 @@ class Music::ThumbnailTest < ActiveSupport::TestCase
     assert_nil Music::Thumbnail.of(not_a_picture, size: 96)
   end
 
+  # A record gets re-ripped, or moved, or thrown away, and the catalog still has
+  # the path it used to be at. There is a thumbnail of it sitting on disk, drawn
+  # back when the file was there — and asking a picture that does not exist when it
+  # was last changed is asking a question about nothing.
+  test "a picture that is no longer on disk has no thumbnail" do
+    Music::Thumbnail.of(@cover, size: 96)
+    File.delete(@cover)
+
+    assert_nil Music::Thumbnail.of(@cover, size: 96)
+  end
+
   # Blowing a small picture up would cost bytes to add nothing: the browser can
   # stretch it for free, and stretching is all we would be doing.
   test "a picture already smaller than the size asked for is left the size it is" do

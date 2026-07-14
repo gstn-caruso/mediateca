@@ -36,7 +36,13 @@ module Music
       @size = size
     end
 
+    # A record gets re-ripped, or moved, or thrown away, and the catalog goes on
+    # holding the path it used to be at — with a thumbnail of it still sitting on
+    # disk, drawn back when the file was there. Asking when a picture that is not
+    # there was last changed is asking a question about nothing.
     def path
+      return unless File.exist?(@picture)
+
       draw if stale?
 
       file
