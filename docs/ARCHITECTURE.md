@@ -83,6 +83,27 @@ and symlinks that point outside.
 Nothing gets transcoded. The FLACs are served raw and every modern browser plays
 them natively.
 
+### A picture arrives at the size it is going to be drawn
+
+The music is never touched. The pictures are, and they had to be: the library
+rail draws every artist and every record at forty-four pixels a side, and it was
+sending the scan to do it — 133 sleeves on this NAS, 68 MB of them, 527 KB each.
+A phone downloaded every byte, and then decoded a 1500×1500 JPEG into nine
+megabytes of bitmap, once per row. Nothing on screen was any better for it.
+
+So `Music::Thumbnail` draws a picture once at each size the app actually uses —
+96 for a row and for the pill, 320 for a tile in a grid, 640 for the sleeve at
+the top of a record's own page and for the lock screen of a phone, 64 for the
+light behind a title — and keeps it under `storage/`, beside the portraits.
+ffmpeg was already in the image and already decoding sleeves: the colour the app
+wears is read off them.
+
+The sizes are a **list**, not a number out of the URL: a URL that can ask for any
+size is a URL that can ask the NAS to draw ten thousand of them. A picture ffmpeg
+cannot read — a `cover.jpg` somebody's ripper wrote in 2006 — is handed over
+whole, exactly as it was before. That row of 44px sleeves went from 68 MB to
+about 300 KB.
+
 ## The player outlives the page
 
 The player lives outside the `<body>` that Turbo Drive replaces when you navigate
@@ -319,6 +340,31 @@ class it toggled had no effect there anyway — so a phone had no queue at all. 
 opens over the content now rather than beside it: 390px split in two is two
 columns of nothing. A system test at 390px holds every page to no sideways
 scroll.
+
+### Nothing filters its backdrop, and nothing blurs a bitmap
+
+The app was built out of Liquid Glass: six panes — the bar, the rail, the queue,
+the words, the picture, the pill — each one blurring and saturating everything
+standing behind it, over a cover blurred at 56px across the whole screen, with a
+second blurred sleeve behind the title of every page.
+
+A `backdrop-filter` is not painted once. Every frame, the browser copies out what
+is behind the pane, blurs it, and draws the pane back over the top. On the machine
+this was designed on, all of it is free; on a cheap Android it is the difference
+between an app and a slideshow. So the panes are panels — one colour, one hairline
+— and the room keeps the record's colour the way it always really had it: an
+ambient gradient the server derives from the sleeve.
+
+The picture behind a title is still there, and still blown up until it is only
+light. The light is 64 pixels the browser stretches across the header, which is
+the same arithmetic `blur(44px)` was asking the GPU for, done for free while it
+draws, off three kilobytes instead of five hundred.
+
+The rule is a test, not a note in the stylesheet: `StayingLightTest` walks the
+room with everything in it open and fails if anything filters its backdrop or
+asks the GPU to blur a picture. Reduce Transparency and Increase Contrast are
+gone with the thing they existed to switch off — every pane is now what those
+settings used to turn it into, for everybody.
 
 ## The tests
 
