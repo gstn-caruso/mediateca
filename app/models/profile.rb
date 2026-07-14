@@ -120,7 +120,7 @@ class Profile < ApplicationRecord
 
     panels.create_or_find_by!(name: panel) { it.width = Panel.within_reach(to) }.tap do |widened|
       widened.update!(width: Panel.within_reach(to))
-      forget_widths
+      forget_panels
     end
   end
 
@@ -129,7 +129,30 @@ class Profile < ApplicationRecord
   def width_of(panel)
     raise ArgumentError, "no panel called #{panel}" unless Panel.known?(panel)
 
-    widths.fetch(panel, Panel::BORN)
+    kept[panel]&.width || Panel::BORN
+  end
+
+  # A panel handed its share of a room with no content in it. It is written to the
+  # same row the width is — a panel is one thing that is asked two questions, not
+  # two things — so a share arriving before any width brings the width it was born
+  # at along with it, which is the width it has: nobody has dragged it in a room
+  # that still had a content to drag it against.
+  def gives(panel, share:)
+    raise ArgumentError, "no panel called #{panel}" unless Panel.known?(panel)
+
+    panels.create_or_find_by!(name: panel) { it.width = Panel::BORN }.tap do |given|
+      given.update!(share: Panel.share_within_reach(share))
+      forget_panels
+    end
+  end
+
+  # And the ordinary case here is that nobody has ever divided an empty room. Then
+  # it is divided in the proportion the panels are kept at — which for a listener
+  # who has touched nothing is panels of a size, exactly as it was.
+  def share_of(panel)
+    raise ArgumentError, "no panel called #{panel}" unless Panel.known?(panel)
+
+    kept[panel]&.share || width_of(panel)
   end
 
   # Written down once the listener has heard enough of the song to have listened
@@ -259,7 +282,7 @@ class Profile < ApplicationRecord
     forget_hearts
     forget_standings
     forget_tally
-    forget_widths
+    forget_panels
     super
   end
 
@@ -370,15 +393,19 @@ class Profile < ApplicationRecord
   end
 
   # The same bargain again, and this one is on every page in the app: the layout
-  # asks how wide all four panels are, every time it draws, and a listener's
-  # panels are at most four rows. They come back once, and the chrome reads them
-  # off memory rather than asking four times for what one question answers.
-  def widths
-    @widths ||= panels.pluck(:name, :width).to_h
+  # asks after all four panels, every time it draws, and a listener's panels are
+  # at most four rows. They come back once, and the chrome reads them off memory
+  # rather than asking four times for what one question answers.
+  #
+  # The rows themselves, and not a column off them: a panel is asked more than one
+  # thing about itself, and a hash of one answer can only be turned into a hash of
+  # two by asking twice.
+  def kept
+    @kept ||= panels.index_by(&:name)
   end
 
-  def forget_widths
-    @widths = nil
+  def forget_panels
+    @kept = nil
   end
 
   def forget_standings

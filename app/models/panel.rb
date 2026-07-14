@@ -21,8 +21,16 @@ class Panel < ApplicationRecord
   NARROWEST = 240
   WIDEST = 480
 
+  # And the ends of the other rope. A share is a proportion and nothing else — 300
+  # against 100 divides any room three to one — so where its ends fall hardly
+  # matters. What matters is that a number off the network cannot be nothing, or
+  # everything, or not a number at all.
+  LEAST_SHARE = 1
+  MOST_SHARE = 10_000
+
   validates :name, inclusion: { in: NAMES }
   validates :width, numericality: { in: NARROWEST..WIDEST, only_integer: true }
+  validates :share, numericality: { in: LEAST_SHARE..MOST_SHARE }, allow_nil: true
 
   # The hand is held inside the room by the browser, but a request is not a hand.
   # Anybody on the LAN can send this app any number they like, and a panel 9,000
@@ -30,6 +38,10 @@ class Panel < ApplicationRecord
   # where the width is written down, and not only out there where it was dragged.
   def self.within_reach(width)
     width.clamp(NARROWEST, WIDEST)
+  end
+
+  def self.share_within_reach(share)
+    share.clamp(LEAST_SHARE, MOST_SHARE)
   end
 
   def self.known?(name)

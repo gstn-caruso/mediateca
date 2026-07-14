@@ -22,6 +22,31 @@ class WideningAPanelTest < ActionDispatch::IntegrationTest
     assert_equal Panel::WIDEST, @gaston.reload.width_of("queue")
   end
 
+  # A panel let go of in a room with no content in it was not given a width — 950
+  # pixels is not a width a rail can hold, and this would refuse it. It was given a
+  # share of the room, and the two are kept apart.
+  test "a panel let go of in an empty room is a room divided" do
+    patch panel_path("queue"), params: { share: 900 }
+
+    assert_response :no_content
+    assert_equal 900, @gaston.reload.share_of("queue")
+    assert_equal Panel::BORN, @gaston.width_of("queue")
+  end
+
+  test "a share nobody could have dragged is held at the end of its rope" do
+    patch panel_path("queue"), params: { share: 9_999_999 }
+
+    assert_response :no_content
+    assert_equal Panel::MOST_SHARE, @gaston.reload.share_of("queue")
+  end
+
+  test "a panel let go of at neither one thing nor the other says so" do
+    patch panel_path("queue"), params: { share: "half-ish" }
+
+    assert_response :bad_request
+    assert_equal 0, @gaston.reload.panels.count
+  end
+
   test "a panel this app does not have is not made by asking for it" do
     patch panel_path("larder"), params: { width: 300 }
 

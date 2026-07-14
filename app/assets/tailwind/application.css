@@ -399,8 +399,8 @@ html[data-turbo-preview] .animate-enter {
    nailed to 18rem until a hand could move them — which is still the width of one
    nobody has ever touched.
 
-   The width itself is not here. It rides on the room (see panel_widths), and each
-   panel says only which of the room's four numbers is its own. The CSS does the
+   The width itself is not here. It rides on the room (see panel_sizes), and each
+   panel says only which of the room's numbers are its own. The CSS does the
    sizing; nothing else has to know. */
 .panel {
   position: relative;
@@ -498,16 +498,24 @@ html[data-turbo-preview] .animate-enter {
 
    And what it does is hand the room to whoever is left standing. A rail is a rail
    because there is content beside it; with none, a queue holding to 18rem while
-   four feet of nothing sits next to it is not a rail, it is a mistake. So they
-   grow — out from the width their listener keeps them at, which is why the widths
-   still mean something here and nobody's room is thrown away, only widened.
+   four feet of nothing sits next to it is not a rail, it is a mistake.
 
-   Nothing is written down, and nothing needs to be: no hand did this. The panels
-   keep the widths they already had and get them back untouched when the content
-   comes home. The seams are the other half of saying so — a grip is the edge
-   between two things and there are no two things, but more than that, an edge
-   that could still be pulled would be a hand writing down a width the room is
-   holding it at, and calling it a choice.
+   So a panel here stops having a width and starts having a share. Its width was
+   in pixels and had two ends — under 240 a rail cannot say what it is for, over
+   480 it has stopped standing beside the content and started being it — and not
+   one word of that is true of a panel with nothing to stand beside. It is not a
+   rail now. It is half of an empty room, and half of an empty room is nowhere
+   near 480 pixels.
+
+   A share says nothing on its own. It says only how this panel stands to the ones
+   beside it, so 300 against 100 divides any room three to one, on a laptop or on
+   a kitchen tablet where the whole room is 700 pixels. The panels are handed the
+   room in the proportion their listener keeps them, and the room is always full,
+   because a share of it is all that any of them has.
+
+   Nobody has to have divided anything: a share nobody set falls back to the width
+   the panel is kept at, which for a listener who has touched nothing is panels of
+   a size — which is exactly what this used to do, and all it used to do.
 
    Below the breakpoint none of it applies: a phone's content is the phone. The
    rails come over the top of it and the library is not there at all, so there is
@@ -520,11 +528,14 @@ html[data-turbo-preview] .animate-enter {
   }
 
   #panels:has(> #content.is-folded) .panel {
-    flex-grow: 1;
-  }
+    width: auto;
+    flex-basis: 0;
+    flex-grow: var(--share, 1);
 
-  #panels:has(> #content.is-folded) .grip {
-    display: none;
+    /* The one thing a share cannot be allowed to say. A panel divided down to
+       nothing is a panel nobody can find their way back to — and there is no
+       content here to hand its room to, so it would be nothing beside nothing. */
+    min-width: 15rem;
   }
 }
 

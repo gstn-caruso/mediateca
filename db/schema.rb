@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_13_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_13_160000) do
   create_table "absences", force: :cascade do |t|
     t.string "artist", null: false
     t.datetime "created_at", null: false
@@ -86,6 +86,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_13_130000) do
     t.datetime "created_at", null: false
     t.string "name", null: false
     t.integer "profile_id", null: false
+    t.float "share"
     t.datetime "updated_at", null: false
     t.integer "width", null: false
     t.index ["profile_id", "name"], name: "index_panels_on_profile_id_and_name", unique: true
