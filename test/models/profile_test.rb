@@ -86,6 +86,17 @@ class ProfileTest < ActiveSupport::TestCase
     refute Profile.create!(name: "Ana").hides?(piazzolla)
   end
 
+  test "a hidden artist's records leave what you recently played" do
+    almafuerte = Artist.create!(name: "Almafuerte")
+    guanaco = Album.create!(directory: "/music/guanaco", title: "Mundo Guanaco", artist: almafuerte)
+    desencuentro = Track.create!(title: "Desencuentro", path: "/music/guanaco/01.flac", album: guanaco)
+    gaston.played(desencuentro)
+
+    gaston.hide(almafuerte)
+
+    assert_empty gaston.recently_played_albums
+  end
+
   private
 
   def gaston

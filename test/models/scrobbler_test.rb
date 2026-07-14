@@ -7,6 +7,8 @@ require "test_helper"
 # exactly that, and it is the difference between a scrobble delayed and a scrobble
 # lost.
 class ScrobblerTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   setup do
     Lastfm.api = @lastfm = FakeLastfm.new
     @gaston = Profile.create!(name: "Gastón")
@@ -116,6 +118,46 @@ class ScrobblerTest < ActiveSupport::TestCase
 
     assert_not @gaston.reload.scrobbles?
     assert_not_predicate Scrobble.sole, :sent?
+  end
+
+  test "connecting queues the year you listened before you connected" do
+    @gaston.played(@song, at: 8.months.ago)
+    @gaston.played(@song, at: 3.days.ago)
+
+    perform_enqueued_jobs { connected }
+
+    assert_equal 2, Scrobble.count
+    assert_equal 2, @lastfm.scrobbled.size
+  end
+
+  # The history goes out in the order it happened, which is what Last.fm asks for.
+  test "the year goes out in the order you lived it" do
+    @gaston.played(song("Last"), at: 1.day.ago)
+    @gaston.played(song("First"), at: 1.year.ago)
+
+    perform_enqueued_jobs { connected }
+
+    assert_equal [ "First", "Last" ], @lastfm.scrobbled.pluck(:track)
+  end
+
+  test "a song too short for Last.fm is left out of the catch-up too" do
+    @gaston.played(song("A Jingle", seconds: 20), at: 1.day.ago)
+
+    perform_enqueued_jobs { connected }
+
+    assert_predicate Scrobble.all, :empty?
+  end
+
+  # Disconnecting and connecting again is not a reason to scrobble your whole life
+  # a second time.
+  test "connecting again does not send it all a second time" do
+    @gaston.played(@song, at: 8.months.ago)
+    perform_enqueued_jobs { connected }
+
+    perform_enqueued_jobs { connected }
+
+    assert_equal 1, Scrobble.count
+    assert_equal 1, @lastfm.scrobbled.size
   end
 
   # The loop that would have been. Last.fm hands over a listener's whole history —

@@ -15,7 +15,9 @@ class ServingTheServiceWorkerTest < ActionDispatch::IntegrationTest
   # A worker may only speak for the pages under the path it was served from. From
   # anywhere but the root — /assets, say — it would control nothing at all.
   test "the worker is served from the root, so it can speak for every page" do
-    assert_equal "/service-worker.js", pwa_service_worker_path
+    get "/service-worker.js"
+
+    assert_response :success
   end
 
   # A worker served as HTML is not run: the browser refuses the registration on

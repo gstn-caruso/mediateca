@@ -41,15 +41,6 @@ class HidingArtistsTest < ActionDispatch::IntegrationTest
     assert_equal 0, @gaston.reload.liked_songs_count
   end
 
-  test "a hidden artist's records leave what you recently played" do
-    @gaston.played(@desencuentro)
-    @gaston.hide(@almafuerte)
-
-    get root_path
-
-    assert_empty @gaston.reload.recently_played_albums
-  end
-
   # The entry is not thrown away — hiding is not deleting, and a listener who
   # changes their mind wants the list they made back, not a list with a hole in
   # it. The row is simply not drawn.

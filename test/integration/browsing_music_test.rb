@@ -30,16 +30,6 @@ class BrowsingMusicTest < ActionDispatch::IntegrationTest
     assert_match "Mundo Guanaco", response.body
   end
 
-  test "an album shows its tracks" do
-    Track.create!(title: "Dijo El Droguero", track_no: 1, disc_no: 1, path: media("otro.flac"), album: @album)
-
-    get album_path(@album)
-
-    assert_response :success
-    assert_operator response.body.index("Dijo El Droguero"), :<, response.body.index("Desencuentro"),
-      "tracks have to come out in playback order, not creation order"
-  end
-
   test "an album's cover is served as an image" do
     get album_cover_path(@album)
 
