@@ -132,6 +132,29 @@ class Profile < ApplicationRecord
     kept[panel]&.width || Panel::BORN
   end
 
+  # A panel handed its share of a room with no content in it. It is written to the
+  # same row the width is — a panel is one thing that is asked two questions, not
+  # two things — so a share arriving before any width brings the width it was born
+  # at along with it, which is the width it has: nobody has dragged it in a room
+  # that still had a content to drag it against.
+  def gives(panel, share:)
+    raise ArgumentError, "no panel called #{panel}" unless Panel.known?(panel)
+
+    panels.create_or_find_by!(name: panel) { it.width = Panel::BORN }.tap do |given|
+      given.update!(share: Panel.share_within_reach(share))
+      forget_panels
+    end
+  end
+
+  # And the ordinary case here is that nobody has ever divided an empty room. Then
+  # it is divided in the proportion the panels are kept at — which for a listener
+  # who has touched nothing is panels of a size, exactly as it was.
+  def share_of(panel)
+    raise ArgumentError, "no panel called #{panel}" unless Panel.known?(panel)
+
+    kept[panel]&.share || width_of(panel)
+  end
+
   # Written down once the listener has heard enough of the song to have listened
   # to it — which is a while after the music started. The player is the only one
   # who was there when it did, so it is the player who says when.

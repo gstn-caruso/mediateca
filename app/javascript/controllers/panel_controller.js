@@ -19,8 +19,17 @@ const within = (value, least, most) => Math.min(Math.max(value, least), Math.max
 
 const widthOf = (panel) => panel.getBoundingClientRect().width
 
-// Which of the room's four numbers is this panel's.
+const sum = (numbers) => numbers.reduce((all, number) => all + number, 0)
+
+// Which of the room's numbers are this panel's.
 const named = (panel) => `--${panel.dataset.panelNameValue}`
+
+// What this panel takes of a room with no content in it. Read back off the room
+// rather than kept anywhere here, exactly as the width is — and when nobody has
+// ever divided an empty room, it is 1, which is the same nothing the CSS falls
+// back to, and which divides the room into panels of a size.
+const shareOf = (panel) =>
+  parseFloat(getComputedStyle(document.documentElement).getPropertyValue(`${named(panel)}-share`)) || 1
 
 // A panel is as wide as the hand that last held its edge left it.
 //
@@ -61,6 +70,7 @@ export default class extends Controller {
     this.hand = {
       x: event.clientX,
       givers,
+      rate: this.rate,
       was: new Map([ this.element, ...givers ].map((panel) => [ panel, widthOf(panel) ]))
     }
 
@@ -104,8 +114,11 @@ export default class extends Controller {
   // opened beside it — holds it back, and goes on holding it. It writes nothing
   // down: the room taking room back is not somebody changing their mind, and on a
   // screen that can hold it again, it is theirs again.
+  // With no content in the room there is nothing to settle *against*, and nothing
+  // asking to be paid: the panels are the room, they are always exactly as wide as
+  // it is, and a window narrowed takes the same slice out of all of them.
   settle() {
-    if (!this.adjustable) return
+    if (this.folded || !this.adjustable) return
 
     this.hold(this.element, within(this.width, NARROWEST, this.most))
   }
@@ -151,8 +164,14 @@ export default class extends Controller {
     return within(from + asked, least, most) - from
   }
 
+  // A rail's ceiling is the point at which it stops standing beside the content and
+  // starts being it. With the content folded away it is not standing beside
+  // anything, so there is nothing it can be too wide for — half an empty room is
+  // half an empty room, and on this screen that is nowhere near 480 pixels.
   ends(panel) {
-    return panel === this.content ? [ CONTENT, Infinity ] : [ NARROWEST, WIDEST ]
+    if (panel === this.content) return [ CONTENT, Infinity ]
+
+    return [ NARROWEST, this.folded ? Infinity : WIDEST ]
   }
 
   // Everything standing behind this panel's edge, nearest first: the panels that
@@ -181,16 +200,48 @@ export default class extends Controller {
   // The content is written down nowhere. It is what the panels have not taken, and
   // it becomes that the moment they take it — so a room that has been told the
   // panels has already been told the content.
+  //
+  // Everything else is told to the room in whatever the room is counting in. With
+  // a content standing in it that is pixels. With none, it is shares, and the hand
+  // — which only ever moved in pixels — is turned back into them on the way out.
+  // Only a drag can be here while the content is folded away; settle knows better
+  // than to come, which is the whole reason there is a hand to ask for the rate.
   hold(panel, px) {
     if (panel === this.content) return
 
-    const held = `${Math.round(px)}px`
+    if (this.folded) return this.tell(`${named(panel)}-share`, `${Math.round(px * this.hand.rate)}`)
 
+    this.tell(named(panel), `${Math.round(px)}px`)
+  }
+
+  tell(number, held) {
     // Idempotent, and it has to be: this is what the observer calls, and a write
     // that changed nothing but fired the observer again would never stop.
-    if (this.room.style.getPropertyValue(named(panel)) === held) return
+    if (this.room.style.getPropertyValue(number) === held) return
 
-    this.room.style.setProperty(named(panel), held)
+    this.room.style.setProperty(number, held)
+  }
+
+  // A hand moves in pixels. A room with no content in it does not count in pixels —
+  // it counts in shares — so this is the rate between the two.
+  //
+  // It holds still for the whole of a drag, and it has to, or the arithmetic would
+  // be measured against a room that moved while it was being measured. It does hold
+  // still: a trade hands one panel exactly what it takes from another, so neither
+  // the shares standing in the room nor the pixels they are drawn in ever change.
+  get rate() {
+    if (!this.folded) return 1
+
+    return sum(this.standing.map(shareOf)) / sum(this.standing.map(widthOf))
+  }
+
+  get standing() {
+    return [ ...this.element.parentElement.children ]
+      .filter((panel) => panel.classList.contains("panel") && panel.offsetParent)
+  }
+
+  get folded() {
+    return !this.content.offsetParent
   }
 
   // How far this one can go when the *room* is what moved: to its own far end, or
@@ -231,6 +282,11 @@ export default class extends Controller {
     return this.gripTarget.offsetParent !== null
   }
 
+  // Written down in the currency it was let go of in. A panel let go of in a room
+  // with no content in it has not been given a width — 950 pixels is not a width a
+  // rail can hold, and the app would refuse it — it has been given a share, and
+  // the two are kept apart. The width it stands at beside a page is still the width
+  // it stands at beside a page, waiting for the page to come home.
   remember(panel) {
     if (panel === this.content) return
 
@@ -240,7 +296,9 @@ export default class extends Controller {
         "Content-Type": "application/json",
         "X-CSRF-Token": document.querySelector("meta[name='csrf-token']")?.content
       },
-      body: JSON.stringify({ width: Math.round(widthOf(panel)) })
+      body: JSON.stringify(this.folded
+        ? { share: Math.round(shareOf(panel)) }
+        : { width: Math.round(widthOf(panel)) })
     })
   }
 }

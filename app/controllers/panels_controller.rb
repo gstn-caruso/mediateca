@@ -7,9 +7,10 @@
 # for the sin of resizing something. Nothing that isn't navigation navigates.
 class PanelsController < ApplicationController
   def update
-    return head :bad_request unless Panel.known?(params[:name]) && width
+    return head :bad_request unless Panel.known?(params[:name]) && (width || share)
 
-    Current.profile.widens(params[:name], to: width)
+    Current.profile.widens(params[:name], to: width) if width
+    Current.profile.gives(params[:name], share:) if share
 
     head :no_content
   end
@@ -20,5 +21,12 @@ class PanelsController < ApplicationController
   # width or it is nothing — and "wide-ish" is not a 500, it is a no.
   def width
     @width ||= Integer(params[:width], exception: false)
+  end
+
+  # And the other thing a panel can be let go of at, which is what it is let go of
+  # at when there is no content in the room for it to have a width beside. A share
+  # is not in pixels: it says only how this panel stands to the ones next to it.
+  def share
+    @share ||= Float(params[:share], exception: false)
   end
 end
