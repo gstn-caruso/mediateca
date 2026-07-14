@@ -164,9 +164,10 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
 
     page.current_window.resize_to(1100, 780)
 
-    eventually { canvas_aim[:rail] != was }
-    sleep 0.3
-    aim = canvas_aim
+    aim = eventually do
+      candidate = canvas_aim
+      candidate if candidate[:rail] != was && candidate[:rail] == candidate[:canvas]
+    end
 
     assert_equal aim[:rail], aim[:canvas], "the picture is stretched over a rail that changed size under it"
   ensure
@@ -187,7 +188,7 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
 
     pause
 
-    assert_equal 0, frames_drawn, "the picture kept moving after the song stopped"
+    assert_equal 0, stray_frames, "the picture kept moving after the song stopped"
 
     unpause
 
@@ -373,11 +374,24 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
     page.evaluate_script("window.drawn")
   end
 
-  # What was drawn over the last three quarters of a second — which, for a picture
-  # that has stopped, is nothing.
+  # What was drawn since the picture was last asked about. A moving picture
+  # rarely makes anybody wait for it, so this returns the moment a frame lands.
   def frames_drawn
     before = frames_so_far
-    sleep 0.75
+    eventually { frames_so_far > before }
+    frames_so_far - before
+  end
+
+  # Proving a negative: two turns of the browser's own animation clock, given to
+  # a frame that should not come. That is the browser itself confirming nothing
+  # was scheduled — a fixed sleep could only ever be a guess at how long a frame
+  # takes on the machine this runs on.
+  def stray_frames
+    before = frames_so_far
+    page.evaluate_async_script(<<~JS)
+      const done = arguments[0]
+      requestAnimationFrame(() => requestAnimationFrame(done))
+    JS
     frames_so_far - before
   end
 
