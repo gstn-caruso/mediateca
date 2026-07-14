@@ -97,7 +97,7 @@
                 two rows and a scrubber tall. At pb-20 the last song on every
                 list sat under the glass — which is exactly the song you are
                 looking at when the pill says "End of playlist". %>
-            <%# glass-deep, not glass. Liquid Glass is the material of the chrome —
+            <%# surface, not chrome. Liquid Glass is the material of the chrome —
                 the bar, the rail, the pill: things that float over the content and
                 let it through. This is the content. Apple says it in one line:
                 "Don't use Liquid Glass in the content layer [...] use Standard
@@ -114,7 +114,7 @@
                   that are about nothing in particular wear the app's own. It is
                   written here and nowhere higher, so the rail, the bar and the
                   pill around it go on wearing what is PLAYING while you browse. %>
-              <main class="h-full animate-enter overflow-y-auto rounded-2xl glass-deep pb-32"
+              <main class="h-full animate-enter overflow-y-auto rounded-2xl surface pb-32"
                     style="<%= yield :dressing %>">
                 <%= yield %>
               </main>
@@ -152,7 +152,7 @@
              data-action="pointerdown->pill#grab pointermove->pill#drag
                           pointerup->pill#drop pointercancel->pill#drop
                           resize@window->pill#settle"
-             class="absolute bottom-6 left-1/2 z-40 w-[21rem] -translate-x-1/2 rounded-2xl glass sm:w-[26rem]">
+             class="absolute bottom-6 left-1/2 z-40 w-[21rem] -translate-x-1/2 rounded-2xl chrome sm:w-[26rem]">
           <%= render "shared/player" %>
         </div>
       </div>

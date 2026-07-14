@@ -72,7 +72,7 @@
    an app whose backdrop is this busy, "prefer a monochromatic appearance for
    toolbars". The colour of the record belongs on the things you press and the
    line that is playing — not on every pane in the building. */
-@utility glass {
+@utility chrome {
   background-color: rgba(20, 20, 24, 0.62);
   -webkit-backdrop-filter: blur(30px) saturate(200%) brightness(1.05);
   backdrop-filter: blur(30px) saturate(200%) brightness(1.05);
@@ -93,7 +93,7 @@
    songs is read, not glanced at, so it has to hold still against whatever cover
    is burning behind it. Apple's own reading surfaces sit around 0.7-0.9 alpha for
    the same reason: glass is for the controls, not for the page. */
-@utility glass-deep {
+@utility surface {
   background-color: rgba(10, 10, 12, 0.78);
   -webkit-backdrop-filter: blur(20px) saturate(170%);
   backdrop-filter: blur(20px) saturate(170%);
@@ -738,12 +738,12 @@ html[data-playing="true"] .eq > i {
    62% translucent and there is nothing to blur what shows through, so the cover
    reads straight through the songs. Fall back to solid, not to see-through. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass, .glass-deep { @apply solid-glass; }
+  .chrome, .surface { @apply solid-glass; }
   .scroll-edge { display: none; }
 }
 
 @media (prefers-contrast: more) {
-  .glass, .glass-deep { @apply solid-glass; }
+  .chrome, .surface { @apply solid-glass; }
   .scroll-edge { display: none; }
   .hero-wash { display: none; }
 }
@@ -755,15 +755,15 @@ html[data-playing="true"] .eq > i {
    protects nobody. Hence the switch below — it is not a nicety, it is the only
    thing that works on an iPhone. */
 @media (prefers-reduced-transparency: reduce) {
-  .glass, .glass-deep { @apply solid-glass; }
+  .chrome, .surface { @apply solid-glass; }
   .scroll-edge { display: none; }
   .hero-wash { display: none; }
 }
 
 /* The switch. Set from the profile menu, kept in localStorage, applied to <html>
    before first paint so the glass never flashes in. */
-html[data-transparency="off"] .glass,
-html[data-transparency="off"] .glass-deep { @apply solid-glass; }
+html[data-transparency="off"] .chrome,
+html[data-transparency="off"] .surface { @apply solid-glass; }
 html[data-transparency="off"] .scroll-edge { display: none; }
 html[data-transparency="off"] .hero-wash { display: none; }
 
