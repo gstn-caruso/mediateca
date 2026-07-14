@@ -19,12 +19,24 @@ module ServesMedia
   # size — or a size the app does not draw, or of a file ffmpeg cannot read —
   # they get the picture itself, which is what everybody got before the app knew
   # how to draw a small one.
+  #
+  # The root is checked FIRST, and it has to be. A thumbnail is drawn by opening
+  # the file, decoding it and writing it out again — so drawing one and then
+  # asking whether we were allowed to read it is asking about a file we have
+  # already read, and answering with it. The boundary is not the response, it is
+  # the read: nothing outside the root is opened at all, and a picture that
+  # escapes it is refused before ffmpeg is told it exists.
   def serve_picture(path, root: MediaFile.root)
-    thumbnail = Music::Thumbnail.of(path, size: params[:size])
+    return head :not_found if path.blank?
+
+    picture = MediaFile.new(path, root:)
+    return head :not_found unless picture.exist?
+
+    thumbnail = Music::Thumbnail.of(picture.path, size: params[:size])
 
     return serve(thumbnail, as: "image/jpeg", root: Music::Thumbnail.root) if thumbnail
 
-    serve path, as: picture_type(path), root:
+    serve picture.path, as: picture_type(picture.path), root:
   end
 
   def picture_type(path)

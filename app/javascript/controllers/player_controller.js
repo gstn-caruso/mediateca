@@ -631,11 +631,23 @@ export default class extends Controller {
     // Not `track.cover`: that is the forty-pixel thumb in the pill, and this is
     // the picture a phone puts on its lock screen, as big as the phone. The row
     // carries both, and says which is which.
+    //
+    // Falling back to the cover, though, because a queue outlives a deploy: it is
+    // written to localStorage, and the one that is sitting there right now was
+    // written by the build before this one, whose rows have no artwork at all.
+    // Read straight, that is `new URL(undefined)` — a lock screen asking the NAS
+    // for /undefined — for every song somebody already had queued.
+    //
+    // And no `sizes`. It said "640x640", which is the size we ASKED for, and
+    // ffmpeg does not blow a picture up to reach it: a record whose sleeve was
+    // scanned at 300px is sent at 300px. Announcing that as 640 is the same lie
+    // this fell into once already, told about a smaller number. A phone that is
+    // handed a picture and not told a size looks.
     navigator.mediaSession.metadata = new MediaMetadata({
       title: track.title,
       artist: track.subtitle,
       album: track.albumTitle,
-      artwork: [ { src: new URL(track.artwork, location.href).href, sizes: "640x640" } ]
+      artwork: [ { src: new URL(track.artwork ?? track.cover, location.href).href } ]
     })
 
     navigator.mediaSession.setActionHandler("play", () => this.audioTarget.play())

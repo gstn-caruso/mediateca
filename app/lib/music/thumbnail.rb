@@ -21,10 +21,17 @@ module Music
 
     # The picture at this size, or nothing at all — and nothing is an answer:
     # whoever asked has the original, which is what they used to send.
+    #
+    # The size arrives off a URL, and a URL can say anything: `?size[]=96` is an
+    # Array, and an Array has no opinion about to_i. So it is read as a number or
+    # it is not a size, and a thing that is not a size is one of the many sizes
+    # this app does not draw.
     def self.of(picture, size:)
-      return unless picture.present? && SIZES.include?(size.to_i)
+      wanted = Integer(size.to_s, exception: false)
 
-      new(picture.to_s, size: size.to_i).path
+      return unless picture.present? && SIZES.include?(wanted)
+
+      new(picture.to_s, size: wanted).path
     end
 
     def self.root
@@ -46,33 +53,49 @@ module Music
       draw if stale?
 
       file
-    rescue Ffmpeg::Unreadable, Ffmpeg::NotInstalled
-      # A cover.jpg that is not a JPEG is one of the things on a NAS, and an
-      # ffmpeg that is not installed is one of the things on a laptop. Neither is
-      # worth a broken picture: the page gets the file itself, exactly as it did
-      # before any of this was here.
+    rescue Ffmpeg::Unreadable, Ffmpeg::NotInstalled, SystemCallError
+      # Three things, and one answer to all of them. A cover.jpg that is not a
+      # JPEG is one of the things on a NAS. An ffmpeg that is not installed is one
+      # of the things on a laptop. A disk with no room left on it, or mounted
+      # read-only, is one of the things on a NAS as well — and before any of this
+      # existed, a picture was served without writing a byte, so a full disk could
+      # not make the library unreadable. It must not start now.
+      #
+      # None of them is worth a broken picture. The page gets the file itself,
+      # exactly as it did before the app knew how to draw a small one.
       nil
     end
 
     private
 
-    # A better scan of a record, dropped onto the NAS over the old one, is a new
-    # picture at a path that has not changed. The thumbnail beside it is then a
-    # picture of something that is not there any more — so the clock decides,
-    # rather than the name.
+    # A thumbnail wears the mtime of the picture it was drawn from, so the question
+    # "is this still a picture of that?" is asked by comparing them, and answered
+    # exactly.
+    #
+    # Not "was the picture touched more recently than the thumbnail". A sleeve does
+    # not arrive on this NAS by being edited in place — it arrives by rsync -a, or
+    # cp -p, which carry the file's own mtime along with the bytes, and that mtime
+    # is usually older than the moment the app happened to draw the thumbnail. A
+    # better scan of a record would have landed and never been looked at again.
     def stale?
-      !File.exist?(file) || File.mtime(file) < File.mtime(@picture)
+      !File.exist?(file) || File.mtime(file) != File.mtime(@picture)
     end
 
     # Written under another name and moved into place, because two requests for a
-    # sleeve nobody has drawn yet arrive at the same moment, and a browser reading
-    # a half-written JPEG shows half a JPEG. A rename is the one thing the
-    # filesystem promises to do all at once.
+    # sleeve nobody has drawn yet arrive at the same moment — and Puma answers
+    # three at once in one process, so the other name has to be this THREAD's, not
+    # this process's. Two threads sharing a scratch file write over each other and
+    # the second one renames a file that is not there any more.
+    #
+    # A rename is the one thing the filesystem promises to do all at once: whoever
+    # loses the race overwrites an identical picture with an identical picture, and
+    # a browser never sees half a JPEG.
     def draw
       FileUtils.mkdir_p(self.class.root)
-      scratch = "#{file}.#{Process.pid}"
+      scratch = "#{file}.#{Process.pid}.#{Thread.current.object_id}"
 
       File.binwrite(scratch, Ffmpeg.new.thumbnail(@picture, size: @size))
+      File.utime(File.atime(@picture), File.mtime(@picture), scratch)
       File.rename(scratch, file)
     end
 

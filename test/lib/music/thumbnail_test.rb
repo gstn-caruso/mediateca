@@ -46,6 +46,28 @@ class Music::ThumbnailTest < ActiveSupport::TestCase
       "the app is still drawing the sleeve that used to be at that path"
   end
 
+  # And a sleeve does not arrive on this NAS by being edited in place. It arrives
+  # by rsync -a, or cp -p, which carry the file's own mtime with it — and the file
+  # was made long before the thumbnail was drawn. A thumbnail that only redraws for
+  # a picture NEWER than itself never redraws for the way pictures actually land
+  # here, and the listener is shown the old sleeve for ever.
+  test "a picture that landed carrying an older mtime is drawn again" do
+    was = File.size(Music::Thumbnail.of(@cover, size: 96))
+
+    File.binwrite(@cover, File.binread(sleeve({ "#101010" => 0.5, "#f5f5f5" => 0.5 }, SCAN)))
+    FileUtils.touch(@cover, mtime: Time.now - 1.year)
+
+    assert_not_equal was, File.size(Music::Thumbnail.of(@cover, size: 96)),
+      "rsync kept the sleeve's own mtime, and the app decided the new sleeve was the old one"
+  end
+
+  # A URL cannot ask for a size, but a URL can ask for anything: `?size[]=96`
+  # arrives as an Array, and an Array does not answer to to_i.
+  test "a size that is not even a number is simply not a size" do
+    assert_nil Music::Thumbnail.of(@cover, size: [ "96" ])
+    assert_nil Music::Thumbnail.of(@cover, size: "ninety-six")
+  end
+
   # A URL that can ask for any size is a URL that can ask the NAS to draw ten
   # thousand of them.
   test "nobody can ask for a size the app does not draw" do

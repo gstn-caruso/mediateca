@@ -21,12 +21,22 @@ class SendingAPictureAPhoneCanHoldTest < ActionDispatch::IntegrationTest
     Rails.configuration.x.media_root = sleeves.to_s
 
     listening_as
-    @artist = Artist.create!(name: "Elliott Smith", portrait_path: photograph({ "#1e6ad4" => 1.0 }, SCAN))
+    @artist = Artist.create!(name: "Elliott Smith", portrait_path: in_the_portraits(photograph({ "#1e6ad4" => 1.0 }, SCAN)))
     @album = Album.create!(directory: "/music/figure-8", title: "Figure 8", year: 2000, artist: @artist,
                            cover_path: sleeve({ "#c8102e" => 1.0 }, SCAN))
   end
 
   teardown { Rails.configuration.x.media_root = @nas }
+
+  # A face lives under storage/ and a sleeve lives with the music, and each is
+  # served out of its own root. A photograph that a test leaves among the records
+  # is a photograph the app is right to refuse.
+  def in_the_portraits(picture)
+    root = Rails.configuration.x.portraits_root
+    FileUtils.mkdir_p(root)
+
+    File.join(root, File.basename(picture)).tap { FileUtils.cp(picture, it) }
+  end
 
   test "a sleeve arrives at the size it was asked for" do
     get album_cover_path(@album, size: 96)
@@ -68,6 +78,22 @@ class SendingAPictureAPhoneCanHoldTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal "hello", response.body
+  end
+
+  # The media root is the trust boundary, and asking for a size must not be a way
+  # through it. The old test for this pointed a cover at /etc/passwd and was
+  # answered 403 — but only because ffmpeg cannot read /etc/passwd. A picture it
+  # CAN read, sitting outside the root, is the case that matters: drawing it small
+  # first and checking the root afterwards is checking the root of a file we have
+  # already opened, decoded and re-encoded.
+  test "a size is not a way around the media root" do
+    outside = Rails.root.join("tmp/outside-the-root-#{Process.pid}.png")
+    FileUtils.cp(sleeve({ "#c8102e" => 1.0 }, SCAN), outside)
+    @album.update_column(:cover_path, outside.to_s)
+
+    get album_cover_path(@album, size: 96)
+
+    assert_response :forbidden
   end
 
   test "the rail asks for the forty-four pixels it draws, and not for the scan" do
