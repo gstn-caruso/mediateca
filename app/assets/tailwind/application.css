@@ -490,6 +490,44 @@ html[data-turbo-preview] .animate-enter {
   }
 }
 
+/* The content folds away as well, and then it is not there at all.
+
+   It was the one thing in the room that could not. The panels were placed and the
+   content was whatever they had not taken — and you cannot fold the leftovers.
+   Giving it a name is most of the change; the rest is what the room does about it.
+
+   And what it does is hand the room to whoever is left standing. A rail is a rail
+   because there is content beside it; with none, a queue holding to 18rem while
+   four feet of nothing sits next to it is not a rail, it is a mistake. So they
+   grow — out from the width their listener keeps them at, which is why the widths
+   still mean something here and nobody's room is thrown away, only widened.
+
+   Nothing is written down, and nothing needs to be: no hand did this. The panels
+   keep the widths they already had and get them back untouched when the content
+   comes home. The seams are the other half of saying so — a grip is the edge
+   between two things and there are no two things, but more than that, an edge
+   that could still be pulled would be a hand writing down a width the room is
+   holding it at, and calling it a choice.
+
+   Below the breakpoint none of it applies: a phone's content is the phone. The
+   rails come over the top of it and the library is not there at all, so there is
+   nobody to hand the room to. The topbar does not offer it — and a window dragged
+   down to that size unfolds on its own rather than stranding a listener in an
+   empty room with the button that emptied it out of reach. */
+@media (width >= 48rem) {
+  #content.is-folded {
+    display: none;
+  }
+
+  #panels:has(> #content.is-folded) .panel {
+    flex-grow: 1;
+  }
+
+  #panels:has(> #content.is-folded) .grip {
+    display: none;
+  }
+}
+
 /* Full screen, and the rail stops being a rail. The glass header goes: it is a
    window frame, and this is the one thing in the app that is meant to have none.
    Escape brings it back, which is the way out of every full screen there is. */
