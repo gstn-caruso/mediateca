@@ -59,18 +59,18 @@ class HidingAnArtistTest < ApplicationSystemTestCase
     assert_equal steps, page.evaluate_script("history.length")
   end
 
-  # This menu drops out of a card that is already a pane of glass, and glass
-  # inside glass does not compose: the menu stops seeing the page and blurs the
-  # pane it is sitting on, which was blurred and tinted already. It comes out
-  # flat and muddy — which is why Apple says not to stack the material, and why
-  # every other menu in the app is solid. This one had drifted.
-  test "the menu is a menu, not another pane of glass" do
+  # Nothing in this app filters what is behind it any more — a pane that re-blurs
+  # the whole room, every frame, is the one thing a cheap phone cannot afford, and
+  # StayingLightTest walks the room saying so. It cannot walk into a menu, though:
+  # a menu that is shut is not on the page. So this is the same rule, standing at
+  # the one door that test cannot open.
+  test "the menu does not filter what is behind it either" do
     visit root_path
 
     open_the_menu_for "Almafuerte"
 
     assert_equal "none", menu_material,
-      "the menu is filtering its backdrop: it is glass stacked on glass"
+      "the menu is re-blurring everything behind it, every frame, on a phone that cannot"
   end
 
   private

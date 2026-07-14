@@ -51,7 +51,7 @@ export default class extends Controller {
     "audio", "title", "titleText", "idle", "subtitle", "subtitleText", "cover", "tail", "broken",
     "playIcon", "pauseIcon", "progress", "elapsed", "duration",
     "shuffle", "repeat", "repeatOne", "next", "queue", "queueEmpty", "queueToggle", "panel",
-    "repeatBadge", "repeatBadgeText", "backdrop", "row", "suggestions",
+    "repeatBadge", "repeatBadgeText", "row", "suggestions",
     "lyrics", "lyricsPanel", "lyricsToggle", "syncToggle",
     "visualizerPanel", "visualizerToggle"
   ]
@@ -924,7 +924,6 @@ export default class extends Controller {
     this.titleTarget.hidden = !track
     if (!track) {
       this.subtitleTextTarget.textContent = ""
-      this.clearBackdrop()
       this.clearAccent()
       return
     }
@@ -939,7 +938,6 @@ export default class extends Controller {
     this.marquee(this.titleTarget, this.titleTextTarget)
     this.marquee(this.subtitleTarget, this.subtitleTextTarget)
 
-    this.setBackdrop(track.cover)
     this.wear(track.palette)
   }
 
@@ -958,31 +956,6 @@ export default class extends Controller {
       lane.style.setProperty("--marquee-shift", `-${overflow}px`)
       lane.style.setProperty("--marquee-duration", `${Math.max(6, overflow / 25)}s`)
       lane.classList.add("is-scrolling")
-    })
-  }
-
-  // The cover of what's playing washes the whole floor. Two layers cross-fade:
-  // paint the next cover on the layer that's hidden, then trade their opacities.
-  setBackdrop(cover) {
-    if (!this.hasBackdropTarget || !cover) return
-
-    const shown = this.backdropTargets.find((layer) => layer.classList.contains("opacity-100"))
-    if (shown?.dataset.cover === cover) return
-
-    const next = this.backdropTargets.find((layer) => layer !== shown)
-    next.style.backgroundImage = `url("${cover}")`
-    next.dataset.cover = cover
-    next.classList.replace("opacity-0", "opacity-100")
-    shown?.classList.replace("opacity-100", "opacity-0")
-  }
-
-  // Nobody playing, no wash: both layers fade back to the bare backdrop.
-  clearBackdrop() {
-    if (!this.hasBackdropTarget) return
-
-    this.backdropTargets.forEach((layer) => {
-      layer.classList.replace("opacity-100", "opacity-0")
-      delete layer.dataset.cover
     })
   }
 

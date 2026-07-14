@@ -96,7 +96,7 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
   end
 
   # Where this was always going. And what goes full screen is the picture, not a
-  # canvas with a window's worth of glass still stuck to the top of it — so the
+  # canvas with a window's worth of chrome still stuck to the top of it — so the
   # header goes with it, and Escape is the way back, as it is out of every full
   # screen there ever was.
   test "the picture can take the whole screen, and nothing else goes with it" do

@@ -19,7 +19,12 @@
         heading. %>
     <% @history.group_by { |play| play.played_at.to_date }.each do |day, songs| %>
       <section data-history-day class="mt-10 first:mt-8">
-        <h2 class="sticky top-0 z-10 -mx-2 bg-black/40 px-2 py-2 text-xs font-semibold uppercase tracking-widest text-neutral-500 backdrop-blur">
+        <%# The day rides at the top of its own songs while they scroll under it, so
+            it has to hide them. It was a translucent bar blurring whatever passed
+            beneath — which is to say it re-blurred the list on every frame of a
+            scroll through a year of listening. It is the colour of the page it sits
+            on instead, and hides a row by being in front of it. %>
+        <h2 class="sticky top-0 z-10 -mx-2 bg-surface px-2 py-2 text-xs font-semibold uppercase tracking-widest text-neutral-500">
           <%= day == Date.current ? "Today" : (day == Date.yesterday ? "Yesterday" : l(day, format: :long)) %>
         </h2>
 

@@ -50,7 +50,8 @@ class ShowingArtistsTest < ActionDispatch::IntegrationTest
 
     get artist_path(@artist)
 
-    assert_match "/portrait?v=#{MediaFile.signature(@artist.portrait_path)}", CGI.unescapeHTML(response.body)
+    assert_match %r{/portrait\?[^"]*v=#{MediaFile.signature(@artist.portrait_path)}},
+                 CGI.unescapeHTML(response.body)
   end
 
   private
