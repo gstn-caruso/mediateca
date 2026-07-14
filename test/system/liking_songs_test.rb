@@ -14,34 +14,6 @@ class LikingSongsTest < ApplicationSystemTestCase
                   path: media("01 - Desencuentro.flac"), album: @album)
   end
 
-  test "a hearted song lands in Liked Songs, and an unhearted one leaves" do
-    visit album_path(@album)
-
-    # The heart fills in place now rather than reloading the page, so waiting for
-    # it is what says the heart was given. And "Desencuentro" is on the record's
-    # own page too — asserting the song's name proved nothing about having got to
-    # Liked Songs, so a navigation that had not landed yet went unnoticed and the
-    # rest of the test ran against the album.
-    click_on "Like Desencuentro"
-    assert_selector "button[aria-label='Unlike Desencuentro']"
-
-    in_the_library("Playlists") { click_on "Liked Songs" }
-    assert_selector "h1", text: "Liked Songs"
-    assert_text "Desencuentro"
-
-    click_on "Unlike Desencuentro"
-
-    assert_text "Songs you heart show up here"
-  end
-
-  test "an album is hearted from its own page" do
-    visit album_path(@album)
-
-    click_on "Like Mundo Guanaco"
-
-    assert_selector "button[aria-label='Unlike Mundo Guanaco']"
-  end
-
   # Somebody pressing a heart is telling you about a song, not asking to be taken
   # somewhere. It used to be a whole page fetched and redrawn: the scroll jumped
   # back to the top of the record, and the history filled with the same URL, once

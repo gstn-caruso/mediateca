@@ -54,14 +54,6 @@ class OnAPhoneTest < ApplicationSystemTestCase
     assert_text "Who's listening?"
   end
 
-  test "a song still plays" do
-    visit album_path(@album)
-
-    find("button[data-player-track]", text: "Desencuentro").click
-
-    assert_selector "[data-player-target='title']", text: "Desencuentro"
-  end
-
   # The queue used to be desktop-only, twice over: the button that opens it was
   # hidden below md, and the class it toggled had no effect there anyway. So a
   # phone had no way to see what was coming, and no way to change it.

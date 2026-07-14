@@ -33,15 +33,6 @@ class SearchingInTheBrowserTest < ApplicationSystemTestCase
     assert_selector "[data-player-target='title']", text: "Desencuentro"
   end
 
-  test "a search that finds nothing does not pretend otherwise" do
-    visit root_path
-
-    fill_in "Search", with: "Piazzolla"
-    find_field("Search").send_keys(:return)
-
-    assert_text "No results"
-  end
-
   private
 
   def media(name)

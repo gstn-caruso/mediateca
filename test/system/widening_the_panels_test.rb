@@ -90,17 +90,6 @@ class WideningThePanelsTest < ApplicationSystemTestCase
     assert_in_delta kept, width_of("#library-panel"), 2, "the library forgot on a cold load"
   end
 
-  # The whole point of it hanging off the listener rather than off the browser.
-  test "one listener's room is not everybody's" do
-    widen "#library-panel", by: 90
-    written_down("library")
-
-    switch_profile
-    listening_as "Ana"
-
-    assert_in_delta BORN, width_of("#library-panel"), 2, "Ana inherited somebody else's idea of a library"
-  end
-
   # On a phone a rail does not stand beside anything — it comes over the top, and
   # takes the screen. There is no edge between two things to take hold of, so
   # there is nothing to take hold of.

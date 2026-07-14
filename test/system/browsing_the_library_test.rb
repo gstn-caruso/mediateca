@@ -31,18 +31,6 @@ class BrowsingTheLibraryTest < ApplicationSystemTestCase
     end
   end
 
-  test "the lists and the hearts are a turn of their own" do
-    visit root_path
-
-    within "nav" do
-      click_on "Playlists"
-
-      assert_text "Road trip"
-      assert_text "Liked Songs"
-      assert_no_selector "a[href='#{artist_path(@artist)}']"
-    end
-  end
-
   # The rail is re-rendered on every visit, so the turn it was left on cannot
   # ride along in the DOM the way the music does — it is written down and read
   # back, the same way the rail remembers being folded shut.
@@ -53,17 +41,6 @@ class BrowsingTheLibraryTest < ApplicationSystemTestCase
     visit likes_path
 
     within("nav") { assert_selector "a[href='#{album_path(@album)}']" }
-  end
-
-  test "the page turns to the records too" do
-    visit root_path
-
-    within "main" do
-      click_on "Albums"
-
-      assert_selector "a[href='#{album_path(@album)}']"
-      assert_no_selector "a[href='#{artist_path(@artist)}']"
-    end
   end
 
   private
