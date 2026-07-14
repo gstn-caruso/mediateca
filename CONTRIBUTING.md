@@ -48,6 +48,15 @@ The suite has unit, integration, contract, and system tests. Pick the layer
 that actually exercises the thing you're changing — a controller behavior
 doesn't need a system test, and a JS interaction usually does.
 
+A system test costs about four hundred times what a request test costs, so
+`test/system` is kept for **what only a browser can see**: JavaScript, the
+audio element, localStorage, drags, computed styles, media queries, the canvas,
+`history.length`. If your test would pass against the HTML the server already
+sent, it is a request test — write it in `test/integration` and it will run in
+three milliseconds instead of a second and a half. If something is worth
+proving at two layers, prove the *rule* in a unit test and the *wiring* in one
+system test; don't write the same assertion twice in a browser.
+
 ## Tidy First
 
 If a change needs both a structural cleanup (rename, extract, move code

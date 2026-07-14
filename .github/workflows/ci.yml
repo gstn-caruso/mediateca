@@ -137,10 +137,11 @@ jobs:
         run: |
           files=$(wc -l test/system/*_test.rb | grep -v ' total$' | sort -rn |
                     awk '{ print $2 }' | awk "NR % 3 == ${{ matrix.shard }} % 3")
+          test -n "$files" || { echo "este shard no agarró ningún archivo"; exit 1; }
           echo "$files"
           bin/rails tailwindcss:build
           bin/rails db:test:prepare
-          bin/rails test $files
+          echo "$files" | xargs bin/rails test
 
       - name: Keep screenshots from failed system tests
         uses: actions/upload-artifact@v7
