@@ -27,7 +27,7 @@ class SuggestingWhatToPlayNextTest < ActionDispatch::IntegrationTest
     # Signed the way every other media URL in the app is, so a cached response
     # can never be revalidated into another song's audio.
     assert_equal track_stream_path(@libertango, v: MediaFile.signature(@libertango.path)), suggestion["src"]
-    assert_equal album_cover_path(@regina, v: MediaFile.signature(@regina.cover_path)), suggestion["cover"]
+    assert_equal album_cover_path(@regina, v: MediaFile.signature(@regina.cover_path), size: 96), suggestion["cover"]
   end
 
   test "what the queue already holds is not offered again" do

@@ -36,7 +36,7 @@
           <div class="relative">
             <%= link_to artist_path(artist), class: "#{row} pr-11 #{"bg-white/10" if current_page?(artist_path(artist))}" do %>
               <span class="size-11 shrink-0 overflow-hidden rounded-full bg-neutral-800 ring-1 ring-inset ring-white/10">
-                <%= render "shared/artist_face", artist: artist, text: "text-base" %>
+                <%= render "shared/artist_face", artist: artist, text: "text-base", size: 96 %>
               </span>
               <span class="min-w-0">
                 <span class="block truncate text-sm font-medium text-neutral-100"><%= artist.name %></span>
@@ -60,7 +60,7 @@
           <div class="relative">
             <%= link_to album_path(album), class: "#{row} pr-11 #{"bg-white/10" if current_page?(album_path(album))}" do %>
               <span class="size-11 shrink-0 overflow-hidden rounded bg-neutral-800 shadow-lg ring-1 ring-inset ring-white/10">
-                <%= render "shared/sleeve", album: album %>
+                <%= render "shared/sleeve", album: album, size: 96 %>
               </span>
               <span class="min-w-0">
                 <span class="block truncate text-sm font-medium text-neutral-100"><%= album.title %></span>

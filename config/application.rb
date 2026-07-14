@@ -47,6 +47,11 @@ module Mediateca
     config.x.spotify_client_secret = ENV["SPOTIFY_CLIENT_SECRET"]
     config.x.portraits_root = ENV.fetch("PORTRAITS_ROOT", Rails.root.join("storage/portraits").to_s)
 
+    # And the sleeves, drawn small enough for the row they land in. Under storage/
+    # for the same reason: it is the only volume that can be written to, and this
+    # is the one place the app draws a picture of its own.
+    config.x.thumbnails_root = ENV.fetch("THUMBNAILS_ROOT", Rails.root.join("storage/thumbnails").to_s)
+
     # The scanner reads each file's tags with ffprobe, which ships in the image.
     config.x.ffprobe = ENV.fetch("FFPROBE", "ffprobe")
 

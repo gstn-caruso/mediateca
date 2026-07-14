@@ -1,7 +1,8 @@
 <%# An artist nobody photographed gets the tile a listener with no picture gets,
     not the sleeve of one of their records. A record is not a face. %>
 <% if artist.portrait_path.present? %>
-  <%= image_tag portrait_url(artist), alt: "", loading: "lazy", class: "size-full object-cover" %>
+  <%= image_tag portrait_url(artist, size: local_assigns.fetch(:size)), alt: "", decoding: "async",
+                loading: "lazy", class: "size-full object-cover" %>
 <% else %>
   <span aria-hidden="true"
         class="flex size-full items-center justify-center font-bold text-black <%= local_assigns.fetch(:text, "text-xl") %> <%= avatar_colour(artist) %>">

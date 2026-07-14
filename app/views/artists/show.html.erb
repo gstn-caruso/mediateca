@@ -15,7 +15,7 @@
 
   <div class="relative flex flex-col items-center gap-6 px-4 pb-10 pt-12 text-center @2xl:flex-row @2xl:items-end @2xl:gap-8 @2xl:text-left sm:px-8 sm:pt-24">
     <div class="size-40 shrink-0 overflow-hidden rounded-full bg-neutral-800 shadow-2xl shadow-black/60 ring-1 ring-white/10 @2xl:size-56">
-      <%= render "shared/artist_face", artist: @artist, text: "text-6xl" %>
+      <%= render "shared/artist_face", artist: @artist, text: "text-6xl", size: 640 %>
     </div>
 
     <div class="min-w-0 pb-2">
@@ -65,7 +65,7 @@
     <% @albums.each do |album| %>
       <%= link_to album_path(album), class: "group rounded-lg p-4 transition hover:bg-white/5" do %>
         <div class="aspect-square overflow-hidden rounded bg-neutral-800 shadow-lg">
-          <%= render "shared/sleeve", album: album,
+          <%= render "shared/sleeve", album: album, size: 320,
                      class: "size-full object-cover transition duration-300 group-hover:scale-105" %>
         </div>
         <p class="mt-4 truncate text-base font-bold text-white"><%= album.title %></p>

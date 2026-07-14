@@ -17,7 +17,7 @@ module TracksHelper
       src: stream_url(track),
       title: track.title,
       subtitle: track.artist_name,
-      cover: cover_url(track.album),
+      cover: cover_url(track.album, size: 96),
       album: album_path(track.album),
       album_title: track.album.title,
       palette: track.album.palette.to_h.to_json

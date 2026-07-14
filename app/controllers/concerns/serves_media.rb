@@ -15,6 +15,22 @@ module ServesMedia
 
   private
 
+  # A picture, at the size whoever is drawing it says they need. Asked for no
+  # size — or a size the app does not draw, or of a file ffmpeg cannot read —
+  # they get the picture itself, which is what everybody got before the app knew
+  # how to draw a small one.
+  def serve_picture(path, root: MediaFile.root)
+    thumbnail = Music::Thumbnail.of(path, size: params[:size])
+
+    return serve(thumbnail, as: "image/jpeg", root: Music::Thumbnail.root) if thumbnail
+
+    serve path, as: picture_type(path), root:
+  end
+
+  def picture_type(path)
+    Rack::Mime.mime_type(File.extname(path.to_s), "image/jpeg")
+  end
+
   # Portraits live under storage/, not under the media root, because the music
   # is mounted read-only. A different root, but still a root.
   def serve(path, as:, root: MediaFile.root)
