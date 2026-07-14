@@ -17,6 +17,11 @@ const CONTENT = 360
 
 const within = (value, least, most) => Math.min(Math.max(value, least), Math.max(least, most))
 
+const widthOf = (panel) => panel.getBoundingClientRect().width
+
+// Which of the room's four numbers is this panel's.
+const named = (panel) => `--${panel.dataset.panelNameValue}`
+
 // A panel is as wide as the hand that last held its edge left it.
 //
 // Nothing about how wide it is lives in this controller — and nothing about it
@@ -47,8 +52,17 @@ export default class extends Controller {
     this.watching.disconnect()
   }
 
+  // A hand takes a seam, and a seam is between things: this panel, and everything
+  // standing behind it that will give way. All of them are measured now, once — a
+  // drag is told from where it began, not from wherever the last frame left it.
   grab(event) {
-    this.hand = { x: event.clientX, width: this.width }
+    const givers = this.givers
+
+    this.hand = {
+      x: event.clientX,
+      givers,
+      was: new Map([ this.element, ...givers ].map((panel) => [ panel, widthOf(panel) ]))
+    }
 
     event.target.setPointerCapture(event.pointerId)
     this.element.classList.add("is-resizing")
@@ -65,20 +79,25 @@ export default class extends Controller {
 
     const travelled = event.clientX - this.hand.x
 
-    this.widen(this.hand.width + (this.edgeValue === "left" ? -travelled : travelled))
+    this.move(this.edgeValue === "left" ? -travelled : travelled)
   }
 
-  // A press that moved nothing is a press, and it writes nothing down.
+  // A press that moved nothing is a press, and it writes nothing down. What did
+  // move is written down — all of it. The panel that gave was never touched by the
+  // hand, and it is a width its listener now keeps all the same: they moved it,
+  // they just moved it from the other end of the seam.
   drop(event) {
     if (!this.hand) return
 
-    const was = this.hand.width
+    const { was } = this.hand
     this.hand = null
 
     this.element.classList.remove("is-resizing")
     event.target.releasePointerCapture(event.pointerId)
 
-    if (Math.round(this.width) !== Math.round(was)) this.remember()
+    was.forEach((before, panel) => {
+      if (Math.round(widthOf(panel)) !== Math.round(before)) this.remember(panel)
+    })
   }
 
   // The room closing in on a panel somebody left wide — a window narrowed, a rail
@@ -86,21 +105,97 @@ export default class extends Controller {
   // down: the room taking room back is not somebody changing their mind, and on a
   // screen that can hold it again, it is theirs again.
   settle() {
-    if (this.adjustable) this.widen(this.width)
+    if (!this.adjustable) return
+
+    this.hold(this.element, within(this.width, NARROWEST, this.most))
   }
 
-  widen(wanted) {
-    const held = `${Math.round(within(wanted, NARROWEST, this.most))}px`
+  // The seam moves, and moving a seam is a trade: what this panel takes, the room
+  // behind it gives — the panel across the seam first, then the one behind that,
+  // and the content last of all.
+  //
+  // It used to be the content that paid, and only the content: wherever in the
+  // room the seam was and whichever side was pulled, the content was the leftovers
+  // and the leftovers are what every drag came out of. Two rails standing side by
+  // side had a seam between them that neither of them ever felt.
+  //
+  // What nobody behind the seam can pay, this panel does not take — and that is
+  // the whole of why the room stays exactly as full as it was. The arithmetic is a
+  // trade, so there is never anything left over to lose.
+  move(asked) {
+    const { was, givers } = this.hand
+
+    const wanted = this.step(this.element, was.get(this.element), asked)
+
+    let owed = wanted
+    const given = new Map()
+
+    for (const giver of givers) {
+      const paid = owed === 0 ? 0 : this.step(giver, was.get(giver), -owed)
+
+      given.set(giver, paid)
+      owed += paid
+    }
+
+    this.hold(this.element, was.get(this.element) + wanted - owed)
+    given.forEach((paid, giver) => this.hold(giver, was.get(giver) + paid))
+  }
+
+  // How far a panel goes when it is asked to go this far: as far as it can, and
+  // then it stops being what it is. A rail under its floor cannot say what it is
+  // for; a rail over its ceiling has stopped standing beside the content and
+  // started being it; and a page under CONTENT is a page nobody can read.
+  step(panel, from, asked) {
+    const [ least, most ] = this.ends(panel)
+
+    return within(from + asked, least, most) - from
+  }
+
+  ends(panel) {
+    return panel === this.content ? [ CONTENT, Infinity ] : [ NARROWEST, WIDEST ]
+  }
+
+  // Everything standing behind this panel's edge, nearest first: the panels that
+  // give way when it takes room, in the order the room gives it up. A shut rail is
+  // not standing anywhere, so it is stepped over.
+  //
+  // The content is the end of it. A rail leans on the rail beside it and, when
+  // that one is spent, on the page — but the page is where this side of the room
+  // stops. Nothing a hand does to the right of the content should be felt on its
+  // left.
+  get givers() {
+    const behind = this.edgeValue === "left" ? "previousElementSibling" : "nextElementSibling"
+    const standing = []
+
+    for (let panel = this.element[behind]; panel; panel = panel[behind]) {
+      if (!panel.offsetParent) continue
+
+      standing.push(panel)
+
+      if (panel === this.content) break
+    }
+
+    return standing
+  }
+
+  // The content is written down nowhere. It is what the panels have not taken, and
+  // it becomes that the moment they take it — so a room that has been told the
+  // panels has already been told the content.
+  hold(panel, px) {
+    if (panel === this.content) return
+
+    const held = `${Math.round(px)}px`
 
     // Idempotent, and it has to be: this is what the observer calls, and a write
     // that changed nothing but fired the observer again would never stop.
-    if (this.room.style.getPropertyValue(this.mine) === held) return
+    if (this.room.style.getPropertyValue(named(panel)) === held) return
 
-    this.room.style.setProperty(this.mine, held)
+    this.room.style.setProperty(named(panel), held)
   }
 
-  // How far this one can go: to its own far end, or until the content is down to
-  // the least room a page can be read in — whichever it meets first.
+  // How far this one can go when the *room* is what moved: to its own far end, or
+  // until the content is down to the least room a page can be read in — whichever
+  // it meets first.
   //
   // But never back past the width it was born at. On a tablet with a rail open the
   // content is *already* under its floor, and has been since long before any of
@@ -112,11 +207,11 @@ export default class extends Controller {
   }
 
   get spare() {
-    return this.content.getBoundingClientRect().width - CONTENT
+    return widthOf(this.content) - CONTENT
   }
 
   get width() {
-    return this.element.getBoundingClientRect().width
+    return widthOf(this.element)
   }
 
   get content() {
@@ -125,11 +220,6 @@ export default class extends Controller {
 
   get room() {
     return document.documentElement
-  }
-
-  // Which of the room's four numbers is this panel's.
-  get mine() {
-    return `--${this.nameValue}`
   }
 
   // Shut, or on a phone. Either way there is no edge standing between two things,
@@ -141,14 +231,16 @@ export default class extends Controller {
     return this.gripTarget.offsetParent !== null
   }
 
-  remember() {
-    fetch(`/panels/${this.nameValue}`, {
+  remember(panel) {
+    if (panel === this.content) return
+
+    fetch(`/panels/${panel.dataset.panelNameValue}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
         "X-CSRF-Token": document.querySelector("meta[name='csrf-token']")?.content
       },
-      body: JSON.stringify({ width: Math.round(this.width) })
+      body: JSON.stringify({ width: Math.round(widthOf(panel)) })
     })
   }
 }

@@ -63,6 +63,48 @@ class WideningThePanelsTest < ApplicationSystemTestCase
     assert_in_delta WIDEST, width_of("#library-panel"), 2, "the library ate the room"
   end
 
+  # A seam is between two things, and moving it is a trade: what one panel takes,
+  # the one across it gives. It was not — the content gave, whichever seam was
+  # pulled and wherever in the room it was, because the content was the leftovers
+  # and the leftovers are what every drag came out of. Two rails standing side by
+  # side had a seam between them that neither of them felt.
+  test "a rail takes its room from the rail across the seam" do
+    two_rails_up
+    page = width_of("main")
+
+    widen "#queue-panel", by: -40
+
+    assert_in_delta BORN + 40, width_of("#queue-panel"), 2, "the queue did not follow the hand"
+    assert_in_delta BORN - 40, width_of("#visualizer-panel"), 2, "the picture did not give the queue its room"
+    assert_in_delta page, width_of("main"), 2, "the content paid for a drag that was not about it"
+  end
+
+  # And when the rail across the seam has nothing left to give, the room goes on
+  # giving way behind it — the next panel, and the content last of all.
+  #
+  # A rail is born 48 pixels off its floor. A hand that could ask for nothing once
+  # its neighbour was spent would be a queue frozen 48 pixels from where it began,
+  # in a room with half a screen of content standing idle beside it.
+  test "when the rail across the seam is spent, the room goes on giving way" do
+    two_rails_up
+
+    widen "#queue-panel", by: -600
+
+    assert_in_delta WIDEST, width_of("#queue-panel"), 2, "the queue was frozen by the rail beside it"
+    assert_in_delta NARROWEST, width_of("#visualizer-panel"), 2, "the picture did not give what it had"
+  end
+
+  # Both sides of a seam moved, so both sides of it are written down. The one that
+  # gave was never touched by the hand, and it is a width its listener now keeps
+  # all the same: they moved it, they just moved it from the other end.
+  test "both sides of a seam are written down" do
+    two_rails_up
+
+    widen "#queue-panel", by: -40
+
+    assert_in_delta BORN - 40, written_down("visualizer"), 2, "the picture forgot what it gave"
+  end
+
   # The content is what all of this is beside. A hand that could go on widening
   # rails until there was nothing left to widen them beside would be a hand
   # holding a library with no music in it.
@@ -115,6 +157,14 @@ class WideningThePanelsTest < ApplicationSystemTestCase
   end
 
   private
+
+  # Two rails standing side by side, which is what a seam between two panels needs.
+  # The words are not one of them: a song nobody wrote them for has nothing to
+  # open, so that button goes dead — and none of this needs a song.
+  def two_rails_up
+    open_the "Visualizer"
+    open_the "Playing Next"
+  end
 
   ALBUM_DIR = "Almafuerte/1995 - Mundo guanaco".freeze
 
