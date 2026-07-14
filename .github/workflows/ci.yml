@@ -128,6 +128,13 @@ jobs:
         uses: ./.github/actions/ffmpeg
 
       # `test:system` corre el directorio entero, así que el shard se arma a mano.
+      #
+      # El gate tarda lo que tarda el shard más lento, así que repartir de a uno
+      # no alcanza: el archivo del player tiene veintipico de tests y arrastra a
+      # la máquina que le toque. Se reparte por cantidad de tests, del más pesado
+      # al más liviano, cada uno a la máquina que menos tenga encima — que es lo
+      # más parejo que se consigue sin cronometrar cada test.
+      #
       # tailwindcss:build va explícito: sin la hoja de estilos el browser no
       # aplica ningún text-transform, y los tests que leen el texto de la pantalla
       # fallan por mayúsculas — un rojo que no tiene nada que ver con el código.
@@ -135,8 +142,12 @@ jobs:
         env:
           RAILS_ENV: test
         run: |
-          files=$(wc -l test/system/*_test.rb | grep -v ' total$' | sort -rn |
-                    awk '{ print $2 }' | awk "NR % 3 == ${{ matrix.shard }} % 3")
+          files=$(grep -c '^\s*test "' test/system/*_test.rb | tr ':' ' ' | sort -k2 -rn |
+                    awk -v shards=3 -v mine=${{ matrix.shard }} '
+                      { lightest = 1
+                        for (s = 2; s <= shards; s++) if (load[s] < load[lightest]) lightest = s
+                        load[lightest] += $2
+                        if (lightest == mine) print $1 }')
           test -n "$files" || { echo "este shard no agarró ningún archivo"; exit 1; }
           echo "$files"
           bin/rails tailwindcss:build
