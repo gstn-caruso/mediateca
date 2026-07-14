@@ -628,11 +628,14 @@ export default class extends Controller {
   announce(track) {
     if (!("mediaSession" in navigator)) return
 
+    // Not `track.cover`: that is the forty-pixel thumb in the pill, and this is
+    // the picture a phone puts on its lock screen, as big as the phone. The row
+    // carries both, and says which is which.
     navigator.mediaSession.metadata = new MediaMetadata({
       title: track.title,
       artist: track.subtitle,
       album: track.albumTitle,
-      artwork: [ { src: new URL(track.cover, location.href).href, sizes: "512x512" } ]
+      artwork: [ { src: new URL(track.artwork, location.href).href, sizes: "640x640" } ]
     })
 
     navigator.mediaSession.setActionHandler("play", () => this.audioTarget.play())

@@ -28,7 +28,7 @@ class PuttingARecordOnTest < ActionDispatch::IntegrationTest
   test "a song is spelled the way the player writes one down" do
     get album_queue_path(@figure_8)
 
-    assert_equal %w[trackId src title subtitle cover album albumTitle palette],
+    assert_equal %w[trackId src title subtitle cover artwork album albumTitle palette],
       response.parsed_body["tracks"].first.keys
   end
 

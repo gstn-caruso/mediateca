@@ -11,6 +11,12 @@ module TracksHelper
   # it is a queue of songs with no source and no title. Same words either way — so
   # a record put on from the rail is the same queue as one put on from its own
   # tracklist.
+  # The sleeve travels twice, at two sizes, because two things draw it and they
+  # are nothing like the same size: `cover` is the forty-pixel thumb in the pill,
+  # and `artwork` is what the machine itself puts up — the lock screen of a phone,
+  # the Now Playing tile — which is as big as the phone. One picture for both
+  # meant handing an Android ninety-six pixels and telling it they were five
+  # hundred and twelve.
   def queueable(track)
     {
       track_id: track.id,
@@ -18,6 +24,7 @@ module TracksHelper
       title: track.title,
       subtitle: track.artist_name,
       cover: cover_url(track.album, size: 96),
+      artwork: cover_url(track.album, size: Music::Thumbnail::SIZES.max),
       album: album_path(track.album),
       album_title: track.album.title,
       palette: track.album.palette.to_h.to_json

@@ -20,6 +20,25 @@ class TracksHelperTest < ActionView::TestCase
     assert_equal album.palette.on_accent, palette["--color-on-accent"]
   end
 
+  # Two pictures of one sleeve, because two things draw it and they are nothing
+  # like the same size. The pill draws it at forty pixels, in the corner of the
+  # room. The phone draws it on the lock screen, as big as the phone.
+  #
+  # It was one picture, and then it was one thumbnail — which meant an Android
+  # putting the record on its lock screen was handed ninety-six pixels and told
+  # they were five hundred and twelve.
+  test "the sleeve on the lock screen is not the one in the pill" do
+    album = Album.create!(directory: "/music/figure-8", title: "Figure 8", year: 2000,
+                          artist: Artist.create!(name: "Elliott Smith"), cover_path: "/music/figure-8/cover.jpg")
+    track = Track.create!(title: "Son of Sam", track_no: 1, disc_no: 1, duration: 186.0,
+                          path: "/music/figure-8/01.flac", album:)
+
+    song = queueable(track)
+
+    assert_equal cover_url(album, size: 96), song[:cover]
+    assert_equal cover_url(album, size: Music::Thumbnail::SIZES.max), song[:artwork]
+  end
+
   test "a duration shows in minutes and seconds" do
     assert_equal "2:17", track_duration(136.9)
   end
