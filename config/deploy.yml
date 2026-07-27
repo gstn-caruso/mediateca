@@ -45,6 +45,17 @@
 service: mediateca
 image: <%= optional_env("MEDIATECA_IMAGE") || "mediateca" %>
 
+# What a deploy is allowed to leave behind. The container it replaced stays on
+# the machine, stopped, and its image stays with it — that stopped container is
+# the only thing `kamal rollback` will boot, and the only thing standing between
+# its image and the prune. Kamal keeps five by default, which on a NAS with a
+# 16 GB system disk and a 1.4 GB image is four deploys' worth of insurance
+# nobody asked for. One is the smallest number that still buys what insurance is
+# for: the version now serving, and the one to go back to. Kamal does the
+# pruning itself, at the end of every deploy that got the new version answering
+# /up — so nothing is thrown away until the thing replacing it is known to work.
+retain_containers: 1
+
 servers:
   web:
     - <%= host %>
