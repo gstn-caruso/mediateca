@@ -51,9 +51,9 @@ export default class extends Controller {
     "audio", "title", "titleText", "idle", "subtitle", "subtitleText", "cover", "tail", "broken",
     "playIcon", "pauseIcon", "progress", "elapsed", "duration",
     "shuffle", "repeat", "repeatOne", "next", "queue", "queueEmpty", "queueToggle", "panel",
-    "repeatBadge", "repeatBadgeText", "backdrop", "row", "suggestions",
+    "repeatBadge", "repeatBadgeText", "row", "suggestions",
     "lyrics", "lyricsPanel", "lyricsToggle", "syncToggle",
-    "visualizerPanel", "visualizerToggle"
+    "visualizerPanel", "visualizerToggle", "screenCover", "screenTitle", "screenSubtitle"
   ]
 
   // Whether the words are to follow the song. A plain controller field, not
@@ -628,11 +628,26 @@ export default class extends Controller {
   announce(track) {
     if (!("mediaSession" in navigator)) return
 
+    // Not `track.cover`: that is the forty-pixel thumb in the pill, and this is
+    // the picture a phone puts on its lock screen, as big as the phone. The row
+    // carries both, and says which is which.
+    //
+    // Falling back to the cover, though, because a queue outlives a deploy: it is
+    // written to localStorage, and the one that is sitting there right now was
+    // written by the build before this one, whose rows have no artwork at all.
+    // Read straight, that is `new URL(undefined)` — a lock screen asking the NAS
+    // for /undefined — for every song somebody already had queued.
+    //
+    // And no `sizes`. It said "640x640", which is the size we ASKED for, and
+    // ffmpeg does not blow a picture up to reach it: a record whose sleeve was
+    // scanned at 300px is sent at 300px. Announcing that as 640 is the same lie
+    // this fell into once already, told about a smaller number. A phone that is
+    // handed a picture and not told a size looks.
     navigator.mediaSession.metadata = new MediaMetadata({
       title: track.title,
       artist: track.subtitle,
       album: track.albumTitle,
-      artwork: [ { src: new URL(track.cover, location.href).href, sizes: "512x512" } ]
+      artwork: [ { src: new URL(track.artwork ?? track.cover, location.href).href } ]
     })
 
     navigator.mediaSession.setActionHandler("play", () => this.audioTarget.play())
@@ -924,7 +939,7 @@ export default class extends Controller {
     this.titleTarget.hidden = !track
     if (!track) {
       this.subtitleTextTarget.textContent = ""
-      this.clearBackdrop()
+      this.sayItOverThePicture(null)
       this.clearAccent()
       return
     }
@@ -939,8 +954,27 @@ export default class extends Controller {
     this.marquee(this.titleTarget, this.titleTextTarget)
     this.marquee(this.subtitleTarget, this.subtitleTextTarget)
 
-    this.setBackdrop(track.cover)
+    this.sayItOverThePicture(track)
     this.wear(track.palette)
+  }
+
+  // The same three things again, printed over Milkdrop for a picture that has the
+  // whole screen. It is written whether or not anybody is in full screen — going
+  // full screen is a CSS rule finding it already there, not a moment something has
+  // to be built for.
+  //
+  // The sleeve is the big one, for the reason it is the big one on a lock screen:
+  // `cover` is the ninety-six-pixel thumb the pill wears, and this is a hand's
+  // width of screen, which handed the thumb would be a hand's width of mush. And
+  // it falls back to the thumb for the reason announce() does — a queue written by
+  // the build before this one has rows with no `artwork` on them at all.
+  sayItOverThePicture(track) {
+    if (!this.hasScreenTitleTarget) return
+
+    this.screenTitleTarget.textContent = track?.title ?? ""
+    this.screenSubtitleTarget.textContent = track?.subtitle ?? ""
+    this.screenCoverTarget.classList.toggle("hidden", !track)
+    if (track) this.screenCoverTarget.src = track.artwork ?? track.cover
   }
 
   // A title or artist too long for its lane scrolls, pausing at each end, and
@@ -958,31 +992,6 @@ export default class extends Controller {
       lane.style.setProperty("--marquee-shift", `-${overflow}px`)
       lane.style.setProperty("--marquee-duration", `${Math.max(6, overflow / 25)}s`)
       lane.classList.add("is-scrolling")
-    })
-  }
-
-  // The cover of what's playing washes the whole floor. Two layers cross-fade:
-  // paint the next cover on the layer that's hidden, then trade their opacities.
-  setBackdrop(cover) {
-    if (!this.hasBackdropTarget || !cover) return
-
-    const shown = this.backdropTargets.find((layer) => layer.classList.contains("opacity-100"))
-    if (shown?.dataset.cover === cover) return
-
-    const next = this.backdropTargets.find((layer) => layer !== shown)
-    next.style.backgroundImage = `url("${cover}")`
-    next.dataset.cover = cover
-    next.classList.replace("opacity-0", "opacity-100")
-    shown?.classList.replace("opacity-100", "opacity-0")
-  }
-
-  // Nobody playing, no wash: both layers fade back to the bare backdrop.
-  clearBackdrop() {
-    if (!this.hasBackdropTarget) return
-
-    this.backdropTargets.forEach((layer) => {
-      layer.classList.replace("opacity-100", "opacity-0")
-      delete layer.dataset.cover
     })
   }
 

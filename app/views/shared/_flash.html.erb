@@ -11,7 +11,7 @@
   <div class="pointer-events-none absolute inset-x-0 top-16 z-50 flex justify-center px-4">
     <% flash.each do |kind, said| %>
       <p role="status"
-         class="max-w-md rounded-2xl glass px-4 py-2.5 text-center text-sm shadow-2xl shadow-black/50 animate-enter
+         class="max-w-md rounded-2xl chrome px-4 py-2.5 text-center text-sm shadow-2xl shadow-black/50 animate-enter
                 <%= kind == "alert" ? "text-red-300 ring-1 ring-inset ring-red-400/30" : "text-neutral-100" %>">
         <%= said %>
       </p>

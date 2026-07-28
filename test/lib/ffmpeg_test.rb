@@ -2,6 +2,13 @@ require "test_helper"
 
 class FfmpegTest < ActiveSupport::TestCase
   include Sleeves
+  include Pictures
+
+  test "an image comes back as a JPEG no bigger than the square asked for" do
+    jpeg = Ffmpeg.new.thumbnail(sleeve({ "#c8102e" => 1.0 }, 600), size: 96)
+
+    assert_equal [ 96, 96 ], measure(kept(jpeg))
+  end
 
   test "an image comes back as its pixels, and nothing else" do
     pixels = Ffmpeg.new.pixels(sleeve("#c8102e" => 1.0), size: 8)

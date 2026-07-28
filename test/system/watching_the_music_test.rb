@@ -82,6 +82,38 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
     refute_equal first, second
   end
 
+  # Nobody walked the presets by hand for twenty years. Milkdrop picked its own
+  # every few minutes, and that is most of what made it a thing to leave running
+  # rather than a thing to operate — you put it on and the wall keeps changing.
+  test "the picture picks a new preset on its own" do
+    play "Desencuentro"
+    a_preset_lasts 500
+    click_button "Visualizer"
+    assert_selector PRESET, text: /\S/
+    draw_nothing
+    first = find(PRESET).text
+
+    assert_no_selector PRESET, exact_text: first
+  end
+
+  # And the minutes are the music's, not the wall's. A song paused over lunch
+  # leaves the picture on exactly the preset it stopped on: nothing is drawn, so
+  # nothing is spent, and coming back to a different wall than the one you left
+  # would be the app having a go at Milkdrop while nobody was listening.
+  test "a picture that has stopped keeps the preset it stopped on" do
+    play "Desencuentro"
+    a_preset_lasts 500
+    click_button "Visualizer"
+    assert_selector PRESET, text: /\S/
+    draw_nothing
+    pause
+    stopped_on = find(PRESET).text
+
+    sleep 1.5
+
+    assert_selector PRESET, exact_text: stopped_on
+  end
+
   # Arrows are for the presets, but only once the picture is up: typing a search
   # is the same keyboard, and a caret has to be able to move through a word.
   test "the arrows are the search box's while you are typing in it" do
@@ -96,7 +128,7 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
   end
 
   # Where this was always going. And what goes full screen is the picture, not a
-  # canvas with a window's worth of glass still stuck to the top of it — so the
+  # canvas with a window's worth of chrome still stuck to the top of it — so the
   # header goes with it, and Escape is the way back, as it is out of every full
   # screen there ever was.
   test "the picture can take the whole screen, and nothing else goes with it" do
@@ -121,6 +153,52 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
     # Counted from before the screen was asked for: the picture is put back on the
     # instant the canvas is resized, and a window that opens after that has missed it.
     assert eventually { frames_so_far > so_far }, "the picture went black on its way to the screen"
+  end
+
+  # Full screen there is nothing left in the room but the picture. The pill that
+  # says what is playing is behind it, on a page nobody can see — so across the
+  # room somebody asks what this is, and the answer is on a screen you have to
+  # come out of full screen to read.
+  #
+  # So it is said over the picture, where every full screen player has always said
+  # it: the sleeve, the song, and whose it is, down in the corner.
+  test "full screen says what is playing over the picture" do
+    play "Desencuentro"
+    click_button "Visualizer"
+    assert_selector PRESET, text: /\S/
+
+    click_button "Full screen"
+
+    within BILLING do
+      assert_text "Desencuentro"
+      assert_text "Almafuerte"
+    end
+  end
+
+  # And the sleeve up there is not the sleeve in the pill. The pill's is a
+  # forty-pixel thumb; this one is a hand's width of screen, and handed the thumb
+  # it would be a hand's width of mush. It takes the big one — the same picture a
+  # phone puts on its lock screen.
+  test "the sleeve over the picture is the big one, not the pill's thumb" do
+    play "Desencuentro"
+    click_button "Visualizer"
+    assert_selector PRESET, text: /\S/
+
+    click_button "Full screen"
+
+    assert_selector "#{BILLING} img[src*='size=#{Music::Thumbnail::SIZES.max}']"
+  end
+
+  # In its rail it says none of it. The rail is a postage stamp with the pill
+  # sitting under it saying all of this already, and a second copy of it printed
+  # over the picture would be covering the only thing the rail is for.
+  test "the picture in its rail says nothing about what is playing" do
+    play "Desencuentro"
+
+    click_button "Visualizer"
+
+    assert_selector PRESET, text: /\S/
+    assert_no_selector BILLING
   end
 
   # Milkdrop does not own the canvas it draws on: it sizes its own framebuffers,
@@ -286,8 +364,44 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
 
   PRESET = "[data-visualizer-target='preset']".freeze
 
+  # What is playing, printed over the picture — and only over a picture that has
+  # the whole screen.
+  BILLING = ".visualizer-billing".freeze
+
   # What a <canvas> measures when nobody has ever told it otherwise.
   BARE_CANVAS = [ 300, 150 ].freeze
+
+  # A preset's turn is five minutes, and nobody is sitting in front of a test for
+  # five minutes. The rail carries the number rather than hiding it in the
+  # JavaScript, so the test can turn it down to something it can watch.
+  def a_preset_lasts(ms)
+    page.execute_script("document.getElementById('visualizer-panel').dataset.visualizerTurnValue = #{ms}")
+  end
+
+  # Milkdrop, emptied out, with the loop it is drawn in left running.
+  #
+  # A preset's turn is spent by the frames the picture draws, so a test about the
+  # clock has to have the picture actually moving — and on this runner moving is
+  # the expensive part: a thousand shader instructions a pixel, rasterised on a
+  # CPU, sixty times a second, in one of four browsers sharing two cores. Putting
+  # a preset ON costs more again, and it is a cost this pays over and over: every
+  # time the clock runs out, another few hundred lines of GLSL to compile.
+  #
+  # Left to do either for real, these two took the browser down far enough that
+  # OTHER tests failed with them — a pause that was never seen, an audio graph
+  # that never finished being built inside the two seconds anybody waited for it.
+  #
+  # What is under test is the counting, and the counting happens in the loop. So
+  # the loop is left exactly as it is, and the picture inside it is emptied out:
+  # every frame still comes and every preset still goes up, by name, and none of
+  # it costs anything.
+  def draw_nothing
+    page.execute_script(<<~JS)
+      const { visualizer } = document.querySelector("#visualizer-panel canvas").show
+      visualizer.render = () => {}
+      visualizer.loadPreset = () => {}
+    JS
+  end
 
   # Every wire the page is about to run, taken down as it is run. Web Audio will
   # not say afterwards what is plugged into what, so it is asked on the way past.

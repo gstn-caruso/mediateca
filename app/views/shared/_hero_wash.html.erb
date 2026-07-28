@@ -1,13 +1,17 @@
 <%# What stands behind the name at the head of a page: the picture of the thing
-    the page is about, blown up until it is only light. The stylesheet says why
-    this is allowed to exist next to the playing record's backdrop, and what the
-    blur and the mask are for.
+    the page is about, blown up until it is only light.
 
-    It is the same file, at the same URL, as the sharp one in front of it — so
-    the browser fetches one image and draws it twice. %>
+    Sixty-four pixels of it. The browser stretches them across the whole header,
+    and a picture stretched that far IS a blur — the same arithmetic the GPU was
+    doing under `filter: blur(44px)`, done for free while it draws, off three
+    kilobytes instead of two megabytes. The stylesheet says what the mask and the
+    scrim are for.
+
+    Not the same file as the sharp sleeve in front of it, and that is the point:
+    the sharp one is a picture, this one is a light. %>
 <% if picture %>
   <div aria-hidden="true" class="hero-wash absolute inset-0 overflow-hidden rounded-t-2xl">
-    <img src="<%= picture %>" alt="" loading="eager">
+    <img src="<%= picture %>" alt="" loading="eager" decoding="async">
   </div>
 <% else %>
   <%# Nothing to blow up: a record nobody scanned, an artist nobody photographed.

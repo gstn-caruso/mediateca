@@ -17,10 +17,12 @@ module ActiveSupport
     # with an empty body. Give the directory the same isolation the database has.
     parallelize_setup do |worker|
       Rails.configuration.x.portraits_root = Rails.root.join("tmp/portraits-#{worker}").to_s
+      Rails.configuration.x.thumbnails_root = Rails.root.join("tmp/thumbnails-#{worker}").to_s
     end
 
     parallelize_teardown do
       FileUtils.rm_rf(Rails.configuration.x.portraits_root)
+      FileUtils.rm_rf(Rails.configuration.x.thumbnails_root)
     end
 
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.

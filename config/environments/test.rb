@@ -43,6 +43,11 @@ Rails.application.configure do
   # A handful of fake FLACs and covers stand in for the NAS.
   config.x.media_root = Rails.root.join("test/fixtures/media").to_s
 
-  # Portraits are written by tests; they do not belong in the app's storage.
+  # Portraits are written by tests; they do not belong in the app's storage. Nor
+  # do the thumbnails a test draws — and the parallel hook that gives each worker
+  # its own directory does not fire at all below Rails' threshold of fifty tests,
+  # so a single file's worth of tests was drawing sleeves straight into the
+  # directory the real server serves out of.
   config.x.portraits_root = Rails.root.join("tmp/portraits").to_s
+  config.x.thumbnails_root = Rails.root.join("tmp/thumbnails").to_s
 end

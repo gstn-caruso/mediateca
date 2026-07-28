@@ -17,12 +17,30 @@ class Ffmpeg
 
   CHANNELS = 3 # red, green, blue: rawvideo in rgb24 is three bytes a pixel
 
+  # Sharp enough that a sleeve is a sleeve; 2 is nearly lossless and 31 is a
+  # smear. The thumbnails are small, and the difference between 4 and 2 is bytes
+  # nobody can see.
+  QUALITY = 4
+
   # The image, decoded, scaled to a square of the size asked for, and handed back
   # as its bare pixels: no header, no container, nothing written to disk.
   def pixels(image, size:)
     raw = ask(image, %W[-frames:v 1 -vf scale=#{size}:#{size} -f rawvideo -pix_fmt rgb24 -])
 
     raw.unpack("C*").each_slice(CHANNELS).to_a
+  end
+
+  # The same image as a JPEG, fitted inside a square of the size asked for, its
+  # shape kept — a photograph of an artist is not square and must not be made so.
+  #
+  # `min(iw, size)` rather than `size`, so a picture already smaller than the
+  # square comes back the size it is: blowing one up would cost bytes to add
+  # nothing. The commas are escaped because this is one filter argument, and a
+  # comma is where ffmpeg would otherwise start reading the next filter.
+  def thumbnail(image, size:)
+    fit = "scale=w=min(iw\\,#{size}):h=min(ih\\,#{size}):force_original_aspect_ratio=decrease"
+
+    ask(image, %W[-frames:v 1 -vf #{fit} -q:v #{QUALITY} -f mjpeg -])
   end
 
   private

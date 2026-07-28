@@ -15,6 +15,13 @@
   /* What reads on top of the accent — white by default, flipped to near-black
      at runtime when the extracted accent is too light to hold white text. */
   --color-on-accent: #ffffff;
+
+  /* The two materials the app is made of. Named here as colours as well as built
+     below as utilities, so that anything which has to MATCH a panel rather than
+     be one — a heading riding at the top of a list it has to hide — can say which
+     panel it is matching, instead of guessing at a hex. */
+  --color-chrome: #17171b;
+  --color-surface: #101013;
 }
 
 /* The two places the accent is thinned rather than worn straight: the bead of
@@ -36,115 +43,72 @@
 @property --ambient-tint { syntax: "<color>"; inherits: true; initial-value: rgba(250, 45, 72, 0.14); }
 
 /* So the theme morphs instead of cutting: when a new record repaints the accent
-   (player#setAccent), the colour eases across half a second.
+   (player#wear), the colour eases across half a second.
 
    Only the colour. The glow vars are deliberately left to snap: they feed the
-   inset box-shadows of five stacked backdrop-filter panels and a full-viewport
-   fixed gradient, so easing them re-rasterized the entire document, every frame,
-   for half a second on every track change — the most expensive thing in the app,
-   to animate a tint sitting under a 56px blur at 12% alpha, where no eye can
-   follow it anyway. The part you actually see easing — the Play button, the
-   playing row, the equalizer — is the accent, and the accent still eases. */
+   wash in the corners of the room, which is a full-viewport gradient, and easing
+   it repaints the whole floor every frame for half a second on every track
+   change — to animate a tint at 12% alpha, where no eye can follow it anyway.
+   The part you actually see easing — the Play button, the playing row, the
+   equalizer — is the accent, and the accent still eases. */
 :root {
   transition: --color-accent 500ms ease, --color-accent-bright 500ms ease;
 }
 
-/* The dark, faintly-lit backdrop the glass refracts. Fixed, so it stays put
-   while the panels move over it. */
+/* The room the panels stand in: black, lit in its corners by whatever is playing.
+   Two gradients and no picture — which is all that is left of the wash, and it is
+   what makes the gaps between the panels the colour of the music.
+
+   Not `background-attachment: fixed`. That asks the browser to keep a full-screen
+   image still while the page moves under it, which on a phone means rasterising
+   the floor again and again — and there is nothing here to hold still for: the
+   room does not scroll, the panels inside it do. */
 @utility bg-ambient {
   background-color: #000000;
   background-image:
     radial-gradient(55rem 28rem at 12% -6%, var(--ambient-tint), transparent 60%),
     radial-gradient(50rem 32rem at 106% 6%, rgba(124, 58, 237, 0.10), transparent 55%);
-  background-attachment: fixed;
 }
 
-/* Liquid glass: a dark translucent pane that blurs and heavily saturates the
-   wash behind it. Its light is layered, not a single line — a bright specular
-   rim across the top, a sheen falling from that edge, and a grounding shade
-   along the bottom so it reads as a lit sheet of glass, not a flat panel.
+/* The furniture: the bar, the pill, the flash. The things you reach for.
 
-   The glass is not tinted, and that is the rule, not an omission. It used to
-   pick up the record's colour, and so did the rail, the queue, the topbar and
-   the page under them — five persistent surfaces all washed the same hue at
-   once, over a background that is already a cover burning behind them. Apple:
-   "refrain from adding colour to the background of multiple controls", and, for
-   an app whose backdrop is this busy, "prefer a monochromatic appearance for
-   toolbars". The colour of the record belongs on the things you press and the
-   line that is playing — not on every pane in the building. */
-@utility glass {
-  background-color: rgba(20, 20, 24, 0.62);
-  -webkit-backdrop-filter: blur(30px) saturate(200%) brightness(1.05);
-  backdrop-filter: blur(30px) saturate(200%) brightness(1.05);
-  box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.28),
-    inset 0 12px 28px -18px rgba(255, 255, 255, 0.16),
-    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.40),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.10),
-    0 24px 64px -20px rgba(0, 0, 0, 0.80);
+   This was glass — a pane that blurred and heavily saturated everything standing
+   behind it, lit along its top edge like a real sheet of it. It was beautiful on
+   the machine it was designed on.
+
+   A backdrop-filter is not painted once, though. Every frame, the browser copies
+   out everything behind the pane, blurs it, and draws the pane back over the top;
+   and six of them stood at all times — the bar, the rail, the queue, the words,
+   the picture, the pill — over a cover that was itself being blurred at 56px
+   across the whole screen. On the cheap Android this app is actually for, that is
+   the difference between an app and a slideshow.
+
+   So it is a panel now: one colour, and a hairline to say where it ends. The five
+   stacked inset shadows that raked light across it are gone with the blur, and
+   they had to be — a specular rim is a thing glass does, and light falling on a
+   sheet of nothing is just a grey smear. What is left is the thing that never
+   needed a GPU: the record's colour, on the things you press. */
+@utility chrome {
+  background-color: var(--color-chrome);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.10);
 }
 
-/* The reading surface: the same glass family, but more opaque and less blurred
-   so long lists stay legible while the ambient glow still tints its edges.
-
-   It said "more opaque" and was 0.55 against the glass's 0.62 — less opaque, the
-   exact opposite of the one thing it exists to do. It was also used nowhere, so
-   nothing ever showed it. It is the material the songs sit on now, and a list of
-   songs is read, not glanced at, so it has to hold still against whatever cover
-   is burning behind it. Apple's own reading surfaces sit around 0.7-0.9 alpha for
-   the same reason: glass is for the controls, not for the page. */
-@utility glass-deep {
-  background-color: rgba(10, 10, 12, 0.78);
-  -webkit-backdrop-filter: blur(20px) saturate(170%);
-  backdrop-filter: blur(20px) saturate(170%);
-  box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+/* The reading surface: the page, the rails, the library. What you look AT rather
+   than what you look THROUGH — so it is a shade darker than the furniture, and it
+   holds perfectly still. A list of songs is read, not glanced at. */
+@utility surface {
+  background-color: var(--color-surface);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
-/* The menus. Solid, and that is not a compromise.
-
-   A menu drops out of the topbar, or out of a row in the list — both of which are
-   already glass. Glass inside glass does not compose: an ancestor that filters its
-   backdrop becomes the backdrop, so the menu stops seeing the page and filters the
-   pane it is sitting on, which has already been blurred and tinted. It comes out
-   flat and muddy, in Chrome and in Safari alike. Apple says not to stack the
-   material for the same reason, from the other end: "avoid layering Liquid Glass
-   elements on top of each other."
-
-   The right fix on a native platform is the top layer, where the menu escapes its
-   ancestor and meets the real backdrop. The web has that — `popover` — but it
-   cannot yet put the menu under the button that opened it without anchor
-   positioning, which Safari does not have. So: a standard material, opaque, which
-   is what Apple prescribes wherever glass does not belong. It reads as a menu
-   rather than a smudge, and it will keep reading as one when anchor positioning
-   lands and this can become a real popover. */
+/* The menus. A shade lighter than the furniture they drop out of, and lifted off
+   it by a shadow, because a menu that is exactly the colour of what it is lying
+   on is not a menu, it is a rectangle of text. */
 @utility menu-panel {
-  background-color: #1b1b1f;
+  background-color: #1f1f24;
   box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.10),
     inset 0 0 0 1px rgba(255, 255, 255, 0.10),
-    0 24px 64px -20px rgba(0, 0, 0, 0.80);
-}
-
-/* The scroll edge effect: the foot of the scroller, dissolving.
-
-   A pane of glass does not make what is behind it unreadable — that is the whole
-   point of it — so songs scrolling under the player pill stayed perfectly legible
-   through it, and you got two lists at once, one printed over the other. Apple's
-   answer to this is not a thicker pane. It is to take the content apart before it
-   ever reaches the glass: the last inch of the scroller blurs out and fades, so a
-   row has already dissolved by the time the pill is over it.
-
-   Apple ships two of these. This is the soft one — a blur under a gradient mask,
-   which is what suits a pill floating free over content. The hard one (a flat cut:
-   6px of blur under an opaque fill) is for bars pinned to the edge, and there is
-   no such bar here. */
-@utility scroll-edge {
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  -webkit-mask-image: linear-gradient(to top, #000 30%, transparent);
-  mask-image: linear-gradient(to top, #000 30%, transparent);
+    0 16px 40px -16px rgba(0, 0, 0, 0.85);
 }
 
 /* A colored control given weight and light: a bright top rim, a shaded belly,
@@ -160,32 +124,18 @@
 /* The head of a record's page, and of an artist's: their own picture, blown up
    until it is nothing but light, and let go before the songs begin.
 
-   This is not the #backdrop, and the difference is the whole reason it is allowed
-   to exist. The backdrop is the record that is PLAYING, burning under the entire
-   building — it belongs to the music and it stays put while you browse. This is
-   the record you have OPENED. It lives inside the page, it is about what you are
-   looking at rather than what you are hearing, and it ends where the track list
-   starts. A blurred sleeve was pulled out of this header once for doubling up
-   with the backdrop; it doubles up no longer, because now the two of them are
-   answering different questions.
+   The blur is not drawn any more. It is not needed: what the page is handed is a
+   sixty-four pixel thumbnail, stretched across a header some nine hundred pixels
+   wide, and a browser that stretches a picture that far is doing a blur — it is
+   the same arithmetic, it is done in hardware for free, and the answer is three
+   kilobytes instead of two megabytes. `filter: blur(44px)` over a full-size scan
+   asked a phone to hold the whole sleeve in memory, blur every pixel of it, and
+   then throw all that detail away.
 
    It is let go, not cut off: the wash is masked out on its way down, so the
    header dissolves into the reading surface instead of ending on a line. A line
    across the page is a seam, and the one thing a hero cannot look like is a
-   banner somebody pasted on top.
-
-   The picture is scaled up before it is blurred, because a blur reaches further
-   than the edge of its own box and would pull the emptiness beyond it back in as
-   a dark rim around everything.
-
-   The numbers are the whole difference between a hero and a smudge, and they were
-   wrong once already. At blur(56px) and brightness(0.4) the wash was invisible:
-   the header is a wide band a few hundred pixels tall, a square sleeve stretched
-   across it is already only its middle stripe, and a blur that big over a strip
-   that short leaves a flat field — which was then dimmed until the field was the
-   panel's own black. Half the library's sleeves are black and white, and those
-   heroes came out with no head at all. So: blurred enough that no one reads the
-   sleeve twice, bright enough that the header is lit by it, and let go slowly. */
+   banner somebody pasted on top. */
 .hero-wash {
   -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
   mask-image: linear-gradient(to bottom, #000 55%, transparent);
@@ -194,20 +144,20 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: scale(1.18);
-  filter: blur(44px) saturate(1.9) brightness(0.62);
 }
 
-/* And under the words, a shade. The wash is bright enough to be a wash now, which
-   is exactly bright enough to swallow a title printed on it — a white sleeve gave
-   white type a white bed to lie on. The type gets its own ground, darkest where
-   the type is and gone by the top, so the picture is still the picture. */
+/* And under the words, a shade — which is now doing two jobs. It is still the
+   ground the title stands on, darkest where the type is, because a white sleeve
+   otherwise gives white type a white bed to lie on. And it is the dimming that
+   `brightness(0.62)` used to do inside the filter: the veil never quite lifts, so
+   the picture is a light behind the words rather than a picture competing with
+   them. A gradient costs nothing; a filter cost the frame. */
 .hero-wash::before {
   content: "";
   position: absolute;
   inset: 0;
   z-index: 1;
-  background-image: linear-gradient(to top, rgb(10 10 12 / 0.85), rgb(10 10 12 / 0.35) 55%, transparent);
+  background-image: linear-gradient(to top, rgb(10 10 12 / 0.88), rgb(10 10 12 / 0.55) 55%, rgb(10 10 12 / 0.38));
 }
 
 /* And the record's own colour, lighting its header from above. The blurred
@@ -233,11 +183,20 @@
    for the same reason the lit pill under the library's tabs rides in --tab: the
    layout has already said where the player rests, in its own classes, and a hand
    that has never touched it must not be able to tell that any of this is here.
-   Untouched, the player wears none of these classes and nothing below applies. */
+   Untouched, the player wears none of these classes and nothing below applies.
+
+   It is also the one panel in the app that still casts a shadow, because it is
+   the only one that is above anything: it floats over the songs, and it has to
+   say so. Everything else stands on the floor, and a thing standing on a floor
+   does not need to be lifted off it. The hairline has to be said again with it —
+   this box-shadow replaces the one `chrome` gave it, rather than adding to it. */
 #player {
   cursor: grab;
   /* The hand that drags the player would otherwise be scrolling something. */
   touch-action: none;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.10),
+    0 12px 32px -14px rgba(0, 0, 0, 0.85);
 }
 
 /* The transport is pressed, not carried. It has to go on saying so: `cursor` is
@@ -286,29 +245,12 @@
   border-radius: 1rem 1rem 0 0;
 }
 
-/* The empty inch under the songs, and the fade that dissolves them into it, are
-   both there because a pill floats over the foot of the list. A bar standing in
-   a row of its own floats over nothing — so nothing has to be got out of its
-   way, and the list runs all the way down to its own foot. */
+/* The empty inch under the songs is there because a pill floats over the foot of
+   the list. A bar standing in a row of its own floats over nothing — so nothing
+   has to be got out of its way, and the list runs all the way down to its own
+   foot. */
 :has(> #player.is-docked) main {
   padding-bottom: 1rem;
-}
-
-:has(> #player.is-docked) .scroll-edge {
-  display: none;
-}
-
-/* The mini-player is the one pane that floats free of the layout, so it earns
-   the full glass read: a diagonal gloss raked across it and screened over the
-   pane, the way light catches the near edge of a lens. */
-#player::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: linear-gradient(125deg, rgba(255, 255, 255, 0.12), transparent 42%);
-  mix-blend-mode: screen;
 }
 
 /* Apple Music's scrubber: a thin capsule whose bright bead surfaces on hover.
@@ -528,7 +470,7 @@ html[data-turbo-preview] .animate-enter {
   }
 }
 
-/* Full screen, and the rail stops being a rail. The glass header goes: it is a
+/* Full screen, and the rail stops being a rail. The header goes with it: it is a
    window frame, and this is the one thing in the app that is meant to have none.
    Escape brings it back, which is the way out of every full screen there is. */
 #visualizer-panel:fullscreen {
@@ -538,6 +480,34 @@ html[data-turbo-preview] .animate-enter {
 }
 #visualizer-panel:fullscreen .visualizer-chrome {
   display: none;
+}
+
+/* And it starts saying what is playing, which in its rail it never does: down
+   there the pill is sitting under it saying all of this already, and a second
+   copy printed over the picture would be covering the only thing the rail is
+   for. Full screen the pill is behind the picture, on a page nobody can see.
+
+   The credit for the preset goes up to the other end to make room — the corner
+   a full screen player puts the song in is the bottom left, and it has been
+   since the first one. */
+.visualizer-billing {
+  display: none;
+  /* The gradient under it does most of the work of making white words legible
+     over a picture nobody chose, and this catches the rest — Milkdrop can be
+     bright, and it is bright somewhere different every frame. A shadow on text
+     is drawn where the text is drawn: it is not a filter, and it costs the phone
+     nothing. */
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.9);
+}
+#visualizer-panel:fullscreen .visualizer-billing {
+  display: flex;
+}
+#visualizer-panel:fullscreen [data-visualizer-target="preset"] {
+  top: 0;
+  bottom: auto;
+  padding: 0.75rem 1rem 2rem;
+  background-image: linear-gradient(to bottom, rgb(0 0 0 / 0.8), transparent);
+  text-align: right;
 }
 
 /* A line of the song. Dim until it is sung: the one being sung now is lit, a
@@ -652,7 +622,7 @@ html[data-turbo-preview] .animate-enter {
 }
 
 /* The keyboard has to be able to see where it is. Chrome's default ring is
-   nearly invisible on dark glass, and three inputs killed it outright. */
+   nearly invisible on a dark panel, and three inputs killed it outright. */
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
@@ -695,77 +665,29 @@ html[data-playing="true"] .eq > i {
 }
 
 /* Someone who asked for less motion gets none: the theme cuts to its colour,
-   pages appear at once, the hearts don't beat, the wash doesn't cross-fade, and
-   the equalizer holds a steady shape. */
+   pages appear at once, the hearts don't beat, and the equalizer holds a steady
+   shape. */
 @media (prefers-reduced-motion: reduce) {
   :root { transition: none; }
   .animate-enter { animation: none; }
   .segmented::before { transition: none; }
   .eq > i { animation: none; transform: scaleY(0.6); }
   .heart .is-beating { animation: none; }
-  [data-player-target="backdrop"] { transition: none; }
 }
 
-/* ---------------------------------------------------------------------------
-   Someone who asked for less transparency gets none.
+/* Reduce Transparency, Increase Contrast, and the switch in the profile menu that
+   turned the glass off by hand: all three used to live here, and all three are
+   gone with the thing they existed to switch off. There is no transparency left
+   to reduce. Every pane in the app is now what those settings used to turn it
+   into, for everybody, all the time — which is the outcome the settings were
+   asking for, and it is now simply the app.
 
-   Reduce Transparency and Increase Contrast are the two settings that exist
-   precisely for an interface like this one, and the whole app is glass: the
-   topbar, the rail, the queue, the menus, the scroller, the pill. Turned on,
-   every one of them stayed exactly as translucent as before, and the cover
-   burning through behind the songs is the point at which this app stops being
-   readable for the person who turned that setting on.
-
-   So the glass goes solid. Nothing else moves — the accent still comes off the
-   record, the layout does not shift, the ambient wash stays. It is the same app
-   with the glass swapped for panels.
-
-   The tint is dropped along with the blur on purpose. A glow lit from behind a
-   30px blur is a glow; the same glow with nothing to diffuse it is a coloured
-   smear across a solid panel, which is worse than the flat panel it replaced.
-
-   Kept: --reduced, one place to say what "solid" means, so the four selectors
-   below cannot drift apart. */
-@utility solid-glass {
-  --tw-backdrop-blur: initial;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  background-color: #16161a;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
-}
-
-/* No backdrop-filter at all (old engines, some Android WebViews): the panes are
-   62% translucent and there is nothing to blur what shows through, so the cover
-   reads straight through the songs. Fall back to solid, not to see-through. */
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass, .glass-deep { @apply solid-glass; }
-  .scroll-edge { display: none; }
-}
-
+   The one thing they also did that still means something: the picture behind a
+   title. It is a light, and a light under type is a light under type. Somebody who
+   asked for more contrast gets the type on the panel itself. */
 @media (prefers-contrast: more) {
-  .glass, .glass-deep { @apply solid-glass; }
-  .scroll-edge { display: none; }
   .hero-wash { display: none; }
 }
-
-/* Chrome and Firefox honour this. Safari does not — it parses the query and then
-   never matches it, so `reduce` and `no-preference` are both false and this block
-   simply never fires there, no matter what the person set in iOS or macOS. Which
-   is to say: on the one platform this setting comes from, the media query alone
-   protects nobody. Hence the switch below — it is not a nicety, it is the only
-   thing that works on an iPhone. */
-@media (prefers-reduced-transparency: reduce) {
-  .glass, .glass-deep { @apply solid-glass; }
-  .scroll-edge { display: none; }
-  .hero-wash { display: none; }
-}
-
-/* The switch. Set from the profile menu, kept in localStorage, applied to <html>
-   before first paint so the glass never flashes in. */
-html[data-transparency="off"] .glass,
-html[data-transparency="off"] .glass-deep { @apply solid-glass; }
-html[data-transparency="off"] .scroll-edge { display: none; }
-html[data-transparency="off"] .hero-wash { display: none; }
 
 /* The listener's avatar, which is a record.
 

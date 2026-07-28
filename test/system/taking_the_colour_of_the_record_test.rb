@@ -1,8 +1,8 @@
 require "application_system_test_case"
 
 # Put a record on and the whole app takes its colour: the Play button, the
-# playing row, the equalizer, the glass edges. So the colour it takes had better
-# be the record's, and not one we made up on the way out.
+# playing row, the equalizer, the light in the corners of the room. So the colour
+# it takes had better be the record's, and not one we made up on the way out.
 class TakingTheColourOfTheRecordTest < ApplicationSystemTestCase
   ALBUM_DIR = "Elliott Smith/2000 - Figure 8".freeze
 

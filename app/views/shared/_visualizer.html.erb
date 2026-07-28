@@ -9,9 +9,11 @@
     record. So the rail is carried through a visit whole, and the controller on it
     picks up where it left off.
 
-    The player is not asked to draw anything. It owns the rail — it owns all three
-    — and says only when it opens; everything on this side of that is the
-    visualizer's own. %>
+    The player does not draw the picture. It owns the rail — it owns all three —
+    and says only when it opens; Milkdrop and everything about it is the
+    visualizer's own. What the player does put here is the one thing that was
+    never Milkdrop's business: what is playing, over the top of it, on a picture
+    that has the whole screen. %>
 <aside id="visualizer-panel" data-turbo-permanent data-player-target="visualizerPanel"
        data-controller="visualizer panel"
        data-panel-name-value="visualizer" data-panel-edge-value="left"
@@ -20,7 +22,7 @@
                     keydown@window->visualizer#hotkey
                     fullscreenchange@document->visualizer#refit"
        style="--panel: var(--visualizer)"
-       class="panel rail shrink-0 flex-col overflow-hidden rounded-2xl glass-deep">
+       class="panel rail shrink-0 flex-col overflow-hidden rounded-2xl surface">
   <%= render "shared/grip", side: "left-0" %>
 
   <%# Gone in full screen: a frame around a thing that is meant to have none. %>
@@ -61,5 +63,26 @@
     <p data-visualizer-target="preset" aria-live="off"
        class="pointer-events-none absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/80 to-transparent
               px-3 pb-2 pt-6 text-[11px] leading-tight text-white/70"></p>
+
+    <%# What is playing, on a picture that has the whole screen — and only then.
+        In its rail the pill sits under it saying all of this already; full screen
+        the pill is behind the picture, on a page nobody can see, and somebody
+        across the room asking what this is has to come out of full screen to find
+        out.
+
+        The player writes it, because what is playing is the one thing it has
+        always known — it says the same three things in the pill and again on the
+        lock screen of a phone, each at the size that screen wants them. This is
+        the biggest of the three. %>
+    <div class="visualizer-billing pointer-events-none absolute inset-x-0 bottom-0 items-end gap-6
+                bg-gradient-to-t from-black/85 via-black/50 to-transparent px-10 pb-10 pt-24">
+      <img data-player-target="screenCover" alt=""
+           class="hidden size-44 shrink-0 rounded-xl object-cover shadow-2xl ring-1 ring-white/10">
+
+      <div class="min-w-0 pb-2">
+        <p data-player-target="screenTitle" class="truncate text-4xl font-semibold leading-tight text-white"></p>
+        <p data-player-target="screenSubtitle" class="mt-1 truncate text-xl text-white/70"></p>
+      </div>
+    </div>
   </div>
 </aside>
