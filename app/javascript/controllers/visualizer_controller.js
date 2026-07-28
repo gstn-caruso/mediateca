@@ -14,6 +14,15 @@ const MELT = 2.0
 // every one of them sixty times a second. Two is where it stops being worth it.
 const SHARPNESS = 2
 
+// How long a preset's turn on the wall lasts. Nobody walked these by hand for
+// twenty years: Milkdrop picked its own every few minutes, and that is most of
+// what made it a thing to leave running rather than a thing to operate.
+//
+// It is a value on the rail rather than a constant in here for one reason, and
+// it is worth saying out loud: five minutes is a long time to sit in front of a
+// test, and the test turns it down to something it can watch.
+const TURN = 5 * 60 * 1000
+
 // Butterchurn and its presets are both webpack UMD bundles, and the two disagree
 // about where they left their exports.
 const api = (bundle) => bundle?.default ?? bundle
@@ -41,6 +50,18 @@ class Show {
     this.visualizer.loadPreset(this.presets[this.name], melt)
 
     return this.name
+  }
+
+  // Somewhere else in the thousands, every one of them as likely as the next: a
+  // step of anything but zero lands on a different preset, and a ring walked at
+  // random is the same as reaching into the hat.
+  //
+  // Not the next one along, which is what the arrows give. The names are sorted,
+  // so a preset's neighbour is usually the same preset with a different number
+  // after it — a wall that changed itself every five minutes into a variation on
+  // what was already up would look like a wall that had not changed at all.
+  wander(melt) {
+    return this.wear(1 + Math.floor(Math.random() * (this.names.length - 1)), melt)
   }
 
   render() {
@@ -83,6 +104,7 @@ class Show {
 // because somebody clicked on a record — are made once and kept on the canvas.
 export default class extends Controller {
   static targets = [ "canvas", "preset", "fullscreen" ]
+  static values = { turn: { type: Number, default: TURN } }
 
   connect() {
     this.live = true
@@ -165,14 +187,40 @@ export default class extends Controller {
     return Boolean(audio && audio.src && !audio.paused)
   }
 
+  // Drawing, and spending the preset's turn while it draws.
+  //
+  // The clock is the drawing itself rather than a timer, and that is the whole of
+  // why a song paused over lunch leaves the picture on the preset it stopped on:
+  // no frame, nothing spent. A timer would have gone on running through the
+  // lunch and changed the wall six times at somebody who had stopped the music to
+  // answer the door — and they would have come back to a room they did not leave.
   paint(show) {
-    const draw = () => {
+    let last = performance.now()
+
+    const draw = (now) => {
       show.render()
+      this.spend(now - last)
+      last = now
       this.frame = requestAnimationFrame(draw)
     }
 
     cancelAnimationFrame(this.frame)
     this.frame = requestAnimationFrame(draw)
+  }
+
+  // What is left of this preset's turn, less the music just drawn. Run out, and
+  // the wall picks itself another.
+  //
+  // The count rides on the canvas, with the show and the tap: a visit tears this
+  // controller down and stands a new one up, and clicking through to another
+  // record is not a reason for a preset to start its five minutes over.
+  spend(drawn) {
+    const canvas = this.canvasTarget
+
+    canvas.owed -= drawn
+    if (canvas.owed > 0) return
+
+    this.putUp(canvas.show.wander(MELT))
   }
 
   // One frame, and then nothing. A rail opened over a song that is not playing
@@ -221,9 +269,21 @@ export default class extends Controller {
 
     const show = new Show(visualizer, presets.getPresets(), canvas, sharpness)
     canvas.show = show
-    this.presetTarget.textContent = show.wear(0, 0)
+    this.putUp(show.wear(0, 0))
 
     return show
+  }
+
+  // A preset goes up, and its turn starts now — whoever put it there, an arrow or
+  // a turn that ran out. Pressing right and being overruled two seconds later by
+  // a clock that had been running under the last one is not what a hand on the
+  // arrow keys is asking for.
+  //
+  // And the rail says whose it is: Milkdrop is not one picture, it is thousands,
+  // and each one is somebody's work with their name on it.
+  putUp(name) {
+    this.canvasTarget.owed = this.turnValue
+    this.presetTarget.textContent = name
   }
 
   // To draw the music the picture has to hear it, and the only way to hear an
@@ -291,7 +351,7 @@ export default class extends Controller {
     const show = this.canvasTarget.show
     if (!show) return
 
-    this.presetTarget.textContent = show.wear(step, this.playing ? MELT : 0)
+    this.putUp(show.wear(step, this.playing ? MELT : 0))
     if (!this.playing) this.still(show)
   }
 

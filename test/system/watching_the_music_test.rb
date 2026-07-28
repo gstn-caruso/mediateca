@@ -82,6 +82,39 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
     refute_equal first, second
   end
 
+  # Nobody walked the presets by hand for twenty years. Milkdrop picked its own
+  # every few minutes, and that is most of what made it a thing to leave running
+  # rather than a thing to operate — you put it on and the wall keeps changing.
+  #
+  # This is the one test here that needs the picture actually moving, because the
+  # clock it runs on is the picture's own.
+  test "the picture picks a new preset on its own" do
+    play "Desencuentro"
+    a_preset_lasts 300
+    click_button "Visualizer"
+    assert_selector PRESET, text: /\S/
+    first = find(PRESET).text
+
+    assert_no_selector PRESET, exact_text: first
+  end
+
+  # And the minutes are the music's, not the wall's. A song paused over lunch
+  # leaves the picture on exactly the preset it stopped on: nothing is drawn, so
+  # nothing is spent, and coming back to a different wall than the one you left
+  # would be the app having a go at Milkdrop while nobody was listening.
+  test "a picture that has stopped keeps the preset it stopped on" do
+    play "Desencuentro"
+    a_preset_lasts 300
+    click_button "Visualizer"
+    assert_selector PRESET, text: /\S/
+    pause
+    stopped_on = find(PRESET).text
+
+    sleep 1
+
+    assert_selector PRESET, exact_text: stopped_on
+  end
+
   # Arrows are for the presets, but only once the picture is up: typing a search
   # is the same keyboard, and a caret has to be able to move through a word.
   test "the arrows are the search box's while you are typing in it" do
@@ -288,6 +321,13 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
 
   # What a <canvas> measures when nobody has ever told it otherwise.
   BARE_CANVAS = [ 300, 150 ].freeze
+
+  # A preset's turn is five minutes, and nobody is sitting in front of a test for
+  # five minutes. The rail carries the number rather than hiding it in the
+  # JavaScript, so the test can turn it down to something it can watch.
+  def a_preset_lasts(ms)
+    page.execute_script("document.getElementById('visualizer-panel').dataset.visualizerTurnValue = #{ms}")
+  end
 
   # Every wire the page is about to run, taken down as it is run. Web Audio will
   # not say afterwards what is plugged into what, so it is asked on the way past.
