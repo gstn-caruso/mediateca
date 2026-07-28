@@ -383,15 +383,24 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
   # A preset's turn is spent by the frames the picture draws, so a test about the
   # clock has to have the picture actually moving — and on this runner moving is
   # the expensive part: a thousand shader instructions a pixel, rasterised on a
-  # CPU, sixty times a second, in one of four browsers sharing two cores. Left to
-  # draw for real, these two took the browser down far enough that OTHER tests
-  # failed — a pause that was never seen, a graph that never finished being built.
+  # CPU, sixty times a second, in one of four browsers sharing two cores. Putting
+  # a preset ON costs more again, and it is a cost this pays over and over: every
+  # time the clock runs out, another few hundred lines of GLSL to compile.
+  #
+  # Left to do either for real, these two took the browser down far enough that
+  # OTHER tests failed with them — a pause that was never seen, an audio graph
+  # that never finished being built inside the two seconds anybody waited for it.
   #
   # What is under test is the counting, and the counting happens in the loop. So
-  # the loop is left exactly as it is and the picture inside it is emptied: every
-  # frame still comes, and every one of them costs nothing.
+  # the loop is left exactly as it is, and the picture inside it is emptied out:
+  # every frame still comes and every preset still goes up, by name, and none of
+  # it costs anything.
   def draw_nothing
-    page.execute_script("document.querySelector('#visualizer-panel canvas').show.visualizer.render = () => {}")
+    page.execute_script(<<~JS)
+      const { visualizer } = document.querySelector("#visualizer-panel canvas").show
+      visualizer.render = () => {}
+      visualizer.loadPreset = () => {}
+    JS
   end
 
   # Every wire the page is about to run, taken down as it is run. Web Audio will
