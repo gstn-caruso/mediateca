@@ -156,6 +156,52 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
     assert eventually { frames_so_far > so_far }, "the picture went black on its way to the screen"
   end
 
+  # Full screen there is nothing left in the room but the picture. The pill that
+  # says what is playing is behind it, on a page nobody can see — so across the
+  # room somebody asks what this is, and the answer is on a screen you have to
+  # come out of full screen to read.
+  #
+  # So it is said over the picture, where every full screen player has always said
+  # it: the sleeve, the song, and whose it is, down in the corner.
+  test "full screen says what is playing over the picture" do
+    play "Desencuentro"
+    click_button "Visualizer"
+    assert_selector PRESET, text: /\S/
+
+    click_button "Full screen"
+
+    within BILLING do
+      assert_text "Desencuentro"
+      assert_text "Almafuerte"
+    end
+  end
+
+  # And the sleeve up there is not the sleeve in the pill. The pill's is a
+  # forty-pixel thumb; this one is a hand's width of screen, and handed the thumb
+  # it would be a hand's width of mush. It takes the big one — the same picture a
+  # phone puts on its lock screen.
+  test "the sleeve over the picture is the big one, not the pill's thumb" do
+    play "Desencuentro"
+    click_button "Visualizer"
+    assert_selector PRESET, text: /\S/
+
+    click_button "Full screen"
+
+    assert_selector "#{BILLING} img[src*='size=#{Music::Thumbnail::SIZES.max}']"
+  end
+
+  # In its rail it says none of it. The rail is a postage stamp with the pill
+  # sitting under it saying all of this already, and a second copy of it printed
+  # over the picture would be covering the only thing the rail is for.
+  test "the picture in its rail says nothing about what is playing" do
+    play "Desencuentro"
+
+    click_button "Visualizer"
+
+    assert_selector PRESET, text: /\S/
+    assert_no_selector BILLING
+  end
+
   # Milkdrop does not own the canvas it draws on: it sizes its own framebuffers,
   # aims at them, and draws. A canvas nobody has sized is 300×150 — that is simply
   # what a canvas is — and the picture came out drawn through a letterbox and
@@ -318,6 +364,10 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
   private
 
   PRESET = "[data-visualizer-target='preset']".freeze
+
+  # What is playing, printed over the picture — and only over a picture that has
+  # the whole screen.
+  BILLING = ".visualizer-billing".freeze
 
   # What a <canvas> measures when nobody has ever told it otherwise.
   BARE_CANVAS = [ 300, 150 ].freeze

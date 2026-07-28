@@ -53,7 +53,7 @@ export default class extends Controller {
     "shuffle", "repeat", "repeatOne", "next", "queue", "queueEmpty", "queueToggle", "panel",
     "repeatBadge", "repeatBadgeText", "row", "suggestions",
     "lyrics", "lyricsPanel", "lyricsToggle", "syncToggle",
-    "visualizerPanel", "visualizerToggle"
+    "visualizerPanel", "visualizerToggle", "screenCover", "screenTitle", "screenSubtitle"
   ]
 
   // Whether the words are to follow the song. A plain controller field, not
@@ -939,6 +939,7 @@ export default class extends Controller {
     this.titleTarget.hidden = !track
     if (!track) {
       this.subtitleTextTarget.textContent = ""
+      this.sayItOverThePicture(null)
       this.clearAccent()
       return
     }
@@ -953,7 +954,27 @@ export default class extends Controller {
     this.marquee(this.titleTarget, this.titleTextTarget)
     this.marquee(this.subtitleTarget, this.subtitleTextTarget)
 
+    this.sayItOverThePicture(track)
     this.wear(track.palette)
+  }
+
+  // The same three things again, printed over Milkdrop for a picture that has the
+  // whole screen. It is written whether or not anybody is in full screen — going
+  // full screen is a CSS rule finding it already there, not a moment something has
+  // to be built for.
+  //
+  // The sleeve is the big one, for the reason it is the big one on a lock screen:
+  // `cover` is the ninety-six-pixel thumb the pill wears, and this is a hand's
+  // width of screen, which handed the thumb would be a hand's width of mush. And
+  // it falls back to the thumb for the reason announce() does — a queue written by
+  // the build before this one has rows with no `artwork` on them at all.
+  sayItOverThePicture(track) {
+    if (!this.hasScreenTitleTarget) return
+
+    this.screenTitleTarget.textContent = track?.title ?? ""
+    this.screenSubtitleTarget.textContent = track?.subtitle ?? ""
+    this.screenCoverTarget.classList.toggle("hidden", !track)
+    if (track) this.screenCoverTarget.src = track.artwork ?? track.cover
   }
 
   // A title or artist too long for its lane scrolls, pausing at each end, and

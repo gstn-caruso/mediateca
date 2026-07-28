@@ -482,6 +482,34 @@ html[data-turbo-preview] .animate-enter {
   display: none;
 }
 
+/* And it starts saying what is playing, which in its rail it never does: down
+   there the pill is sitting under it saying all of this already, and a second
+   copy printed over the picture would be covering the only thing the rail is
+   for. Full screen the pill is behind the picture, on a page nobody can see.
+
+   The credit for the preset goes up to the other end to make room — the corner
+   a full screen player puts the song in is the bottom left, and it has been
+   since the first one. */
+.visualizer-billing {
+  display: none;
+  /* The gradient under it does most of the work of making white words legible
+     over a picture nobody chose, and this catches the rest — Milkdrop can be
+     bright, and it is bright somewhere different every frame. A shadow on text
+     is drawn where the text is drawn: it is not a filter, and it costs the phone
+     nothing. */
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.9);
+}
+#visualizer-panel:fullscreen .visualizer-billing {
+  display: flex;
+}
+#visualizer-panel:fullscreen [data-visualizer-target="preset"] {
+  top: 0;
+  bottom: auto;
+  padding: 0.75rem 1rem 2rem;
+  background-image: linear-gradient(to bottom, rgb(0 0 0 / 0.8), transparent);
+  text-align: right;
+}
+
 /* A line of the song. Dim until it is sung: the one being sung now is lit, a
    little larger, and the rail carries it to the middle of itself — which is
    what makes the panel a karaoke rather than a page of text.
