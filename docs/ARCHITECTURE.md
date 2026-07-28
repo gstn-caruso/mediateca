@@ -356,9 +356,24 @@ between an app and a slideshow. So the panes are panels — one colour, one hair
 ambient gradient the server derives from the sleeve.
 
 The picture behind a title is still there, and still blown up until it is only
-light. The light is 64 pixels the browser stretches across the header, which is
-the same arithmetic `blur(44px)` was asking the GPU for, done for free while it
-draws, off three kilobytes instead of five hundred.
+light: 64 pixels the browser stretches across the header, five hundred bytes on
+the wire instead of five hundred kilobytes.
+
+**The blur moved; it did not go.** This first shipped claiming that a picture
+stretched seventeen times *is* a blur — same arithmetic, done for free by the
+scaler. It is not. Stretching interpolates, and an interpolated edge is still an
+edge: the wash came back with the sleeve's lettering legible and the JPEG's own
+8×8 grid — a whole eighth of a 64px picture — spread into soft squares a hand's
+width across. So the edges are taken out where a blur is cheap, which is one
+ffmpeg, once, on a picture already down to 64 pixels: `Music::Thumbnail::LIGHT`
+is the one size that is not a picture, and it is drawn through `gblur`.
+
+The light carries `-light` in its filename, and that is not decoration. A
+thumbnail is only redrawn when the picture it came off changes, and a sleeve
+sitting on a NAS does not change — a light answering to the name the sharp one
+already had would never have been drawn at all, and every record anybody had
+opened would have kept its pixelated wash for ever, on a fix that passed all of
+its tests.
 
 The rule is a test, not a note in the stylesheet: `StayingLightTest` walks the
 room with everything in it open and fails if anything filters its backdrop or

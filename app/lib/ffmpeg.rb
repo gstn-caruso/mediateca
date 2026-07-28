@@ -37,8 +37,13 @@ class Ffmpeg
   # square comes back the size it is: blowing one up would cost bytes to add
   # nothing. The commas are escaped because this is one filter argument, and a
   # comma is where ffmpeg would otherwise start reading the next filter.
-  def thumbnail(image, size:)
+  #
+  # Asked for a blur, it comes back with the edges taken out of it, in the one
+  # place a blur is cheap: here, once, on a picture already scaled down to
+  # sixty-four pixels — rather than sixty times a second on somebody's phone.
+  def thumbnail(image, size:, blur: nil)
     fit = "scale=w=min(iw\\,#{size}):h=min(ih\\,#{size}):force_original_aspect_ratio=decrease"
+    fit += ",gblur=sigma=#{blur}" if blur
 
     ask(image, %W[-frames:v 1 -vf #{fit} -q:v #{QUALITY} -f mjpeg -])
   end

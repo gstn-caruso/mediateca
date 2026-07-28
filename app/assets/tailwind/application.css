@@ -124,13 +124,17 @@
 /* The head of a record's page, and of an artist's: their own picture, blown up
    until it is nothing but light, and let go before the songs begin.
 
-   The blur is not drawn any more. It is not needed: what the page is handed is a
-   sixty-four pixel thumbnail, stretched across a header some nine hundred pixels
-   wide, and a browser that stretches a picture that far is doing a blur — it is
-   the same arithmetic, it is done in hardware for free, and the answer is three
-   kilobytes instead of two megabytes. `filter: blur(44px)` over a full-size scan
-   asked a phone to hold the whole sleeve in memory, blur every pixel of it, and
-   then throw all that detail away.
+   The blur is not drawn here any more, and it is not gone either: it has moved to
+   the one place it is cheap. `filter: blur(44px)` over a full-size scan asked a
+   phone to hold the whole sleeve in memory, blur every pixel of it, and then
+   throw all that detail away — every frame. This stood here claiming the browser
+   would do the same work for free by stretching a sixty-four pixel thumbnail, and
+   it was wrong: stretching interpolates, and an interpolated edge is still an
+   edge. The wash came out in blocks with the lettering readable.
+
+   Now the thumbnail arrives with the edges already taken out of it — one ffmpeg,
+   once, on a picture sixty-four pixels wide, five hundred bytes on the wire. What
+   is stretched here is a light, so stretching it is all this has to do.
 
    It is let go, not cut off: the wash is masked out on its way down, so the
    header dissolves into the reading surface instead of ending on a line. A line

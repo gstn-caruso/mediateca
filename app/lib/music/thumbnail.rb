@@ -19,6 +19,22 @@ module Music
     # the wash behind a title, which is a picture blown up until it is only light.
     SIZES = [ 64, 96, 320, 640 ].freeze
 
+    # And that last one is the odd one out: it is not a picture, it is a light.
+    #
+    # The wash is these sixty-four pixels stretched across a header nine hundred
+    # wide, and blowing a picture up is not blurring it. The lettering stayed
+    # legible, and the JPEG's own eight-by-eight grid — a whole eighth of a
+    # sixty-four pixel picture — came out as soft squares a hand's width across.
+    # It looked pixelated because it was.
+    #
+    # So the edges are taken out here, where a blur is one ffmpeg on a picture that
+    # is already tiny, and never a frame on somebody's phone. Five is enough that
+    # nothing of the grid survives it, and it is about what `blur(44px)` was asking
+    # the GPU for back when the GPU was asked: forty-four pixels of a header is
+    # some two and a half of these.
+    LIGHT = 64
+    SPREAD = 5
+
     # The picture at this size, or nothing at all — and nothing is an answer:
     # whoever asked has the original, which is what they used to send.
     #
@@ -94,15 +110,26 @@ module Music
       FileUtils.mkdir_p(self.class.root)
       scratch = "#{file}.#{Process.pid}.#{Thread.current.object_id}"
 
-      File.binwrite(scratch, Ffmpeg.new.thumbnail(@picture, size: @size))
+      File.binwrite(scratch, Ffmpeg.new.thumbnail(@picture, size: @size, blur: (SPREAD if light?)))
       File.utime(File.atime(@picture), File.mtime(@picture), scratch)
       File.rename(scratch, file)
     end
 
+    def light?
+      @size == LIGHT
+    end
+
     # The same name the URL is keyed on, which is the path digested — so a picture
     # that moved is a different thumbnail, and one that did not is the same one.
+    #
+    # And the light says in its name that it is one. It has to: a thumbnail is
+    # redrawn when the picture it came off changes, and a sleeve sitting on a NAS
+    # does not change. Every 64 on that disk was drawn sharp by an earlier build,
+    # and a light answering to the same name would never be drawn at all — every
+    # record anybody had ever opened would keep its pixelated wash for ever, on a
+    # fix that passed all of its tests.
     def file
-      File.join(self.class.root, "#{MediaFile.signature(@picture)}-#{@size}.jpg")
+      File.join(self.class.root, "#{MediaFile.signature(@picture)}-#{@size}#{"-light" if light?}.jpg")
     end
   end
 end
