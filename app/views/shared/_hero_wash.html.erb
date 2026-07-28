@@ -1,11 +1,16 @@
 <%# What stands behind the name at the head of a page: the picture of the thing
     the page is about, blown up until it is only light.
 
-    Sixty-four pixels of it. The browser stretches them across the whole header,
-    and a picture stretched that far IS a blur — the same arithmetic the GPU was
-    doing under `filter: blur(44px)`, done for free while it draws, off three
-    kilobytes instead of two megabytes. The stylesheet says what the mask and the
-    scrim are for.
+    Sixty-four pixels of it, and the browser stretches them across the whole
+    header. That much of it was always true; what was not is what stood here
+    saying that a picture stretched that far IS a blur. It is not. Stretching
+    interpolates, and interpolating leaves the sleeve's edges exactly where they
+    were, only wider — the lettering stayed legible and the JPEG's own grid came
+    out as soft squares a hand's width across.
+
+    So the edges come out before it is sent, in ffmpeg, once, on a picture already
+    down to sixty-four pixels. Five hundred bytes, and nothing is asked of the
+    phone at all. The stylesheet says what the mask and the scrim are for.
 
     Not the same file as the sharp sleeve in front of it, and that is the point:
     the sharp one is a picture, this one is a light. %>
