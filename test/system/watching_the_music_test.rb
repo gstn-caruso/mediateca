@@ -85,14 +85,12 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
   # Nobody walked the presets by hand for twenty years. Milkdrop picked its own
   # every few minutes, and that is most of what made it a thing to leave running
   # rather than a thing to operate — you put it on and the wall keeps changing.
-  #
-  # This is the one test here that needs the picture actually moving, because the
-  # clock it runs on is the picture's own.
   test "the picture picks a new preset on its own" do
     play "Desencuentro"
-    a_preset_lasts 300
+    a_preset_lasts 500
     click_button "Visualizer"
     assert_selector PRESET, text: /\S/
+    draw_nothing
     first = find(PRESET).text
 
     assert_no_selector PRESET, exact_text: first
@@ -104,13 +102,14 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
   # would be the app having a go at Milkdrop while nobody was listening.
   test "a picture that has stopped keeps the preset it stopped on" do
     play "Desencuentro"
-    a_preset_lasts 300
+    a_preset_lasts 500
     click_button "Visualizer"
     assert_selector PRESET, text: /\S/
+    draw_nothing
     pause
     stopped_on = find(PRESET).text
 
-    sleep 1
+    sleep 1.5
 
     assert_selector PRESET, exact_text: stopped_on
   end
@@ -377,6 +376,22 @@ class WatchingTheMusicTest < ApplicationSystemTestCase
   # JavaScript, so the test can turn it down to something it can watch.
   def a_preset_lasts(ms)
     page.execute_script("document.getElementById('visualizer-panel').dataset.visualizerTurnValue = #{ms}")
+  end
+
+  # Milkdrop, emptied out, with the loop it is drawn in left running.
+  #
+  # A preset's turn is spent by the frames the picture draws, so a test about the
+  # clock has to have the picture actually moving — and on this runner moving is
+  # the expensive part: a thousand shader instructions a pixel, rasterised on a
+  # CPU, sixty times a second, in one of four browsers sharing two cores. Left to
+  # draw for real, these two took the browser down far enough that OTHER tests
+  # failed — a pause that was never seen, a graph that never finished being built.
+  #
+  # What is under test is the counting, and the counting happens in the loop. So
+  # the loop is left exactly as it is and the picture inside it is emptied: every
+  # frame still comes, and every one of them costs nothing.
+  def draw_nothing
+    page.execute_script("document.querySelector('#visualizer-panel canvas').show.visualizer.render = () => {}")
   end
 
   # Every wire the page is about to run, taken down as it is run. Web Audio will
