@@ -48,6 +48,14 @@ anybody. See [SECURITY.md](SECURITY.md).
 
 - **Plays what you have.** FLAC, served raw with `Range` support, so seeking in a
   34 MB file doesn't download 34 MB.
+- **Milkdrop.** The thing that was in Winamp — the reason people left Winamp open
+  with the lights off — drawing what it hears off the record you own. It runs in
+  WebGL, and it is fed the twenty years of presets people wrote for the original.
+  The arrow keys walk them, each one melting into the next over two seconds the way
+  Milkdrop always did, and it goes as big as the screen. It is a megabyte of presets
+  and a live WebGL context, so none of it is fetched until you open the rail, and it
+  holds still the moment the song does — sixty frames a second over a paused track
+  is the whole cost of the thing for none of the point of it.
 - **The disk is the truth.** Rename a file and the song is still the song: the
   scan pairs what vanished with what arrived, so your playlists and hearts
   survive it. A [beets](https://beets.io) database, if you keep one, is invited
