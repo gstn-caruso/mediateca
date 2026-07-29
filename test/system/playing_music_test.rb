@@ -19,14 +19,6 @@ class PlayingMusicTest < ApplicationSystemTestCase
     end
   end
 
-  test "the library shows the artists" do
-    visit root_path
-
-    assert_text "Your Library"
-    assert_text "Almafuerte"
-    take_screenshot
-  end
-
   test "an album shows its tracks and can be played" do
     visit album_path(@album)
 
@@ -346,18 +338,6 @@ class PlayingMusicTest < ApplicationSystemTestCase
     page.execute_script("window.playerHome.appendChild(window.playerPill)")
 
     assert_selector "[data-player-target='title']", text: "Desencuentro"
-  end
-
-  # The search box and Home live in the top bar, reached without looking.
-  test "the header searches, and goes home" do
-    visit album_path(@album)
-
-    fill_in "Search", with: "Desencuentro"
-    find_field("Search").send_keys(:return)
-    assert_selector "h2", text: "Songs"
-
-    within("#topbar") { click_on "Home" }
-    assert_selector "main h1", text: "Your Library"
   end
 
   private

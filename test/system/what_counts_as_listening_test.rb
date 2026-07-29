@@ -37,21 +37,28 @@ class WhatCountsAsListeningTest < ApplicationSystemTestCase
   end
 
   # The player says nothing until the halfway mark, and then says it once. It is
-  # asked four times a second, so "once" is the whole of the assertion.
+  # asked four times a second, so "once" is the whole of the assertion — and the
+  # asking does not outlive the song, so waiting for Desencuentro to come on is
+  # waiting through every ask "Un Tema Corto" was ever going to get.
   test "sitting through a song once is one play, not one a second" do
     play "Un Tema Corto"
 
     eventually { Play.any? }
-    sleep 1.5
+    assert_selector "[data-player-target='title']", text: "Desencuentro"
 
     assert_equal 1, Play.count
   end
 
+  # A skip is a press, not a wait: the cursor moves and Desencuentro is on
+  # screen before the click even returns. Checking for it first is checking
+  # that the skip's own handler — the one thing that could still call
+  # "Un Tema Corto" heard — has already run.
   test "a song you skipped is not in your history" do
     play "Un Tema Corto"
     click_on "Next"
 
-    assert_no_plays
+    assert_selector "[data-player-target='title']", text: "Desencuentro"
+    assert_empty Play.all
   end
 
   # The hole this rule exists to close. Position is not listening: dragging the
@@ -138,6 +145,13 @@ class WhatCountsAsListeningTest < ApplicationSystemTestCase
 
   # Proving a negative: give it longer than the song and the threshold both, and
   # then look.
+  #
+  # Both scrubs land the song on Desencuentro too, once `ended` decides the seek
+  # was really the end — but getting there needs the file to actually finish
+  # decoding, and asking a Capybara finder to watch for it competes with that
+  # decoding for the one thing this runner is short of. A wait, here, is not a
+  # guess: the song and the threshold are both known quantities, and outliving
+  # both is outliving the only window a wrong Play could come from.
   def assert_no_plays
     sleep 2.5
 

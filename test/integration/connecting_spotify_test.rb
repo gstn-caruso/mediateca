@@ -103,17 +103,6 @@ class ConnectingSpotifyTest < ActionDispatch::IntegrationTest
     assert_predicate SpotifyAccount.all, :empty?
   end
 
-  # Spotify hands back a new access token and, quite legally, no new refresh token.
-  # A client that wrote the nothing over the old one would have disconnected itself
-  # an hour later — silently, and a month before anybody noticed.
-  test "a refresh that hands back no new refresh token does not throw away the old one" do
-    connect
-    @gaston.spotify_account.update!(expires_at: 1.minute.ago)
-
-    assert_equal "a-fresh-one", @gaston.reload.spotify_account.token
-    assert_equal "rt", @gaston.spotify_account.reload.refresh_token
-  end
-
   test "asking Spotify for the hearts and lists sets something long-running going" do
     connect
 

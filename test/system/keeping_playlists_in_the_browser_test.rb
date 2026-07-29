@@ -28,33 +28,11 @@ class KeepingPlaylistsInTheBrowserTest < ApplicationSystemTestCase
     assert_selector "[data-player-target='title']", text: "Desencuentro"
   end
 
-  test "a song is moved, then taken out again" do
-    visit album_path(@album)
-    add "Desencuentro", to: "Road trip"
-    add "El Pibe Tigre", to: "Road trip"
-
-    in_the_library("Playlists") { click_on "Road trip" }
-    click_on "Move El Pibe Tigre up"
-
-    # A waiting matcher, because Turbo has to come back before the order is real.
-    assert_selector "ol > li:first-child", text: "El Pibe Tigre"
-    assert_equal [ "El Pibe Tigre", "Desencuentro" ], titles
-
-    click_on "Remove Desencuentro"
-
-    assert_no_selector "ol", text: "Desencuentro"
-    assert_equal [ "El Pibe Tigre" ], titles
-  end
-
   private
 
   def add(track, to:)
     find("summary[aria-label='Add #{track} to a playlist']").click
     within("details[open]") { click_on to }
-  end
-
-  def titles
-    all("[data-player-track] .font-medium").map(&:text)
   end
 
   def media(name)

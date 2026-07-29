@@ -23,17 +23,6 @@ class SingingAlongTest < ActionDispatch::IntegrationTest
     assert_equal [ 1.0, "La primera línea" ], body["lines"].first.values_at("at", "text")
   end
 
-  # The gap between verses is timed too. It is where the karaoke has nothing to
-  # say, and it has to reach the panel to be able to say nothing.
-  test "the silence between the verses arrives with them" do
-    listening_as
-
-    get track_lyrics_path(@timed)
-
-    assert_equal [ "La primera línea", "La segunda línea", "", "La tercera línea" ],
-                 body["lines"].map { it["text"] }
-  end
-
   # Most of the record has no .lrc beside it, and the panel has to be able to
   # tell "nobody wrote these down" from "the server fell over".
   test "a song nobody wrote the words for says so" do

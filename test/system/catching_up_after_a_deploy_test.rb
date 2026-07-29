@@ -46,7 +46,18 @@ class CatchingUpAfterADeployTest < ApplicationSystemTestCase
     page.execute_script(%(document.querySelector("turbo-cable-stream-source").removeAttribute("connected")))
     page.execute_script(%(document.querySelector("turbo-cable-stream-source").setAttribute("connected", "")))
 
-    sleep 1
+    # The tab asks /build the moment it hears the socket come back — before this
+    # line, over a connection that has had the time an actual WebDriver round
+    # trip takes to be opened. Asking it again ourselves and letting a macrotask
+    # turn pass after is proof that ask has been answered and acted on, not a
+    # guess at how long asking takes.
+    page.evaluate_async_script(<<~JS)
+      const done = arguments[0]
+      fetch("/build", { cache: "no-store" })
+        .then(() => new Promise((resolve) => setTimeout(resolve, 0)))
+        .then(done)
+    JS
+
     assert_not page.evaluate_script("window.refreshed"),
       "the page refreshed itself over nothing: the build underneath it never changed"
   end

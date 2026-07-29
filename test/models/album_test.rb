@@ -40,6 +40,16 @@ class AlbumTest < ActiveSupport::TestCase
     assert_nil @album.quality
   end
 
+  # A track numbered first belongs first, whichever one was scanned first — the
+  # rows have to read the way the record plays, not the way it was catalogued.
+  test "a record's tracks come back in playing order, not the order they were catalogued in" do
+    @album = Album.create!(directory: "/music/guanaco", title: "Mundo Guanaco", artist: @artist)
+    second = Track.create!(title: "Desencuentro", track_no: 2, disc_no: 1, path: "/music/guanaco/02.flac", album: @album)
+    first = Track.create!(title: "Dijo El Droguero", track_no: 1, disc_no: 1, path: "/music/guanaco/01.flac", album: @album)
+
+    assert_equal [ first, second ], @album.tracks.to_a
+  end
+
   private
 
   def record(codecs, bit_rate: nil)
